@@ -15,12 +15,13 @@ struct ClockFaceCanvas: View {
         }
     }
 
-    /// 0 / 6 / 12 / 18 の時刻マークを外周に描く。
+    /// 0 / 6 / 12 / 18 の時刻マークをリングの内側に描く。
+    /// 外周の外側に置くと 280pt の canvas 端でテキストが見切れるため内側配置にする。
     private func drawHourMarks(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
         let labels: [(hour: Int, text: String)] = [
             (0, "0"), (6, "6"), (12, "12"), (18, "18")
         ]
-        let labelRadius = geometry.outerRadius + 10
+        let labelRadius = geometry.innerRadius - 12
         for label in labels {
             guard let tod = TimeOfDay(hour: label.hour, minute: 0) else { continue }
             let angle = tod.clockAngle
