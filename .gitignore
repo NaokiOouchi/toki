@@ -1,0 +1,29 @@
+# Build outputs
+.build/
+build/
+DerivedData/
+
+# Swift Package Manager
+Package.resolved
+.swiftpm/
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code
+.claude/.local/
+CLAUDE.local.md
+
+# 個人メモ
+notes/
+scratch/
