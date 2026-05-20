@@ -92,7 +92,8 @@ final class ClockViewModel: ObservableObject {
                 endAngle: TimeOfDay.from(date: ev.end, calendar: calendar).clockAngle,
                 color: ev.calendarColor,
                 status: ev.status(at: now),
-                externalIdentifier: ev.externalIdentifier
+                externalIdentifier: ev.externalIdentifier,
+                start: ev.start
             )
         }
     }
@@ -141,18 +142,33 @@ final class ClockViewModel: ObservableObject {
     // MARK: - クリックハンドラ
 
     /// イベント円弧のクリックを処理する。
-    /// 該当イベントの externalIdentifier から純正カレンダー.app を開く。
+    /// 該当イベントの externalIdentifier と開始日時から純正カレンダー.app を開く。
+    /// 繰り返しイベントは eventIdentifier が全 occurrence で共通になるため、
+    /// `yyyyMMddTHHmmssZ`（UTC、basic ISO8601）を URL のパスに含めて
+    /// その日の occurrence を Calendar.app に開かせる。
     /// ヒットなし / externalIdentifier 欠落 / URL 組み立て失敗の場合は何もしない（無音）。
     func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
         guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
-        guard let extID = event.externalIdentifier,
-              !extID.isEmpty,
-              let url = URL(string: "ical://ekevent/\(extID)?method=show&options=more") else { return }
+        guard let extID = event.externalIdentifier, !extID.isEmpty else { return }
+        let dateStr = Self.occurrenceURLDateString(event.start)
+        let urlStr = "ical://ekevent/\(extID)/\(dateStr)?method=show&options=more"
+        guard let url = URL(string: urlStr) else { return }
         if !NSWorkspace.shared.open(url) {
             // URL scheme が無視された場合のフォールバック：カレンダー.app を起動だけする
             if let fallback = URL(string: "ical:") {
                 NSWorkspace.shared.open(fallback)
             }
         }
+    }
+
+    /// `yyyyMMddTHHmmssZ`（UTC）形式の文字列を返す。
+    /// 例：2026-05-21 10:30 JST → "20260521T013000Z"
+    /// Calendar.app の URL scheme が要求する basic ISO8601 形式。
+    private static func occurrenceURLDateString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
+        return formatter.string(from: date)
     }
 }

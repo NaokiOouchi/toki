@@ -1,3 +1,4 @@
+import Foundation
 import CoreGraphics
 
 /// UI 描画用のイベント表示モデル。
@@ -10,6 +11,9 @@ struct RenderableEvent: Identifiable {
     let color: CGColor
     let status: EventStatus
     let externalIdentifier: String?
+    /// イベントの開始時刻。繰り返しイベントを開く URL scheme で
+    /// 発生日を指定するために保持する。
+    let start: Date
 }
 
 extension RenderableEvent: Equatable {
