@@ -14,8 +14,8 @@ enum AccessResult {
 /// `EKEvent` などの Infrastructure 型は本クラス内で完結させ、
 /// 外部には Domain の値型（`DayTimeline` / `Event`）のみを返す。
 ///
-/// 本 task（Task 6）では権限要求と今日のイベント取得の骨格まで実装し、
-/// 実体の `EKEvent → Event` 変換は Task 7、購読は Task 8 で追加する。
+/// Task 7 で `EKEvent → Event` 変換と `DayTimeline.make` 呼び出しを実装。
+/// 購読（変更通知）は Task 8 で追加する。
 final class EventKitGateway {
     private let store = EKEventStore()
     private let calendar: Calendar
@@ -37,15 +37,45 @@ final class EventKitGateway {
     }
 
     /// 今日のイベントを取得し `DayTimeline` を返す。
-    /// 本 task では変換を実装せず空の `DayTimeline` を返す。
-    /// Task 7 で `EKEvent → Event` 変換と `DayTimeline.make` 呼び出しに置き換える。
+    /// `EKEvent` を Domain の `Event` に変換し、all-day flag と共に
+    /// `DayTimeline.make` に委譲する。all-day 除外 / clip / 重なりフィルタは
+    /// Domain 側で処理する（Infrastructure には Domain ロジックを書かない）。
     func fetchTodayTimeline() async -> DayTimeline {
         let dayStart = calendar.startOfDay(for: Date())
         guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
             return DayTimeline(date: dayStart, events: [])
         }
         let predicate = store.predicateForEvents(withStart: dayStart, end: dayEnd, calendars: nil)
-        let _ = store.events(matching: predicate)  // Task 7 で変換予定
-        return DayTimeline(date: dayStart, events: [])
+        let ekEvents = store.events(matching: predicate)
+
+        var rawEvents: [Event] = []
+        var allDayFlags: [Bool] = []
+        for ek in ekEvents {
+            guard let event = Self.convert(ek) else { continue }
+            rawEvents.append(event)
+            allDayFlags.append(ek.isAllDay)
+        }
+
+        return DayTimeline.make(date: dayStart,
+                                rawEvents: rawEvents,
+                                allDayFlags: allDayFlags,
+                                calendar: calendar)
+    }
+
+    /// `EKEvent` を Domain の `Event` に変換する。
+    /// recurring イベントは全 occurrence で `eventIdentifier` が共通になるため、
+    /// `startDate` を組み合わせて id を一意化する。
+    /// 0 分以下や不正な値は `Event` の failable init で自動的に弾かれる。
+    private static func convert(_ ek: EKEvent) -> Event? {
+        let baseId = ek.eventIdentifier ?? UUID().uuidString
+        let id = "\(baseId)#\(ek.startDate.timeIntervalSince1970)"
+        return Event(
+            id: id,
+            title: ek.title ?? "(無題)",
+            start: ek.startDate,
+            end: ek.endDate,
+            calendarColor: ek.calendar.cgColor,
+            externalIdentifier: ek.eventIdentifier
+        )
     }
 }
