@@ -15,13 +15,26 @@ enum AccessResult {
 /// 外部には Domain の値型（`DayTimeline` / `Event`）のみを返す。
 ///
 /// Task 7 で `EKEvent → Event` 変換と `DayTimeline.make` 呼び出しを実装。
-/// 購読（変更通知）は Task 8 で追加する。
+/// Task 8 で `EKEventStoreChanged` 通知購読と `timelineUpdates` Publisher を追加。
 final class EventKitGateway {
     private let store = EKEventStore()
     private let calendar: Calendar
 
+    /// 最新値を保持し、新規購読時にも即座に値を渡せるよう CurrentValueSubject を使う。
+    /// 外部には `eraseToAnyPublisher()` 経由でのみ公開し、send 権限は内部に閉じる。
+    private let subject: CurrentValueSubject<DayTimeline, Never>
+    private var cancellables = Set<AnyCancellable>()
+
     init(calendar: Calendar = .current) {
         self.calendar = calendar
+        let initialDate = calendar.startOfDay(for: Date())
+        self.subject = CurrentValueSubject(DayTimeline(date: initialDate, events: []))
+    }
+
+    /// DayTimeline の最新値を購読できる Publisher。
+    /// 新規購読者は CurrentValueSubject により直近の値を即座に受け取る。
+    var timelineUpdates: AnyPublisher<DayTimeline, Never> {
+        subject.eraseToAnyPublisher()
     }
 
     /// EventKit のフルアクセス権限を要求する。
@@ -34,6 +47,30 @@ final class EventKitGateway {
         } catch {
             return .error(error)
         }
+    }
+
+    /// 変更通知の購読を開始する。
+    /// 多重購読を防ぐため冒頭で cancellables をリセットする。
+    /// 300ms debounce することで連続した変更通知を集約する。
+    /// 呼び出し直後に初回 reload を非同期で実行し、最新の DayTimeline を subject に流す。
+    func start() {
+        cancellables.removeAll()
+
+        NotificationCenter.default
+            .publisher(for: .EKEventStoreChanged, object: store)
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task { await self?.reload() }
+            }
+            .store(in: &cancellables)
+
+        Task { await reload() }
+    }
+
+    /// 変更通知の購読を停止する。
+    /// cancellables をクリアすることで sink を破棄する。
+    func stop() {
+        cancellables.removeAll()
     }
 
     /// 今日のイベントを取得し `DayTimeline` を返す。
@@ -60,6 +97,13 @@ final class EventKitGateway {
                                 rawEvents: rawEvents,
                                 allDayFlags: allDayFlags,
                                 calendar: calendar)
+    }
+
+    /// 今日の DayTimeline を再取得して subject に流す。
+    /// 変更通知購読の sink から呼ばれる他、`start()` 時にも初回 reload として呼ばれる。
+    private func reload() async {
+        let timeline = await fetchTodayTimeline()
+        subject.send(timeline)
     }
 
     /// `EKEvent` を Domain の `Event` に変換する。
