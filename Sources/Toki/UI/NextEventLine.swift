@@ -21,7 +21,7 @@ struct NextEventLine: View {
                 Text("\(s.timeHHMM) \(s.title)")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .truncationMode(.tail)
             }
             .padding(.horizontal, 16)
