@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 時計盤の Canvas 描画。0:00 真上、時計回り、24 時間表示。
-/// 描画順：時刻マーク → イベント円弧（past→future→current）→ 針。
+/// 描画順：リング輪郭 → 時刻マーク → イベント円弧（past→future→current）→ 中心ドット → 針。
 struct ClockFaceCanvas: View {
     let now: Date
     let events: [RenderableEvent]
@@ -9,10 +9,42 @@ struct ClockFaceCanvas: View {
     var body: some View {
         Canvas { ctx, size in
             let geometry = ClockGeometry.standard(in: size)
+            drawRingOutlines(in: &ctx, geometry: geometry)
             drawHourMarks(in: &ctx, geometry: geometry)
             drawEventArcs(in: &ctx, geometry: geometry)
             drawHand(in: &ctx, geometry: geometry, now: now)
+            drawCenterDot(in: &ctx, geometry: geometry)
         }
+    }
+
+    /// 二重リングの輪郭線。「時間トラック」を可視化する。
+    private func drawRingOutlines(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
+        let outer = Path(ellipseIn: CGRect(
+            x: geometry.center.x - geometry.outerRadius,
+            y: geometry.center.y - geometry.outerRadius,
+            width: geometry.outerRadius * 2,
+            height: geometry.outerRadius * 2
+        ))
+        let inner = Path(ellipseIn: CGRect(
+            x: geometry.center.x - geometry.innerRadius,
+            y: geometry.center.y - geometry.innerRadius,
+            width: geometry.innerRadius * 2,
+            height: geometry.innerRadius * 2
+        ))
+        ctx.stroke(outer, with: .color(.secondary.opacity(0.25)), lineWidth: 0.5)
+        ctx.stroke(inner, with: .color(.secondary.opacity(0.4)), lineWidth: 0.5)
+    }
+
+    /// 針の根元にある小さなドット。
+    private func drawCenterDot(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
+        let dotRadius: CGFloat = 2.5
+        let rect = CGRect(
+            x: geometry.center.x - dotRadius,
+            y: geometry.center.y - dotRadius,
+            width: dotRadius * 2,
+            height: dotRadius * 2
+        )
+        ctx.fill(Path(ellipseIn: rect), with: .color(.primary))
     }
 
     /// 0 / 6 / 12 / 18 の時刻マークをリングの内側に描く。
