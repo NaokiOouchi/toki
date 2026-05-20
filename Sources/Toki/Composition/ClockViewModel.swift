@@ -1,7 +1,6 @@
 import Foundation
 import AppKit
 import Combine
-import SwiftUI
 import CoreGraphics
 
 /// 時計 UI 用 ViewModel。
@@ -73,6 +72,13 @@ final class ClockViewModel: ObservableObject {
     }
 
     // MARK: - 派生 state
+
+    /// 現在時刻を時計盤の角度（ラジアン）に変換した値。
+    /// VM が保持する `calendar` を使うことで `canvasEvents` の角度計算と
+    /// 同じカレンダー設定で針の角度を算出する。
+    var nowAngle: Double {
+        TimeOfDay.from(date: now, calendar: calendar).clockAngle
+    }
 
     /// Domain Event を UI 描画用 `RenderableEvent` に変換する。
     /// 角度は `TimeOfDay.clockAngle`、status は `Event.status(at:)` に委譲する。

@@ -3,7 +3,10 @@ import SwiftUI
 /// 時計盤の Canvas 描画。0:00 真上、時計回り、24 時間表示。
 /// 描画順：リング輪郭 → 時刻マーク → イベント円弧（past→future→current）→ 中心ドット → 針。
 struct ClockFaceCanvas: View {
-    let now: Date
+    /// 現在時刻に対応する針の角度（ラジアン）。
+    /// 角度変換は ViewModel 側で `calendar` を考慮して行うため、
+    /// View は計算済みの値を受け取るだけにする。
+    let nowAngle: Double
     let events: [RenderableEvent]
     /// 円弧クリック時に呼ばれる。位置は Canvas のローカル座標、geometry は描画時と同じ前提。
     var onTap: ((CGPoint, ClockGeometry) -> Void)? = nil
@@ -14,7 +17,7 @@ struct ClockFaceCanvas: View {
             drawRingOutlines(in: &ctx, geometry: geometry)
             drawHourMarks(in: &ctx, geometry: geometry)
             drawEventArcs(in: &ctx, geometry: geometry)
-            drawHand(in: &ctx, geometry: geometry, now: now)
+            drawHand(in: &ctx, geometry: geometry, angle: nowAngle)
             drawCenterDot(in: &ctx, geometry: geometry)
         }
         .contentShape(Rectangle())
@@ -91,9 +94,8 @@ struct ClockFaceCanvas: View {
     }
 
     /// 現在時刻を指す針を中心から外径まで描く。
-    private func drawHand(in ctx: inout GraphicsContext, geometry: ClockGeometry, now: Date) {
-        let tod = TimeOfDay.from(date: now)
-        let angle = tod.clockAngle
+    /// 角度計算は呼び出し側（ViewModel）で行い、View はラジアン値を受け取るだけ。
+    private func drawHand(in ctx: inout GraphicsContext, geometry: ClockGeometry, angle: Double) {
         let endPoint = CGPoint(
             x: geometry.center.x + CGFloat(cos(angle)) * geometry.outerRadius,
             y: geometry.center.y + CGFloat(sin(angle)) * geometry.outerRadius

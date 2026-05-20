@@ -11,7 +11,7 @@ struct ClockView: View {
         VStack(spacing: 0) {
             ZStack {
                 ClockFaceCanvas(
-                    now: viewModel.now,
+                    nowAngle: viewModel.nowAngle,
                     events: viewModel.canvasEvents,
                     onTap: { point, geometry in
                         viewModel.handleArcTap(at: point, geometry: geometry)
