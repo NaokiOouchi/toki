@@ -28,22 +28,16 @@ struct ClockFaceCanvas: View {
         )
     }
 
-    /// 二重リングの輪郭線。「時間トラック」を可視化する。
+    /// 内側リング輪郭線。時間トラックの内縁を示す。
+    /// 外側はイベント円弧の外端で示唆されるため描画しない。
     private func drawRingOutlines(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
-        let outer = Path(ellipseIn: CGRect(
-            x: geometry.center.x - geometry.outerRadius,
-            y: geometry.center.y - geometry.outerRadius,
-            width: geometry.outerRadius * 2,
-            height: geometry.outerRadius * 2
-        ))
         let inner = Path(ellipseIn: CGRect(
             x: geometry.center.x - geometry.innerRadius,
             y: geometry.center.y - geometry.innerRadius,
             width: geometry.innerRadius * 2,
             height: geometry.innerRadius * 2
         ))
-        ctx.stroke(outer, with: .color(.secondary.opacity(0.25)), lineWidth: 0.5)
-        ctx.stroke(inner, with: .color(.secondary.opacity(0.4)), lineWidth: 0.5)
+        ctx.stroke(inner, with: .color(.secondary.opacity(0.6)), lineWidth: 0.75)
     }
 
     /// 針の根元にある小さなドット。
