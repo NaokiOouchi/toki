@@ -32,7 +32,7 @@
 
 ### 時計
 - 24時間アナログ時計（0:00 が真上、12:00 が真下、時計回り）
-- 二重円のリング（内径 220px、外径 260px）が「時間トラック」
+- 二重円のリング（内径 200px、外径 240px）が「時間トラック」
 - 時刻マーク：0, 6, 12, 18 の4箇所に小さく数字
 - 針：中心から外周まで 1.5px の線、現在時刻を指す
 
@@ -271,8 +271,8 @@ window.contentView = NSHostingView(rootView: ClockView())
 ```swift
 Canvas { ctx, size in
     let center = CGPoint(x: size.width / 2, y: size.height / 2)
-    let outerR: CGFloat = 130
-    let innerR: CGFloat = 110
+    let outerR: CGFloat = 120
+    let innerR: CGFloat = 100
 
     for event in events {
         let startAngle = TimeOfDay(from: event.start).clockAngle
