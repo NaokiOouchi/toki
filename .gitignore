@@ -21,7 +21,7 @@ xcuserdata/
 .idea/
 
 # Claude Code
-.claude/.local/
+.claude/
 CLAUDE.local.md
 
 # 個人メモ
