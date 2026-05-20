@@ -12,23 +12,26 @@ struct ClockFaceCanvas: View {
     var onTap: ((CGPoint, ClockGeometry) -> Void)? = nil
 
     var body: some View {
-        Canvas { ctx, size in
-            let geometry = ClockGeometry.standard(in: size)
-            drawRingOutlines(in: &ctx, geometry: geometry)
-            drawHourMarks(in: &ctx, geometry: geometry)
-            drawEventArcs(in: &ctx, geometry: geometry)
-            drawHand(in: &ctx, geometry: geometry, angle: nowAngle)
-            drawCenterDot(in: &ctx, geometry: geometry)
+        // GeometryReader で現在のレイアウトサイズを取り、描画とタップで同じ geometry を共有する。
+        // 親 frame が変わってもヒットテストと描画がズレないようにする。
+        GeometryReader { proxy in
+            Canvas { ctx, size in
+                let geometry = ClockGeometry.standard(in: size)
+                drawRingOutlines(in: &ctx, geometry: geometry)
+                drawHourMarks(in: &ctx, geometry: geometry)
+                drawEventArcs(in: &ctx, geometry: geometry)
+                drawHand(in: &ctx, geometry: geometry, angle: nowAngle)
+                drawCenterDot(in: &ctx, geometry: geometry)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                SpatialTapGesture(coordinateSpace: .local)
+                    .onEnded { value in
+                        let geometry = ClockGeometry.standard(in: proxy.size)
+                        onTap?(value.location, geometry)
+                    }
+            )
         }
-        .contentShape(Rectangle())
-        .gesture(
-            SpatialTapGesture(coordinateSpace: .local)
-                .onEnded { value in
-                    // ClockView 側で 280x280 固定 frame を当てている前提で size を直書きする（MVP 妥協）。
-                    let geometry = ClockGeometry.standard(in: CGSize(width: 280, height: 280))
-                    onTap?(value.location, geometry)
-                }
-        )
     }
 
     /// 内側リング輪郭線。時間トラックの内縁を示す。
