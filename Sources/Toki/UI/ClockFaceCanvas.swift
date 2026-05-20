@@ -1,14 +1,16 @@
 import SwiftUI
 
 /// 時計盤の Canvas 描画。0:00 真上、時計回り、24 時間表示。
-/// Task 12 でイベント円弧、Task 14 で events 引数が追加される予定。
+/// 描画順：時刻マーク → イベント円弧（past→future→current）→ 針。
 struct ClockFaceCanvas: View {
     let now: Date
+    let events: [RenderableEvent]
 
     var body: some View {
         Canvas { ctx, size in
             let geometry = ClockGeometry.standard(in: size)
             drawHourMarks(in: &ctx, geometry: geometry)
+            drawEventArcs(in: &ctx, geometry: geometry)
             drawHand(in: &ctx, geometry: geometry, now: now)
         }
     }
@@ -30,6 +32,23 @@ struct ClockFaceCanvas: View {
                 .font(.system(size: 9))
                 .foregroundStyle(.secondary)
             ctx.draw(text, at: position, anchor: .center)
+        }
+    }
+
+    /// イベント円弧を描画する。current のアウトラインが最上位に来るよう描画順を制御する。
+    private func drawEventArcs(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
+        let sorted = events.sorted { Self.drawOrder($0.status) < Self.drawOrder($1.status) }
+        for event in sorted {
+            drawEventArc(in: &ctx, event: event, geometry: geometry)
+        }
+    }
+
+    /// past → future → current の順で描画するための優先度。
+    private static func drawOrder(_ status: EventStatus) -> Int {
+        switch status {
+        case .past: return 0
+        case .future: return 1
+        case .current: return 2
         }
     }
 
