@@ -10,8 +10,15 @@ struct ClockView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                ClockFaceCanvas(now: viewModel.now, events: viewModel.canvasEvents)
+                ClockFaceCanvas(
+                    now: viewModel.now,
+                    events: viewModel.canvasEvents,
+                    onTap: { point, geometry in
+                        viewModel.handleArcTap(at: point, geometry: geometry)
+                    }
+                )
                 CurrentEventLabel(state: viewModel.centerState)
+                    .allowsHitTesting(false)  // 中央テキストが円弧クリックを奪わないようにする
             }
             .frame(width: 280, height: 280)
 

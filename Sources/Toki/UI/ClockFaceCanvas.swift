@@ -5,6 +5,8 @@ import SwiftUI
 struct ClockFaceCanvas: View {
     let now: Date
     let events: [RenderableEvent]
+    /// 円弧クリック時に呼ばれる。位置は Canvas のローカル座標、geometry は描画時と同じ前提。
+    var onTap: ((CGPoint, ClockGeometry) -> Void)? = nil
 
     var body: some View {
         Canvas { ctx, size in
@@ -15,6 +17,15 @@ struct ClockFaceCanvas: View {
             drawHand(in: &ctx, geometry: geometry, now: now)
             drawCenterDot(in: &ctx, geometry: geometry)
         }
+        .contentShape(Rectangle())
+        .gesture(
+            SpatialTapGesture(coordinateSpace: .local)
+                .onEnded { value in
+                    // ClockView 側で 280x280 固定 frame を当てている前提で size を直書きする（MVP 妥協）。
+                    let geometry = ClockGeometry.standard(in: CGSize(width: 280, height: 280))
+                    onTap?(value.location, geometry)
+                }
+        )
     }
 
     /// 二重リングの輪郭線。「時間トラック」を可視化する。

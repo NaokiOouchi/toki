@@ -131,4 +131,22 @@ final class ClockViewModel: ObservableObject {
         let c = calendar.dateComponents([.hour, .minute], from: date)
         return String(format: "%02d:%02d", c.hour ?? 0, c.minute ?? 0)
     }
+
+    // MARK: - クリックハンドラ
+
+    /// イベント円弧のクリックを処理する。
+    /// 該当イベントの externalIdentifier から純正カレンダー.app を開く。
+    /// ヒットなし / externalIdentifier 欠落 / URL 組み立て失敗の場合は何もしない（無音）。
+    func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
+        guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
+        guard let extID = event.externalIdentifier,
+              !extID.isEmpty,
+              let url = URL(string: "ical://ekevent/\(extID)?method=show&options=more") else { return }
+        if !NSWorkspace.shared.open(url) {
+            // URL scheme が無視された場合のフォールバック：カレンダー.app を起動だけする
+            if let fallback = URL(string: "ical:") {
+                NSWorkspace.shared.open(fallback)
+            }
+        }
+    }
 }
