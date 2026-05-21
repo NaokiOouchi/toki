@@ -10,10 +10,12 @@ final class EventTests: XCTestCase {
     private func makeEvent(id: String = "id-1",
                            title: String = "テスト予定",
                            start: Date = Date(timeIntervalSince1970: 1_700_000_000),
-                           end: Date = Date(timeIntervalSince1970: 1_700_003_600))
+                           end: Date = Date(timeIntervalSince1970: 1_700_003_600),
+                           calendarTitle: String = "")
         -> Event? {
         Event(id: id, title: title, start: start, end: end,
-              calendarColor: makeColor(), externalIdentifier: "ext-1")
+              calendarColor: makeColor(), externalIdentifier: "ext-1",
+              calendarTitle: calendarTitle)
     }
 
     // 1. zero duration
