@@ -20,11 +20,12 @@ final class DayTimelineTests: XCTestCase {
 
     private func today() -> Date { date(2026, 5, 20, 0, 0) }
 
-    private func makeEvent(id: String, start: Date, end: Date, calendarTitle: String = "") -> Event {
+    private func makeEvent(id: String, start: Date, end: Date, calendarTitle: String = "", webURL: URL? = nil) -> Event {
         Event(id: id, title: "ev-\(id)", start: start, end: end,
               calendarColor: CGColor(red: 0, green: 0, blue: 0, alpha: 1),
               externalIdentifier: nil,
-              calendarTitle: calendarTitle)!
+              calendarTitle: calendarTitle,
+              webURL: webURL)!
     }
 
     // 1

@@ -11,11 +11,13 @@ final class EventTests: XCTestCase {
                            title: String = "テスト予定",
                            start: Date = Date(timeIntervalSince1970: 1_700_000_000),
                            end: Date = Date(timeIntervalSince1970: 1_700_003_600),
-                           calendarTitle: String = "")
+                           calendarTitle: String = "",
+                           webURL: URL? = nil)
         -> Event? {
         Event(id: id, title: title, start: start, end: end,
               calendarColor: makeColor(), externalIdentifier: "ext-1",
-              calendarTitle: calendarTitle)
+              calendarTitle: calendarTitle,
+              webURL: webURL)
     }
 
     // 1. zero duration

@@ -3,11 +3,12 @@ import CoreGraphics
 @testable import Toki
 
 final class EventStatusTests: XCTestCase {
-    private func makeEvent(start: Date, end: Date, calendarTitle: String = "") -> Event {
+    private func makeEvent(start: Date, end: Date, calendarTitle: String = "", webURL: URL? = nil) -> Event {
         Event(id: "e1", title: "test", start: start, end: end,
               calendarColor: CGColor(red: 0, green: 0, blue: 0, alpha: 1),
               externalIdentifier: nil,
-              calendarTitle: calendarTitle)!
+              calendarTitle: calendarTitle,
+              webURL: webURL)!
     }
 
     func testPast() {
