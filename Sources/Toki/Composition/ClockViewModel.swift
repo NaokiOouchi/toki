@@ -208,16 +208,22 @@ final class ClockViewModel: ObservableObject {
     /// 失敗時は nil（呼び出し側で今日のビュー fallback）。
     ///
     /// 形式：https://calendar.google.com/calendar/u/0/r/event?eid=<URL-safe-base64>
-    /// eid 中身：base64("<base_uid> <calendar_email>")
-    ///   - base_uid：externalIdentifier から `_R<digits>T<digits>` suffix を除去
+    /// eid 中身：base64("<base_uid>_<UTC_occurrence_date>Z <calendar_email>")
+    ///   - base_uid：externalIdentifier から `_R<digits>T<digits>` suffix と
+    ///     `@google.com` suffix を除去した純粋な UID
+    ///   - UTC_occurrence_date：イベント開始日時を UTC で `yyyyMMddTHHmmss` フォーマット
     ///   - URL-safe：`+`→`-`、`/`→`_`、`=` 除去
+    ///
+    /// 仕様は Google Calendar が生成する共有 URL の eid を実機 decode して逆算（spec 004 §0 § 5）。
     private static func googleEventDetailURL(for event: RenderableEvent) -> String? {
         guard let extID = event.externalIdentifier,
               extID.hasSuffix("@google.com"),
               !event.calendarTitle.isEmpty else { return nil }
 
-        let baseUID = stripRecurrenceSuffix(from: extID)
-        let raw = "\(baseUID) \(event.calendarTitle)"
+        let baseUID = normalizeGoogleUID(extID)
+        guard !baseUID.isEmpty else { return nil }
+        let dateStr = utcOccurrenceDateString(event.start)
+        let raw = "\(baseUID)_\(dateStr) \(event.calendarTitle)"
         guard let data = raw.data(using: .utf8) else { return nil }
         let b64 = data.base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
@@ -226,17 +232,30 @@ final class ClockViewModel: ObservableObject {
         return "https://calendar.google.com/calendar/u/0/r/event?eid=\(b64)"
     }
 
-    /// `_R<digits>T<digits>` の繰り返し instance suffix を除去する。
+    /// Google iCal UID を eid 用の純粋な UID に正規化する。
+    /// 1. `_R<digits>T<digits>` の繰り返し instance suffix を除去
+    /// 2. `@google.com` suffix を除去
     /// 例：`b7ru16r58op25kb1nlvn6993hq_R20251106T120000@google.com`
-    ///   → `b7ru16r58op25kb1nlvn6993hq@google.com`
-    /// 単発イベントには影響しない。
-    private static func stripRecurrenceSuffix(from externalID: String) -> String {
-        guard let range = externalID.range(of: "_R[0-9]+T[0-9]+", options: .regularExpression) else {
-            return externalID
+    ///   → `b7ru16r58op25kb1nlvn6993hq`
+    private static func normalizeGoogleUID(_ externalID: String) -> String {
+        var s = externalID
+        if let range = s.range(of: "_R[0-9]+T[0-9]+", options: .regularExpression) {
+            s.removeSubrange(range)
         }
-        var stripped = externalID
-        stripped.removeSubrange(range)
-        return stripped
+        if s.hasSuffix("@google.com") {
+            s = String(s.dropLast("@google.com".count))
+        }
+        return s
+    }
+
+    /// イベント発生日時を UTC `yyyyMMddTHHmmssZ` フォーマット文字列に変換する。
+    /// 例：JST 21:00 → "20260521T120000Z"
+    private static func utcOccurrenceDateString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
+        return formatter.string(from: date)
     }
 
     /// イベント開始日から Google Calendar の day view URL を組み立てる。
