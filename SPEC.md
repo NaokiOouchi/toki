@@ -69,8 +69,11 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 - 時計と区切る 0.5px ボーダー
 
 ### インタラクション
-- **マウスオーバー**：イベント円弧の上に来ると、ツールチップで時刻 + タイトルが表示される（中央表示は現状維持、spec 003 で変更）
-- **左クリック**：そのイベントの日の Google カレンダーをデフォルトブラウザで開く（spec 003 で純正カレンダー.app 連携から変更）
+- **マウスオーバー**：イベント円弧の上に来ると、ツールチップで時刻 + タイトルが表示される（中央表示は現状維持、ツールチップ表示は spec 003 で追加）
+  - ツールチップ位置はウィンドウ端で自動反転する（spec 004 で追加）
+- **左クリック**：そのイベントを Google Calendar で開く（spec 004 で event detail URL に拡張）
+  - Google event（`@google.com` 末尾）→ `/r/event?eid=<base64>` で詳細ページ
+  - 非 Google event（Exchange / iCloud 等）→ `/r/day/YYYY/MM/DD` の今日のビュー fallback
 - **右クリック**：コンテキストメニュー（位置リセット / 再読込 / 終了）
 - **メニューバーアイコン**：クリックで時計の表示／非表示トグル
 
@@ -316,18 +319,31 @@ NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: store)
     .store(in: &cancellables)
 ```
 
-### イベント円弧クリック時の挙動（spec 003 で変更）
+### イベント円弧クリック時の挙動（spec 003 / 004）
 
 ```swift
-let formatted = String(format: "https://calendar.google.com/calendar/u/0/r/day/%04d/%02d/%02d", year, month, day)
-let url = URL(string: formatted)!
-NSWorkspace.shared.open(url)
+// Google event なら detail URL を組み立て、それ以外は今日のビュー fallback。
+private static func calendarURL(for event: RenderableEvent, calendar: Calendar) -> String {
+    if let detail = googleEventDetailURL(for: event) {
+        return detail
+    }
+    return googleCalendarDayURL(for: event.start, calendar: calendar)
+}
 ```
+
+詳細 URL 形式（Google）：
+- `https://calendar.google.com/calendar/u/0/r/event?eid=<URL-safe-base64>`
+- eid 中身：`base64("<base_uid> <calendar_email>")`
+  - `base_uid` は `calendarItemExternalIdentifier` から `_R<digits>T<digits>` を除去
+  - URL-safe：`+`→`-`、`/`→`_`、`=` 除去
+
+今日のビュー URL（非 Google fallback、spec 003 から）：
+- `https://calendar.google.com/calendar/u/0/r/day/YYYY/MM/DD`
 
 純正カレンダー.app への `ical://` URL scheme 連携は spec 003 で撤去された。
 Google Calendar の繰り返しイベントの `_R<参照日>` suffix で正しい occurrence を
-開けない問題が実機検証で判明したため、Google Calendar の web 版（今日のビュー）に
-切り替えた。詳細は `specs/003-hover-tooltip-and-browser.md` 参照。
+開けない問題が実機検証で判明したため、Google Calendar の web 版に切り替えた。
+詳細は `specs/003-hover-tooltip-and-browser.md` および `specs/004-event-detail-and-tooltip-flip.md` 参照。
 
 ---
 
