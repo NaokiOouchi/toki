@@ -71,10 +71,10 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 ### インタラクション
 - **マウスオーバー**：イベント円弧の上に来ると、ツールチップで時刻 + タイトルが表示される（中央表示は現状維持、ツールチップ表示は spec 003 で追加）
   - ツールチップ位置はウィンドウ端で自動反転する（spec 004 で追加）
-- **左クリック**：そのイベントを Google Calendar で開く（spec 004 で event detail URL に拡張）
-  - Google event（`@google.com` 末尾）→ `/r/event?eid=<base64>` で詳細ページ
-  - 非 Google event（Exchange / iCloud 等）→ `/r/day/YYYY/MM/DD` の今日のビュー fallback
-- **右クリック**：コンテキストメニュー（位置リセット / 再読込 / 終了）
+- **左クリック**：そのイベントを Google Calendar で開く（spec 005 で API 経由の event detail URL に拡張）
+  - Google Calendar API 接続済み → API から取得した `htmlLink` で event detail を開く
+  - 非 Google event / 未接続 → `/r/day/YYYY/MM/DD` の今日のビュー fallback
+- **右クリック**：コンテキストメニュー（Google Calendar 接続 / 切断、終了など。接続項目は spec 005 で動的追加）
 - **メニューバーアイコン**：クリックで時計の表示／非表示トグル
 
 ---
@@ -115,7 +115,12 @@ Toki/
 │   │   ├── EventStatus.swift            # past/current/future
 │   │   └── DayTimeline.swift            # 今日のイベント集約
 │   ├── Infrastructure/
-│   │   └── EventKitGateway.swift        # EventKit wrapper
+│   │   ├── EventKitGateway.swift        # EventKit wrapper（spec 005 で Google API 統合）
+│   │   ├── OAuthConfig.swift            # OAuth 2.0 client 設定（spec 005）
+│   │   ├── KeychainStore.swift          # OAuth token を Keychain に永続化（spec 005）
+│   │   ├── LoopbackOAuthReceiver.swift  # OAuth Loopback redirect 受信（spec 005）
+│   │   ├── GoogleOAuthClient.swift      # OAuth 認可コードフロー（spec 005）
+│   │   └── GoogleCalendarAPI.swift      # events.list で htmlLink 取得（spec 005）
 │   └── Composition/
 │       └── ClockViewModel.swift         # Domain ↔ UI のブリッジ
 ├── Resources/
@@ -319,31 +324,41 @@ NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: store)
     .store(in: &cancellables)
 ```
 
-### イベント円弧クリック時の挙動（spec 003 / 004）
+### イベント円弧クリック時の挙動（spec 003 / 005）
 
 ```swift
-// Google event なら detail URL を組み立て、それ以外は今日のビュー fallback。
-private static func calendarURL(for event: RenderableEvent, calendar: Calendar) -> String {
-    if let detail = googleEventDetailURL(for: event) {
-        return detail
+// Google Calendar API で取得した webURL があればそれを開く。
+// なければ今日のビュー fallback。
+func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
+    guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
+    hoveredTooltip = nil
+    let url: URL
+    if let webURL = event.webURL {
+        url = webURL
+    } else {
+        guard let dayURL = URL(string: Self.googleCalendarDayURL(for: event.start, calendar: calendar)) else { return }
+        url = dayURL
     }
-    return googleCalendarDayURL(for: event.start, calendar: calendar)
+    NSWorkspace.shared.open(url)
 }
 ```
 
-詳細 URL 形式（Google）：
-- `https://calendar.google.com/calendar/u/0/r/event?eid=<URL-safe-base64>`
-- eid 中身：`base64("<base_uid> <calendar_email>")`
-  - `base_uid` は `calendarItemExternalIdentifier` から `_R<digits>T<digits>` を除去
-  - URL-safe：`+`→`-`、`/`→`_`、`=` 除去
+`webURL` は EventKitGateway が Google Calendar API（`events.list?iCalUID=...`）経由で
+`htmlLink` を取得して Domain `Event` に埋め込む。OAuth 2.0 Loopback フローで
+取得した access token は Keychain に保存し、必要時に refresh する。
+
+spec 004 の reverse-engineered eid 経路（`base64("<base_uid> <calendar_email>")`）は
+撤去された。Workspace + Exchange ハイブリッド event で eid を組み立てられず
+破綻したため、Google 公式 API での `htmlLink` 取得に切り替えた。
 
 今日のビュー URL（非 Google fallback、spec 003 から）：
 - `https://calendar.google.com/calendar/u/0/r/day/YYYY/MM/DD`
 
 純正カレンダー.app への `ical://` URL scheme 連携は spec 003 で撤去された。
-Google Calendar の繰り返しイベントの `_R<参照日>` suffix で正しい occurrence を
-開けない問題が実機検証で判明したため、Google Calendar の web 版に切り替えた。
-詳細は `specs/003-hover-tooltip-and-browser.md` および `specs/004-event-detail-and-tooltip-flip.md` 参照。
+詳細は以下参照：
+- `specs/003-hover-tooltip-and-browser.md`（Calendar.app 撤去）
+- `specs/004-event-detail-and-tooltip-flip.md`（reverse-engineered eid、後に spec 005 で置換）
+- `specs/005-google-calendar-api.md`（Google Calendar API 連携）
 
 ---
 
