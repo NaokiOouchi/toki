@@ -2,6 +2,7 @@ import Foundation
 import AppKit
 import Combine
 import CoreGraphics
+import SwiftUI
 
 /// 時計 UI 用 ViewModel。
 /// Gateway を購読して `timeline` を保持し、`now` を分単位で進めながら
@@ -13,6 +14,11 @@ final class ClockViewModel: ObservableObject {
     @Published private(set) var now: Date = Date()
     @Published private(set) var timeline: DayTimeline? = nil
     @Published private(set) var accessGranted: Bool = false
+
+    /// ホバー中のイベントから組み立てるツールチップ状態。
+    /// nil の場合はツールチップを表示しない。
+    /// Equatable 比較により同値時の再描画を抑える。
+    @Published private(set) var hoveredTooltip: TooltipState? = nil
 
     private let gateway: EventKitGateway
     private let calendar: Calendar
@@ -138,6 +144,39 @@ final class ClockViewModel: ObservableObject {
     private static func formatHHMM(_ date: Date, calendar: Calendar) -> String {
         let c = calendar.dateComponents([.hour, .minute], from: date)
         return String(format: "%02d:%02d", c.hour ?? 0, c.minute ?? 0)
+    }
+
+    /// "HH:MM - HH:MM" 形式の時刻範囲文字列。既存 `formatHHMM` を再利用する。
+    private static func formatTimeRange(_ start: Date, _ end: Date, calendar: Calendar) -> String {
+        "\(formatHHMM(start, calendar: calendar)) - \(formatHHMM(end, calendar: calendar))"
+    }
+
+    // MARK: - ホバーハンドラ
+
+    /// イベント円弧上のマウスホバーを処理する。
+    /// `.active(location)` で hitTest し該当イベントがあれば TooltipState を組み立てる。
+    /// `.ended` または該当なしで nil に戻す。
+    /// Equatable 比較により同値時の再描画は no-op となりチラつきを抑える。
+    func handleHover(phase: HoverPhase, geometry: ClockGeometry) {
+        switch phase {
+        case .active(let location):
+            if let event = hitTest(point: location, events: canvasEvents, geometry: geometry) {
+                let tooltip = TooltipState(
+                    startEndLabel: Self.formatTimeRange(event.start, event.end, calendar: calendar),
+                    title: event.title,
+                    position: location
+                )
+                if hoveredTooltip != tooltip {
+                    hoveredTooltip = tooltip
+                }
+            } else if hoveredTooltip != nil {
+                hoveredTooltip = nil
+            }
+        case .ended:
+            if hoveredTooltip != nil {
+                hoveredTooltip = nil
+            }
+        }
     }
 
     // MARK: - クリックハンドラ
