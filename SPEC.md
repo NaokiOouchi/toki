@@ -8,7 +8,7 @@
 ## 1. スコープ
 
 ### 作るもの
-- 個人利用前提（自分のGoogleカレンダーは iCloud アカウント追加経由で EventKit に統合済み）
+- 個人利用前提（自分の Google アカウントに OAuth 2.0 で接続し、Google Calendar API から直接予定を取得する。spec 006 で EventKit を完全撤去）
 - Mac専用（macOS 14 Sonoma 以降）
 - 常時前面表示・全Space表示のフローティングウィンドウ
 
@@ -38,7 +38,7 @@
 
 ### イベント円弧
 - 各イベントはリング上の annulus segment（円環の一部）として描画
-- 色：`EKCalendar.cgColor` をそのまま使用
+- 色：Google Calendar API の `colorId` を `calendar/colors` の `event[colorId].background` で解決した `CGColor`（カレンダー固有色 `backgroundColor` を fallback として使用、spec 006）
 - 状態別の見た目：
   - **過去**（end ≤ now）：alpha 0.3、薄く残す
   - **現在**（start ≤ now < end）：alpha 1.0 + 0.75px のアウトライン
@@ -71,10 +71,10 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 ### インタラクション
 - **マウスオーバー**：イベント円弧の上に来ると、ツールチップで時刻 + タイトルが表示される（中央表示は現状維持、ツールチップ表示は spec 003 で追加）
   - ツールチップ位置はウィンドウ端で自動反転する（spec 004 で追加）
-- **左クリック**：そのイベントを Google Calendar で開く（spec 005 で API 経由の event detail URL に拡張）
-  - Google Calendar API 接続済み → API から取得した `htmlLink` で event detail を開く
-  - 非 Google event / 未接続 → `/r/day/YYYY/MM/DD` の今日のビュー fallback
-- **右クリック**：コンテキストメニュー（Google Calendar 接続 / 切断、終了など。接続項目は spec 005 で動的追加）
+- **左クリック**：そのイベントを Google Calendar で開く（spec 006 以降は常に Google Calendar API 経由で取得した URL を使用）
+  - 接続済み event → API から取得した `htmlLink` で event detail を開く
+  - 未接続 / `htmlLink` 取得失敗 → `/r/day/YYYY/MM/DD` の今日のビュー fallback
+- **右クリック**：コンテキストメニュー（Google Calendar 接続 / 切断、終了など。接続項目は spec 005 で動的追加。「再読込」は Phase 2 で追加予定、spec 006 §Out of scope 参照）
 - **メニューバーアイコン**：クリックで時計の表示／非表示トグル
 
 ---
@@ -86,7 +86,8 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 - SwiftPM（シングルパッケージ、ターゲット1つ）
 - AppKit（`NSApplication`, `NSWindow`, `NSStatusBar`）
 - SwiftUI（描画、状態管理）
-- EventKit（カレンダーデータ）
+- Google Calendar API（OAuth 2.0 + REST、event 取得。spec 006 で EventKit を完全撤去し API 単独運用へ）
+- Security.framework（Keychain で OAuth token を永続化）
 - Combine（時刻・イベント変更のストリーム）
 
 ---
@@ -115,12 +116,12 @@ Toki/
 │   │   ├── EventStatus.swift            # past/current/future
 │   │   └── DayTimeline.swift            # 今日のイベント集約
 │   ├── Infrastructure/
-│   │   ├── EventKitGateway.swift        # EventKit wrapper（spec 005 で Google API 統合）
-│   │   ├── OAuthConfig.swift            # OAuth 2.0 client 設定（spec 005）
-│   │   ├── KeychainStore.swift          # OAuth token を Keychain に永続化（spec 005）
+│   │   ├── GoogleCalendarGateway.swift  # Google Calendar API → Domain Event 変換（spec 006）
+│   │   ├── GoogleCalendarAPI.swift      # events.list / calendar.colors REST 呼び出し（spec 006）
+│   │   ├── GoogleOAuthClient.swift      # OAuth 認可コードフロー、token refresh（spec 005）
 │   │   ├── LoopbackOAuthReceiver.swift  # OAuth Loopback redirect 受信（spec 005）
-│   │   ├── GoogleOAuthClient.swift      # OAuth 認可コードフロー（spec 005）
-│   │   └── GoogleCalendarAPI.swift      # events.list で htmlLink 取得（spec 005）
+│   │   ├── KeychainStore.swift          # OAuth token を Keychain に永続化（spec 005）
+│   │   └── OAuthConfig.swift            # OAuth 2.0 client 設定（spec 005）
 │   └── Composition/
 │       └── ClockViewModel.swift         # Domain ↔ UI のブリッジ
 ├── Resources/
@@ -134,7 +135,7 @@ Toki/
 | Layer | 責務 | 依存先 |
 |---|---|---|
 | Domain | 時間／イベント／状態の純粋ロジック | なし（Foundation のみ） |
-| Infrastructure | EventKit との通信、Domain型への変換 | EventKit, Domain |
+| Infrastructure | Google Calendar API との通信、OAuth、Domain型への変換 | Foundation, Security, Domain |
 | UI | SwiftUI Views、表示状態 | SwiftUI, Domain |
 | App / Window | 起動、ウィンドウ、メニューバー | AppKit, UI, Composition |
 | Composition | 依存を組み立てる、ViewModel | 全部 |
@@ -171,12 +172,12 @@ struct TimeOfDay: Equatable, Comparable {
 ### `Event`
 ```swift
 struct Event: Identifiable, Equatable {
-    let id: String
+    let id: String           // Google Calendar event ID
     let title: String
     let start: Date
     let end: Date
-    let calendarColor: CGColor
-    let externalIdentifier: String?  // EventKit identifier、クリックで開く用
+    let calendarColor: CGColor  // colorId 解決済み or カレンダー固有色
+    let webURL: URL?         // events.list の htmlLink（spec 006 以降 必須経路）
 }
 ```
 
@@ -217,18 +218,19 @@ struct DayTimeline {
 これだけ作って動かす。
 
 1. SwiftPM プロジェクト初期化（`swift package init --type executable`）
-2. `Info.plist` で `LSUIElement=YES`、`NSCalendarsUsageDescription` 設定
+2. `Info.plist` で `LSUIElement=YES` を設定（spec 006 で `NSCalendarsUsageDescription` は不要化）
 3. `AppDelegate` でメニューバーアイコン表示（`NSStatusBar`）
 4. `FloatingClockWindow` でボーダーレス・常時前面ウィンドウを作る
-5. `EventKitGateway` で権限要求 → 今日のイベント取得 → Domain型に変換
-6. `ClockFaceCanvas` で円形時計 + イベント円弧 + 針 + 中央テキスト描画
-7. `Timer.publish(every: 60)` で1分ごとに針更新
-8. `EKEventStoreChanged` 通知でイベント再取得
+5. `GoogleOAuthClient` で OAuth 2.0 Loopback フロー → token を Keychain に保存
+6. `GoogleCalendarGateway` が `events.list` + `calendar/colors` を呼んで Domain `Event` に変換
+7. `ClockFaceCanvas` で円形時計 + イベント円弧 + 針 + 中央テキスト描画
+8. `Timer.publish(every: 60)` で1分ごとに針更新
+9. token expiry 監視 / 接続状態変化で events を再取得（手動「再読込」は Phase 2、spec 006 §Out of scope）
 
 ### Phase 2 — インタラクション
-- マウスホバーでイベント円弧 → 中央表示切替
-- クリックで純正カレンダーに飛ぶ
-- 右クリックメニュー
+- マウスホバーでイベント円弧 → ツールチップ表示（spec 003 / 004 で完了）
+- クリックで Google Calendar event detail を開く（spec 005 / 006 で完了）
+- 右クリックメニュー（接続切替、再読込追加予定）
 - ウィンドウ位置を `UserDefaults` に記憶
 
 ### Phase 3 — 仕上げ
@@ -245,16 +247,26 @@ struct DayTimeline {
 ```xml
 <key>LSUIElement</key>
 <true/>
-<key>NSCalendarsUsageDescription</key>
-<string>カレンダーの予定を時計上に表示するために使用します</string>
 ```
 
-### EventKit 権限要求（macOS 14+）
-```swift
-let store = EKEventStore()
-// requestAccess(to:) は deprecated、これを使う
-try await store.requestFullAccessToEvents()
-```
+spec 006 で EventKit を撤去したため `NSCalendarsUsageDescription` は不要。OAuth はユーザー操作で
+ブラウザに遷移する形式なので、OS パーミッション dialog は出ない。
+
+### OAuth 2.0 (Loopback IP) フロー（spec 005 / 006）
+
+Google Calendar API を単独で使うため、Installed App 用の Loopback Redirect 認可コードフローを採用。
+
+1. `GoogleOAuthClient` がランダムポートで `LoopbackOAuthReceiver` を立てる
+2. `https://accounts.google.com/o/oauth2/v2/auth` をブラウザで開く（scope: `calendar.events.readonly` + `calendar.readonly`）
+3. ユーザーが認可するとローカルポートに `code` が返ってくる
+4. `oauth2.googleapis.com/token` で `code` を access / refresh token に交換し、`KeychainStore` に保存
+5. 以降は `events.list`、`calendar/colors` を access token で叩く。401 時は refresh token で再取得
+
+setup 3 ステップ（README 連携想定）：
+
+1. Google Cloud Console で OAuth client（Desktop / Installed App）を作成
+2. `OAuthConfig` に client ID / client secret を埋め込み（個人利用前提、Phase 3 で安全化検討）
+3. 初回起動時に右クリック → 「Google Calendar を接続」でブラウザを開き、認可
 
 ### Floating Window セットアップ
 ```swift
@@ -317,18 +329,22 @@ DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(secondsToNextMinute)) 
 }
 ```
 
-### EventKit の変更購読
-```swift
-NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: store)
-    .sink { [weak self] _ in self?.reloadEvents() }
-    .store(in: &cancellables)
-```
+### イベント変更購読（spec 006 以降）
 
-### イベント円弧クリック時の挙動（spec 003 / 005）
+EventKit の `EKEventStoreChanged` は撤去された。spec 006 では以下のトリガで再取得する：
+
+- 接続状態変化（OAuth connect / disconnect）
+- access token の自動 refresh 完了
+- ウィンドウ表示トグルなどの明示的なライフサイクル契機
+- 手動「再読込」メニュー項目は Phase 2 で追加予定（spec 006 §Out of scope）
+
+push 通知 / watch API は MVP では使わない（Phase 3 検討）。
+
+### イベント円弧クリック時の挙動（spec 003 / 005 / 006）
 
 ```swift
-// Google Calendar API で取得した webURL があればそれを開く。
-// なければ今日のビュー fallback。
+// 常に Google Calendar API 経由で取得した webURL を最優先で開く。
+// 取得できないケースは今日のビュー fallback。
 func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
     guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
     hoveredTooltip = nil
@@ -343,22 +359,23 @@ func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
 }
 ```
 
-`webURL` は EventKitGateway が Google Calendar API（`events.list?iCalUID=...`）経由で
-`htmlLink` を取得して Domain `Event` に埋め込む。OAuth 2.0 Loopback フローで
-取得した access token は Keychain に保存し、必要時に refresh する。
+`webURL` は `GoogleCalendarGateway` が `events.list` の `htmlLink` をそのまま Domain `Event`
+に埋め込む。spec 006 で EventKit を完全に外したため、すべての event が常に Google API 経由で
+取得される（fallback ルートはあくまで token 期限切れ・未接続時の今日のビュー URL のみ）。
 
 spec 004 の reverse-engineered eid 経路（`base64("<base_uid> <calendar_email>")`）は
 撤去された。Workspace + Exchange ハイブリッド event で eid を組み立てられず
 破綻したため、Google 公式 API での `htmlLink` 取得に切り替えた。
 
-今日のビュー URL（非 Google fallback、spec 003 から）：
+今日のビュー URL（fallback、spec 003 から）：
 - `https://calendar.google.com/calendar/u/0/r/day/YYYY/MM/DD`
 
 純正カレンダー.app への `ical://` URL scheme 連携は spec 003 で撤去された。
 詳細は以下参照：
 - `specs/003-hover-tooltip-and-browser.md`（Calendar.app 撤去）
 - `specs/004-event-detail-and-tooltip-flip.md`（reverse-engineered eid、後に spec 005 で置換）
-- `specs/005-google-calendar-api.md`（Google Calendar API 連携）
+- `specs/005-google-calendar-api.md`（Google Calendar API 連携導入）
+- `specs/006-google-only.md`（EventKit 完全撤去、Google Calendar API 単独運用）
 
 ---
 
@@ -409,7 +426,7 @@ swift build -c release
 1. **Phase 1 を順に作る**：`Package.swift` → `Info.plist` → `Domain/` → `Infrastructure/` → `Window/` → `UI/` → `App/`
 2. **ドメインから書く**：純粋ロジックなので最初に書いてテストも入れると後が楽
 3. **Canvas描画の動作確認は早めに**：イベントデータをハードコードしてでも早く目視確認する
-4. **EventKit 権限がブロッカー**：実機で初回起動 → システム設定でカレンダーアクセス許可、を忘れずに案内
+4. **OAuth 初回接続がブロッカー**：実機で初回起動 → 右クリックメニューから「Google Calendar を接続」→ ブラウザで認可、を忘れずに案内（spec 006）
 5. **エラーが出たら止まって質問**：自分用アプリなので適当に進めず、設計判断は確認してから
 
 ファイル長くなりすぎたら適宜分割OK。命名は SPEC のものを優先、迷ったら聞いて。
