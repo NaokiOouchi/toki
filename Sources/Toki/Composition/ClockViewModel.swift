@@ -182,10 +182,27 @@ final class ClockViewModel: ObservableObject {
     // MARK: - クリックハンドラ
 
     /// イベント円弧のクリックを処理する。
-    /// Calendar.app 統合は spec 003 で撤去済み。
-    /// Google Calendar 今日ビューをブラウザで開く処理は Task 6 で実装する。
+    /// 該当イベントの開始日から Google Calendar の今日のビュー URL を組み立て、
+    /// デフォルトブラウザで開く。Calendar.app は spec 003 で撤去済み。
+    /// ホバーツールチップは即時消去する（クリックとの UX 競合回避）。
+    /// ヒットなし / URL 組み立て失敗の場合は何もしない（無音）。
     func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
-        guard hitTest(point: point, events: canvasEvents, geometry: geometry) != nil else { return }
-        // TODO(spec 003 Task 6): Google Calendar 今日ビューをブラウザで開く
+        guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
+        hoveredTooltip = nil
+        let urlStr = Self.googleCalendarDayURL(for: event.start, calendar: calendar)
+        guard let url = URL(string: urlStr) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    /// イベント開始日から Google Calendar の day view URL を組み立てる。
+    /// 形式：https://calendar.google.com/calendar/u/0/r/day/YYYY/MM/DD
+    /// `u/0` は固定（複数アカウント対応は MVP 範囲外、設定 UI 必須なので Phase 3 行き）。
+    /// ローカルタイムゾーンの暦日を採用（時計表示と整合）。
+    private static func googleCalendarDayURL(for date: Date, calendar: Calendar) -> String {
+        let c = calendar.dateComponents([.year, .month, .day], from: date)
+        let y = c.year ?? 1970
+        let m = c.month ?? 1
+        let d = c.day ?? 1
+        return String(format: "https://calendar.google.com/calendar/u/0/r/day/%04d/%02d/%02d", y, m, d)
     }
 }
