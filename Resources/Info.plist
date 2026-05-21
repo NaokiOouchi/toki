@@ -18,7 +18,5 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
-	<key>NSCalendarsUsageDescription</key>
-	<string>カレンダーの予定を時計上に表示するために使用します</string>
 </dict>
 </plist>
