@@ -190,9 +190,53 @@ final class ClockViewModel: ObservableObject {
     func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
         guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
         hoveredTooltip = nil
-        let urlStr = Self.googleCalendarDayURL(for: event.start, calendar: calendar)
+        let urlStr = Self.calendarURL(for: event, calendar: calendar)
         guard let url = URL(string: urlStr) else { return }
         NSWorkspace.shared.open(url)
+    }
+
+    /// クリック対象イベントから開くべき URL を決定する。
+    /// Google event なら detail URL、それ以外（および詳細生成失敗時）は今日のビュー fallback。
+    private static func calendarURL(for event: RenderableEvent, calendar: Calendar) -> String {
+        if let detail = googleEventDetailURL(for: event) {
+            return detail
+        }
+        return googleCalendarDayURL(for: event.start, calendar: calendar)
+    }
+
+    /// Google Calendar の event detail URL を組み立てる。
+    /// 失敗時は nil（呼び出し側で今日のビュー fallback）。
+    ///
+    /// 形式：https://calendar.google.com/calendar/u/0/r/event?eid=<URL-safe-base64>
+    /// eid 中身：base64("<base_uid> <calendar_email>")
+    ///   - base_uid：externalIdentifier から `_R<digits>T<digits>` suffix を除去
+    ///   - URL-safe：`+`→`-`、`/`→`_`、`=` 除去
+    private static func googleEventDetailURL(for event: RenderableEvent) -> String? {
+        guard let extID = event.externalIdentifier,
+              extID.hasSuffix("@google.com"),
+              !event.calendarTitle.isEmpty else { return nil }
+
+        let baseUID = stripRecurrenceSuffix(from: extID)
+        let raw = "\(baseUID) \(event.calendarTitle)"
+        guard let data = raw.data(using: .utf8) else { return nil }
+        let b64 = data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        return "https://calendar.google.com/calendar/u/0/r/event?eid=\(b64)"
+    }
+
+    /// `_R<digits>T<digits>` の繰り返し instance suffix を除去する。
+    /// 例：`b7ru16r58op25kb1nlvn6993hq_R20251106T120000@google.com`
+    ///   → `b7ru16r58op25kb1nlvn6993hq@google.com`
+    /// 単発イベントには影響しない。
+    private static func stripRecurrenceSuffix(from externalID: String) -> String {
+        guard let range = externalID.range(of: "_R[0-9]+T[0-9]+", options: .regularExpression) else {
+            return externalID
+        }
+        var stripped = externalID
+        stripped.removeSubrange(range)
+        return stripped
     }
 
     /// イベント開始日から Google Calendar の day view URL を組み立てる。
