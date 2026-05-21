@@ -26,8 +26,18 @@ final class LoopbackOAuthReceiver {
             throw ReceiverError.bindFailed
         }
         return try await withCheckedThrowingContinuation { continuation in
+            // ブラウザが /callback の後に /favicon.ico を自動取得する等で
+            // newConnectionHandler が複数回発火しうる。continuation を二重 resume すると
+            // `SWIFT TASK CONTINUATION MISUSE` で fatal 終了するため、フラグで一度だけに絞る。
+            let resumeLock = NSLock()
+            var didResume = false
             listener.newConnectionHandler = { [weak listener] connection in
                 Self.handle(connection: connection, expectedState: expectedState) { result in
+                    resumeLock.lock()
+                    let already = didResume
+                    didResume = true
+                    resumeLock.unlock()
+                    guard !already else { return }
                     listener?.cancel()
                     continuation.resume(with: result)
                 }
