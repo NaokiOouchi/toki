@@ -68,23 +68,48 @@ final class GoogleCalendarAPI {
         }
     }
 
-    /// 1 つの calendar から event を取得する。失敗は空配列。
+    /// 1 つの calendar から event を取得する。
+    /// 401（token 失効）のときのみ getValidAccessToken() で 1 回 retry。
+    /// それ以外の non-2xx は log + 空配列。network error も log + 空配列。
     private func fetchEvents(in cal: GoogleAPICalendar,
                              timeMin: String, timeMax: String,
-                             token: String) async -> [GoogleAPIEvent] {
+                             token initialToken: String) async -> [GoogleAPIEvent] {
         let encodedId = cal.id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? cal.id
         let urlStr = "\(Self.baseURL)/calendars/\(encodedId)/events?timeMin=\(timeMin)&timeMax=\(timeMax)&singleEvents=true&orderBy=startTime&maxResults=250"
         guard let url = URL(string: urlStr) else { return [] }
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        do {
-            let (data, _) = try await session.data(for: request)
-            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let items = json["items"] as? [[String: Any]] else { return [] }
-            return items.compactMap { Self.parseEvent($0, calendar: cal) }
-        } catch {
-            return []
+
+        var token = initialToken
+        // attempt=0: 初回, attempt=1: 401 直後の retry。
+        for attempt in 0..<2 {
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await session.data(for: request)
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+                if statusCode == 401 && attempt == 0 {
+                    // token 失効: 新 token で 1 回だけ retry
+                    do {
+                        token = try await oauth.getValidAccessToken()
+                        continue
+                    } catch {
+                        print("GoogleCalendarAPI fetchEvents: 401 refresh failed: \(error)")
+                        return []
+                    }
+                }
+                if !(200...299).contains(statusCode) {
+                    print("GoogleCalendarAPI fetchEvents: status \(statusCode) for calendar \(cal.id)")
+                    return []
+                }
+                guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let items = json["items"] as? [[String: Any]] else { return [] }
+                return items.compactMap { Self.parseEvent($0, calendar: cal) }
+            } catch {
+                print("GoogleCalendarAPI fetchEvents network error: \(error)")
+                return []
+            }
         }
+        return []
     }
 
     /// event JSON を GoogleAPIEvent に変換する。必須欠落は nil。
