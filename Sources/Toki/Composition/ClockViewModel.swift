@@ -184,95 +184,20 @@ final class ClockViewModel: ObservableObject {
     // MARK: - クリックハンドラ
 
     /// イベント円弧のクリックを処理する。
-    /// 該当イベントの開始日から Google Calendar の今日のビュー URL を組み立て、
-    /// デフォルトブラウザで開く。Calendar.app は spec 003 で撤去済み。
+    /// Google Calendar API 経由で取得した webURL があればそれを開く（spec 005）。
+    /// なければ今日のビュー fallback（spec 003 から継続）。
     /// ホバーツールチップは即時消去する（クリックとの UX 競合回避）。
-    /// ヒットなし / URL 組み立て失敗の場合は何もしない（無音）。
     func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
         guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
         hoveredTooltip = nil
-        let urlStr = Self.calendarURL(for: event, calendar: calendar)
-        guard let url = URL(string: urlStr) else { return }
+        let url: URL
+        if let webURL = event.webURL {
+            url = webURL
+        } else {
+            guard let dayURL = URL(string: Self.googleCalendarDayURL(for: event.start, calendar: calendar)) else { return }
+            url = dayURL
+        }
         NSWorkspace.shared.open(url)
-    }
-
-    /// クリック対象イベントから開くべき URL を決定する。
-    /// Google event なら detail URL、それ以外（および詳細生成失敗時）は今日のビュー fallback。
-    private static func calendarURL(for event: RenderableEvent, calendar: Calendar) -> String {
-        if let detail = googleEventDetailURL(for: event) {
-            return detail
-        }
-        return googleCalendarDayURL(for: event.start, calendar: calendar)
-    }
-
-    /// Google Calendar の event detail URL を組み立てる。
-    /// 失敗時は nil（呼び出し側で今日のビュー fallback）。
-    ///
-    /// 形式：https://www.google.com/calendar/event?eid=<URL-safe-base64>&authuser=<URL-encoded email>
-    /// eid 中身：base64("<base_uid>_<UTC_occurrence_date>Z <calendar_email>")
-    ///   - base_uid：externalIdentifier から `_R<digits>T<digits>` suffix と
-    ///     `@google.com` suffix を除去した純粋な UID
-    ///   - UTC_occurrence_date：イベント開始日時を UTC で `yyyyMMddTHHmmss` フォーマット
-    ///   - URL-safe：`+`→`-`、`/`→`_`、`=` 除去
-    ///
-    /// `www.google.com/calendar/event` は Google が共有時に生成する canonical
-    /// share URL 形式で、authuser パラメータでアカウントを柔軟に切替できる。
-    /// `calendar.google.com/calendar/u/0/r/event` 形式は `u/0` 固定で authuser
-    /// 切替が効きづらく、Workspace アカウント所有のイベントで day view に
-    /// リダイレクトされる事象があった（実機検証で確認）。
-    ///
-    /// 仕様は Google Calendar が生成する共有 URL の eid を実機 decode して逆算（spec 004 §0 § 5）。
-    private static func googleEventDetailURL(for event: RenderableEvent) -> String? {
-        guard let extID = event.externalIdentifier,
-              extID.contains("@google.com"),
-              !event.calendarTitle.isEmpty else { return nil }
-
-        let baseUID = normalizeGoogleUID(extID)
-        guard !baseUID.isEmpty else { return nil }
-        let dateStr = utcOccurrenceDateString(event.start)
-        let raw = "\(baseUID)_\(dateStr) \(event.calendarTitle)"
-        guard let data = raw.data(using: .utf8) else { return nil }
-        let b64 = data.base64EncodedString()
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "=", with: "")
-        let authuser = event.calendarTitle.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
-            ?? event.calendarTitle
-        return "https://www.google.com/calendar/event?eid=\(b64)&authuser=\(authuser)"
-    }
-
-    /// Google iCal UID を eid 用の純粋な UID に正規化する。
-    /// 1. `/RID=<digits>` の Exchange 風 occurrence suffix を除去
-    ///    （Workspace アカウントを Exchange プロトコル経由で同期しているケース）
-    /// 2. `_R<digits>T<digits>` の Google 風 recurrence reference suffix を除去
-    /// 3. `@google.com` suffix を除去
-    /// 例：
-    ///   - `b7ru16r58op25kb1nlvn6993hq_R20251106T120000@google.com`
-    ///     → `b7ru16r58op25kb1nlvn6993hq`
-    ///   - `186f31v36nij3e2shapb0v7qj4@google.com/RID=801032400`
-    ///     → `186f31v36nij3e2shapb0v7qj4`
-    private static func normalizeGoogleUID(_ externalID: String) -> String {
-        var s = externalID
-        if let range = s.range(of: "/RID=[0-9]+", options: .regularExpression) {
-            s.removeSubrange(range)
-        }
-        if let range = s.range(of: "_R[0-9]+T[0-9]+", options: .regularExpression) {
-            s.removeSubrange(range)
-        }
-        if s.hasSuffix("@google.com") {
-            s = String(s.dropLast("@google.com".count))
-        }
-        return s
-    }
-
-    /// イベント発生日時を UTC `yyyyMMddTHHmmssZ` フォーマット文字列に変換する。
-    /// 例：JST 21:00 → "20260521T120000Z"
-    private static func utcOccurrenceDateString(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        formatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
-        return formatter.string(from: date)
     }
 
     /// イベント開始日から Google Calendar の day view URL を組み立てる。
