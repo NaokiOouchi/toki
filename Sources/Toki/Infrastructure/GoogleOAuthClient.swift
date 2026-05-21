@@ -74,6 +74,7 @@ final class GoogleOAuthClient {
     }
 
     /// token を revoke して Keychain 全エントリを削除する。
+    /// network 失敗 / non-2xx でも Keychain は必ずクリア（再認証で復旧可）。
     func revoke() async throws {
         guard let refreshToken = keychain.get(Self.keyRefreshToken) else {
             throw OAuthClientError.noRefreshToken
@@ -81,9 +82,14 @@ final class GoogleOAuthClient {
         let url = URL(string: "\(Self.revokeURL)?token=\(refreshToken)")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        let (_, response) = try await session.data(for: request)
-        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-            // revoke 失敗でも Keychain は削除する（再認証で復旧可）
+        do {
+            let (_, response) = try await session.data(for: request)
+            if let http = response as? HTTPURLResponse,
+               !(200...299).contains(http.statusCode) {
+                print("GoogleOAuthClient.revoke: status \(http.statusCode), Keychain は引き続きクリア")
+            }
+        } catch {
+            print("GoogleOAuthClient.revoke: network error: \(error), Keychain は引き続きクリア")
         }
         try? keychain.delete(Self.keyAccessToken)
         try? keychain.delete(Self.keyRefreshToken)
