@@ -207,12 +207,16 @@ final class ClockViewModel: ObservableObject {
     /// Google Calendar の event detail URL を組み立てる。
     /// 失敗時は nil（呼び出し側で今日のビュー fallback）。
     ///
-    /// 形式：https://calendar.google.com/calendar/u/0/r/event?eid=<URL-safe-base64>
+    /// 形式：https://calendar.google.com/calendar/u/0/r/event?eid=<URL-safe-base64>&authuser=<URL-encoded email>
     /// eid 中身：base64("<base_uid>_<UTC_occurrence_date>Z <calendar_email>")
     ///   - base_uid：externalIdentifier から `_R<digits>T<digits>` suffix と
     ///     `@google.com` suffix を除去した純粋な UID
     ///   - UTC_occurrence_date：イベント開始日時を UTC で `yyyyMMddTHHmmss` フォーマット
     ///   - URL-safe：`+`→`-`、`/`→`_`、`=` 除去
+    ///
+    /// `authuser` パラメータでカレンダー所有アカウントを指定することで、
+    /// `u/0`（ブラウザの第 1 ログインユーザー）に依存せず、複数 Google アカウントの
+    /// どのカレンダーでも該当アカウントへ切り替えて event detail に到達できる。
     ///
     /// 仕様は Google Calendar が生成する共有 URL の eid を実機 decode して逆算（spec 004 §0 § 5）。
     private static func googleEventDetailURL(for event: RenderableEvent) -> String? {
@@ -229,7 +233,9 @@ final class ClockViewModel: ObservableObject {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-        return "https://calendar.google.com/calendar/u/0/r/event?eid=\(b64)"
+        let authuser = event.calendarTitle.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
+            ?? event.calendarTitle
+        return "https://calendar.google.com/calendar/u/0/r/event?eid=\(b64)&authuser=\(authuser)"
     }
 
     /// Google iCal UID を eid 用の純粋な UID に正規化する。
