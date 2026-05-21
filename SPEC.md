@@ -227,17 +227,33 @@ struct DayTimeline {
 8. `Timer.publish(every: 60)` で1分ごとに針更新
 9. token expiry 監視 / 接続状態変化で events を再取得（手動「再読込」は Phase 2、spec 006 §Out of scope）
 
-### Phase 2 — インタラクション
-- マウスホバーでイベント円弧 → ツールチップ表示（spec 003 / 004 で完了）
-- クリックで Google Calendar event detail を開く（spec 005 / 006 で完了）
-- 右クリックメニュー（接続切替、再読込追加予定）
-- ウィンドウ位置を `UserDefaults` に記憶
+### Phase 2 — インタラクション・運用品質
+すでに完了：
+- マウスホバーでイベント円弧 → ツールチップ表示（spec 003 / 004）
+- クリックで Google Calendar event detail を開く（spec 005 / 006）
 
-### Phase 3 — 仕上げ
-- 重なりイベントの2段リング
-- 透明度調整（Option + scroll）
-- メニューバーから対象カレンダー選択
-- 起動時自動オン（LaunchAtLogin）
+候補（順不同、必要になったら spec で起こす）：
+- **右クリック「再読込」**：5 分タイマーを待たずに手動で events 再取得（spec 006 / 007 §Out of scope 由来）
+- **ウィンドウ位置 `UserDefaults` 記憶**：起動時に前回位置を復元
+- **接続中スピナー**：OAuth consent → loopback 受領中に進捗を可視化（spec 006 §Out of scope 由来）
+- **`print` → `os_log` 共通化**：Console.app での絞り込み性向上、log prefix 統一（spec 007 review M1 由来）
+- **`ISO8601DateFormatter` キャッシュ**：parseEventDate のたびに new していたのを 1 個に（spec 007 review M3 由来）
+- **ClockView 定数集約**：tooltipWidth / canvasWidth 等のハードコードを 1 箇所に（spec 007 review M5 由来）
+- **`isAuthorized` 名称分離**：`OAuthClient.isAuthorized`（真実）と `Gateway.isAuthorized`（cache）の同名 shadowing 解消、`lastKnownIsAuthorized` 等に rename（spec 007 review H-007-1 由来）
+- **ViewModel 二重初期評価コメント化 or 削除**：`@Published` 初回 emit との重複を明示（spec 007 review M-007-1 由来）
+- **wake handler 同期コメント化**：`reload()` async 待ちの保険である意図を明記（spec 007 review M-007-2 由来）
+- **`webURL` 値伝播 Domain テスト追加**：`Event` / `DayTimeline.clip` で webURL 保持を確認（spec 007 §Non-goals 由来）
+
+### Phase 3 — 仕上げ・拡張
+- **重なりイベントの 2 段リング**：MVP は 1 段のみ
+- **透明度調整**：Option + scroll
+- **メニューバーから対象カレンダー選択**：calendar 別に表示切替、`calendarTitle` を再導入（spec 007 §Out of scope 由来）
+- **起動時自動オン**：LaunchAtLogin
+- **複数 Google アカウント並列**：MVP は 1 アカウントのみ（spec 005 / 006 §Non-goals 由来）
+- **完全な設定 UI**：client_id / client_secret 入力、calendar 選択、同期間隔（spec 005 / 006 §Non-goals 由来）
+- **永続キャッシュ**：オフライン耐性、起動時即時表示（spec 006 §Non-goals 由来）
+- **OAuth client_secret の安全化**：個人利用以外で配布する場合は secret を分離（spec 005 §Open Questions 由来）
+- **UI / UX 全面見直し**：Liquid Glass 等の最新 Apple デザイン言語適用、要 macOS 26+（要別 spec）
 
 ---
 
