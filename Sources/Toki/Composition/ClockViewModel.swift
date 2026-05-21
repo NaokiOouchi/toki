@@ -131,13 +131,24 @@ final class ClockViewModel: ObservableObject {
             let remaining = Int(ceil(cur.end.timeIntervalSince(now) / 60))
             return .duringEvent(time: timeStr,
                                 title: cur.title,
-                                remaining: "残り \(remaining)分")
+                                remaining: "残り \(Self.formatDurationMinutes(remaining))")
         }
         if let nxt = tl.nextEvent(after: now) {
             let until = Int(ceil(nxt.start.timeIntervalSince(now) / 60))
-            return .freeTime(time: timeStr, subtitle: "次まで \(until)分")
+            return .freeTime(time: timeStr, subtitle: "次まで \(Self.formatDurationMinutes(until))")
         }
         return .freeTime(time: timeStr, subtitle: "予定なし")
+    }
+
+    /// 分単位の数値を読みやすい形式に整形する。
+    /// 60 分未満は「X 分」、60 分以上は「X 時間 Y 分」（Y=0 のときは「X 時間」）。
+    /// 例：45 → "45 分"、60 → "1 時間"、90 → "1 時間 30 分"、600 → "10 時間"
+    static func formatDurationMinutes(_ minutes: Int) -> String {
+        guard minutes >= 60 else { return "\(minutes) 分" }
+        let hours = minutes / 60
+        let mins = minutes % 60
+        if mins == 0 { return "\(hours) 時間" }
+        return "\(hours) 時間 \(mins) 分"
     }
 
     /// 下部「次の予定」ラインの状態。次イベントが無い／権限なし／未取得は nil。
