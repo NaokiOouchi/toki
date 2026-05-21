@@ -120,7 +120,7 @@ final class EventKitGateway {
             end: ek.endDate,
             calendarColor: ek.calendar.cgColor,
             externalIdentifier: ek.eventIdentifier,
-            calendarTitle: ""
+            calendarTitle: ek.calendar.title
         )
     }
 }
