@@ -110,6 +110,10 @@ final class EventKitGateway {
     /// recurring イベントは全 occurrence で `eventIdentifier` が共通になるため、
     /// `startDate` を組み合わせて id を一意化する。
     /// 0 分以下や不正な値は `Event` の failable init で自動的に弾かれる。
+    ///
+    /// `externalIdentifier` には iCal UID（`calendarItemExternalIdentifier`）を
+    /// 採用する。`eventIdentifier` だと `<accountUUID>:<iCalUID>` 形式となり
+    /// account UUID プレフィックスが Google Calendar の eid 生成を破壊するため。
     private static func convert(_ ek: EKEvent) -> Event? {
         let baseId = ek.eventIdentifier ?? UUID().uuidString
         let id = "\(baseId)#\(ek.startDate.timeIntervalSince1970)"
@@ -119,7 +123,7 @@ final class EventKitGateway {
             start: ek.startDate,
             end: ek.endDate,
             calendarColor: ek.calendar.cgColor,
-            externalIdentifier: ek.eventIdentifier,
+            externalIdentifier: ek.calendarItemExternalIdentifier,
             calendarTitle: ek.calendar.title
         )
     }
