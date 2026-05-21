@@ -20,13 +20,23 @@ final class EventKitGateway {
     private let store = EKEventStore()
     private let calendar: Calendar
 
+    /// Google Calendar API クライアント（任意注入）。
+    /// nil の場合は旧挙動を維持し、`webURL` は常に nil となる。
+    private let googleAPI: GoogleCalendarAPI?
+
+    /// iCal UID → htmlLink の in-memory cache。
+    /// 同一 UID への重複 API call（N+1）を回避する。
+    /// `EKEventStoreChanged` 受信時にクリアして再取得する。
+    private var htmlLinkCache: [String: URL] = [:]
+
     /// 最新値を保持し、新規購読時にも即座に値を渡せるよう CurrentValueSubject を使う。
     /// 外部には `eraseToAnyPublisher()` 経由でのみ公開し、send 権限は内部に閉じる。
     private let subject: CurrentValueSubject<DayTimeline, Never>
     private var cancellables = Set<AnyCancellable>()
 
-    init(calendar: Calendar = .current) {
+    init(calendar: Calendar = .current, googleAPI: GoogleCalendarAPI? = nil) {
         self.calendar = calendar
+        self.googleAPI = googleAPI
         let initialDate = calendar.startOfDay(for: Date())
         self.subject = CurrentValueSubject(DayTimeline(date: initialDate, events: []))
     }
@@ -60,6 +70,9 @@ final class EventKitGateway {
             .publisher(for: .EKEventStoreChanged, object: store)
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
+                // EventKit 側で event の追加・変更・削除が起きた可能性があるため、
+                // htmlLink cache をクリアして次回 reload で再取得させる。
+                self?.htmlLinkCache.removeAll()
                 Task { await self?.reload() }
             }
             .store(in: &cancellables)
@@ -93,10 +106,49 @@ final class EventKitGateway {
             allDayFlags.append(ek.isAllDay)
         }
 
+        // Google Calendar API で htmlLink を取得 → cache 更新（未注入 / 失敗時は no-op）。
+        await enrichWithHTMLLinks(rawEvents: rawEvents)
+
+        // cache から webURL を引いて Event を再生成する。
+        // Event は immutable struct なので新しいインスタンスに差し替える。
+        let enriched = rawEvents.map { ev -> Event in
+            let webURL = ev.externalIdentifier.flatMap { htmlLinkCache[$0] }
+            return Event(id: ev.id,
+                         title: ev.title,
+                         start: ev.start,
+                         end: ev.end,
+                         calendarColor: ev.calendarColor,
+                         externalIdentifier: ev.externalIdentifier,
+                         calendarTitle: ev.calendarTitle,
+                         webURL: webURL)!
+        }
+
         return DayTimeline.make(date: dayStart,
-                                rawEvents: rawEvents,
+                                rawEvents: enriched,
                                 allDayFlags: allDayFlags,
                                 calendar: calendar)
+    }
+
+    /// `@google.com` を含む `externalIdentifier` を持つ event について、
+    /// Google Calendar API で htmlLink を取得して cache を更新する。
+    /// cache に既に入っている UID は API 呼び出しを省略（N+1 回避）。
+    /// API 未注入 / 失敗時は silent fail：clock 表示を止めない設計。
+    private func enrichWithHTMLLinks(rawEvents: [Event]) async {
+        guard let api = googleAPI else { return }
+        let googleUIDs = rawEvents.compactMap { ev -> String? in
+            guard let ext = ev.externalIdentifier, ext.contains("@google.com") else { return nil }
+            return htmlLinkCache[ext] == nil ? ext : nil
+        }
+        guard !googleUIDs.isEmpty else { return }
+        do {
+            let fetched = try await api.fetchHTMLLinks(forICalUIDs: googleUIDs)
+            for (uid, url) in fetched {
+                htmlLinkCache[uid] = url
+            }
+        } catch {
+            // silent fail：clock 表示を止めない。前回値の cache はそのまま保持する。
+            print("Google Calendar API fetch failed: \(error)")
+        }
     }
 
     /// 今日の DayTimeline を再取得して subject に流す。
