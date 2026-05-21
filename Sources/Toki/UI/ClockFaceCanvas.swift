@@ -103,15 +103,23 @@ struct ClockFaceCanvas: View {
         }
     }
 
-    /// 現在時刻を指す針を中心から外径まで描く。
+    /// 現在時刻を指す針を、中央テキストエリアの外側から外径まで描く。
+    /// 中央 3 行テキスト（CurrentEventLabel）と針が視覚的に重ならないよう
+    /// 内側にギャップを設けることで、針が文字を貫通して見える違和感を回避する。
     /// 角度計算は呼び出し側（ViewModel）で行い、View はラジアン値を受け取るだけ。
     private func drawHand(in ctx: inout GraphicsContext, geometry: ClockGeometry, angle: Double) {
+        // 中央テキスト（3 行 × ~15pt）を避けるためのギャップ半径
+        let handInnerOffset: CGFloat = 32
+        let startPoint = CGPoint(
+            x: geometry.center.x + CGFloat(cos(angle)) * handInnerOffset,
+            y: geometry.center.y + CGFloat(sin(angle)) * handInnerOffset
+        )
         let endPoint = CGPoint(
             x: geometry.center.x + CGFloat(cos(angle)) * geometry.outerRadius,
             y: geometry.center.y + CGFloat(sin(angle)) * geometry.outerRadius
         )
         var path = Path()
-        path.move(to: geometry.center)
+        path.move(to: startPoint)
         path.addLine(to: endPoint)
         ctx.stroke(path, with: .color(.primary), lineWidth: 1.5)
     }
