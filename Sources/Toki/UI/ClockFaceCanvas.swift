@@ -10,6 +10,9 @@ struct ClockFaceCanvas: View {
     let events: [RenderableEvent]
     /// 円弧クリック時に呼ばれる。位置は Canvas のローカル座標、geometry は描画時と同じ前提。
     var onTap: ((CGPoint, ClockGeometry) -> Void)? = nil
+    /// マウスホバー時に呼ばれる。`.active(location)` / `.ended` の HoverPhase と
+    /// 描画時と同じ ClockGeometry を渡す。
+    var onHover: ((HoverPhase, ClockGeometry) -> Void)? = nil
 
     var body: some View {
         // GeometryReader で現在のレイアウトサイズを取り、描画とタップで同じ geometry を共有する。
@@ -31,6 +34,10 @@ struct ClockFaceCanvas: View {
                         onTap?(value.location, geometry)
                     }
             )
+            .onContinuousHover(coordinateSpace: .local) { phase in
+                let geometry = ClockGeometry.standard(in: proxy.size)
+                onHover?(phase, geometry)
+            }
         }
     }
 
