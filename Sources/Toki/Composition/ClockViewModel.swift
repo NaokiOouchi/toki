@@ -223,7 +223,7 @@ final class ClockViewModel: ObservableObject {
     /// 仕様は Google Calendar が生成する共有 URL の eid を実機 decode して逆算（spec 004 §0 § 5）。
     private static func googleEventDetailURL(for event: RenderableEvent) -> String? {
         guard let extID = event.externalIdentifier,
-              extID.hasSuffix("@google.com"),
+              extID.contains("@google.com"),
               !event.calendarTitle.isEmpty else { return nil }
 
         let baseUID = normalizeGoogleUID(extID)
@@ -241,12 +241,20 @@ final class ClockViewModel: ObservableObject {
     }
 
     /// Google iCal UID を eid 用の純粋な UID に正規化する。
-    /// 1. `_R<digits>T<digits>` の繰り返し instance suffix を除去
-    /// 2. `@google.com` suffix を除去
-    /// 例：`b7ru16r58op25kb1nlvn6993hq_R20251106T120000@google.com`
-    ///   → `b7ru16r58op25kb1nlvn6993hq`
+    /// 1. `/RID=<digits>` の Exchange 風 occurrence suffix を除去
+    ///    （Workspace アカウントを Exchange プロトコル経由で同期しているケース）
+    /// 2. `_R<digits>T<digits>` の Google 風 recurrence reference suffix を除去
+    /// 3. `@google.com` suffix を除去
+    /// 例：
+    ///   - `b7ru16r58op25kb1nlvn6993hq_R20251106T120000@google.com`
+    ///     → `b7ru16r58op25kb1nlvn6993hq`
+    ///   - `186f31v36nij3e2shapb0v7qj4@google.com/RID=801032400`
+    ///     → `186f31v36nij3e2shapb0v7qj4`
     private static func normalizeGoogleUID(_ externalID: String) -> String {
         var s = externalID
+        if let range = s.range(of: "/RID=[0-9]+", options: .regularExpression) {
+            s.removeSubrange(range)
+        }
         if let range = s.range(of: "_R[0-9]+T[0-9]+", options: .regularExpression) {
             s.removeSubrange(range)
         }
