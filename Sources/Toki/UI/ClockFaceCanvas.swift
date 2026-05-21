@@ -109,7 +109,7 @@ struct ClockFaceCanvas: View {
     /// 角度計算は呼び出し側（ViewModel）で行い、View はラジアン値を受け取るだけ。
     private func drawHand(in ctx: inout GraphicsContext, geometry: ClockGeometry, angle: Double) {
         // 中央テキスト（3 行 × ~15pt）を避けるためのギャップ半径
-        let handInnerOffset: CGFloat = 32
+        let handInnerOffset: CGFloat = 28
         let startPoint = CGPoint(
             x: geometry.center.x + CGFloat(cos(angle)) * handInnerOffset,
             y: geometry.center.y + CGFloat(sin(angle)) * handInnerOffset
