@@ -16,6 +16,9 @@ struct RenderableEvent: Identifiable {
     let start: Date
     /// イベントの終了時刻。ツールチップで時刻範囲を表示するために保持する。
     let end: Date
+    /// イベントが属するカレンダー名（Google の場合はメールアドレス）。
+    /// Google event 詳細 URL の eid 生成に必要。
+    let calendarTitle: String
 }
 
 extension RenderableEvent: Equatable {
