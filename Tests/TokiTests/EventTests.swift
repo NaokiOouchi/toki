@@ -11,12 +11,10 @@ final class EventTests: XCTestCase {
                            title: String = "テスト予定",
                            start: Date = Date(timeIntervalSince1970: 1_700_000_000),
                            end: Date = Date(timeIntervalSince1970: 1_700_003_600),
-                           calendarTitle: String = "",
                            webURL: URL? = nil)
         -> Event? {
         Event(id: id, title: title, start: start, end: end,
-              calendarColor: makeColor(), externalIdentifier: "ext-1",
-              calendarTitle: calendarTitle,
+              calendarColor: makeColor(),
               webURL: webURL)
     }
 
@@ -44,7 +42,6 @@ final class EventTests: XCTestCase {
         XCTAssertNotNil(e)
         XCTAssertEqual(e?.id, "id-1")
         XCTAssertEqual(e?.title, "テスト予定")
-        XCTAssertEqual(e?.externalIdentifier, "ext-1")
     }
 
     // 5. Equatable by id (同 id 異タイトル)

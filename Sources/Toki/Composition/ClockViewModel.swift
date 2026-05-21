@@ -101,10 +101,8 @@ final class ClockViewModel: ObservableObject {
                 endAngle: TimeOfDay.from(date: ev.end, calendar: calendar).clockAngle,
                 color: ev.calendarColor,
                 status: ev.status(at: now),
-                externalIdentifier: ev.externalIdentifier,
                 start: ev.start,
                 end: ev.end,
-                calendarTitle: ev.calendarTitle,
                 webURL: ev.webURL
             )
         }

@@ -41,8 +41,6 @@ struct DayTimeline {
                      start: newStart,
                      end: newEnd,
                      calendarColor: event.calendarColor,
-                     externalIdentifier: event.externalIdentifier,
-                     calendarTitle: event.calendarTitle,
                      webURL: event.webURL)
     }
 

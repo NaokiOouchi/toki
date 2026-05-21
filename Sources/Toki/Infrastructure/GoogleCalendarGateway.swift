@@ -98,8 +98,6 @@ final class GoogleCalendarGateway {
                                 title: ge.summary,
                                 start: start, end: end,
                                 calendarColor: ge.calendarColor,
-                                externalIdentifier: ge.iCalUID,
-                                calendarTitle: ge.calendarSummary,
                                 webURL: ge.htmlLink) else { return nil }
         return (event, isAllDay)
     }

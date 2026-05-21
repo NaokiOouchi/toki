@@ -9,25 +9,18 @@ struct Event: Identifiable {
     let start: Date
     let end: Date
     let calendarColor: CGColor
-    let externalIdentifier: String?
-    /// EKCalendar.title から伝播するカレンダー名（Google の場合はメールアドレス）。
-    /// Google event 詳細 URL の eid 生成に必要。空文字列は許容。
-    let calendarTitle: String
     /// Google Calendar API で取得した event detail URL（`htmlLink`）。
-    /// 非 Google event / API 取得失敗の場合は nil。
+    /// 取得失敗の場合は nil。
     let webURL: URL?
 
     init?(id: String, title: String, start: Date, end: Date,
-          calendarColor: CGColor, externalIdentifier: String?,
-          calendarTitle: String, webURL: URL? = nil) {
+          calendarColor: CGColor, webURL: URL? = nil) {
         guard !id.isEmpty, start < end else { return nil }
         self.id = id
         self.title = title
         self.start = start
         self.end = end
         self.calendarColor = calendarColor
-        self.externalIdentifier = externalIdentifier
-        self.calendarTitle = calendarTitle
         self.webURL = webURL
     }
 }
