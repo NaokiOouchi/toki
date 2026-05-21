@@ -20,28 +20,23 @@ final class ClockViewModel: ObservableObject {
     /// Equatable 比較により同値時の再描画を抑える。
     @Published private(set) var hoveredTooltip: TooltipState? = nil
 
-    private let gateway: EventKitGateway
+    private let gateway: GoogleCalendarGateway?
     private let calendar: Calendar
     private var cancellables = Set<AnyCancellable>()
     private var minuteTimerCancellable: AnyCancellable?
 
-    init(gateway: EventKitGateway, calendar: Calendar = .current) {
+    init(gateway: GoogleCalendarGateway?, calendar: Calendar = .current) {
         self.gateway = gateway
         self.calendar = calendar
     }
 
-    /// ViewModel を起動する。権限要求 → 購読開始 → タイマー開始 → wake 監視を順に行う。
+    /// ViewModel を起動する。OAuth 接続状態の取り込み → 購読開始 → タイマー開始 → wake 監視を順に行う。
+    /// `accessGranted` は EventKit 権限ではなく「Google Calendar に OAuth 接続済みか」を意味する。
     func start() async {
-        let result = await gateway.requestAccess()
-        // AccessResult は `.error(Error)` を持つため Equatable 合成されない。
-        // 明示的にパターンマッチで判定する。
-        if case .granted = result {
-            accessGranted = true
-        } else {
-            accessGranted = false
-        }
-        gateway.start()
-        gateway.timelineUpdates
+        accessGranted = gateway?.isAuthorized ?? false
+
+        gateway?.start()
+        gateway?.timelineUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] tl in self?.timeline = tl }
             .store(in: &cancellables)
@@ -55,8 +50,16 @@ final class ClockViewModel: ObservableObject {
                 guard let self else { return }
                 self.now = Date()
                 self.scheduleMinuteTimer()
+                self.accessGranted = self.gateway?.isAuthorized ?? false
+                Task { await self.gateway?.reload() }
             }
             .store(in: &cancellables)
+    }
+
+    /// OAuth 接続状態を最新に同期する。
+    /// AppDelegate が beginAuthorization / revoke 完了後に呼び出して即時 UI 反映する。
+    func refreshAuthorizationState() {
+        accessGranted = gateway?.isAuthorized ?? false
     }
 
     /// 次の :00 までの差分を待ってから 60 秒ごとのタイマーを開始する。
@@ -112,7 +115,7 @@ final class ClockViewModel: ObservableObject {
     var centerState: CenterState {
         let timeStr = Self.formatHHMM(now, calendar: calendar)
         if !accessGranted {
-            return .freeTime(time: timeStr, subtitle: "権限が必要")
+            return .freeTime(time: timeStr, subtitle: "右クリックで接続")
         }
         guard let tl = timeline else {
             return .freeTime(time: timeStr, subtitle: "読み込み中")

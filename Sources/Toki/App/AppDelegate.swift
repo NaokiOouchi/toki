@@ -3,27 +3,29 @@ import SwiftUI
 
 /// メニューバー常駐と FloatingClockWindow の表示/非表示を司る AppDelegate。
 /// Gateway → ViewModel → Window(ClockView) の順で構成し、`vm.start()` で
-/// EventKit 権限要求・購読・タイマーを開始する。
+/// OAuth 接続状態の取り込み・購読・タイマーを開始する。
 /// メニューバーアイコンは左クリックでウィンドウ toggle、右クリックで終了メニュー。
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: FloatingClockWindow?
     private var statusItem: NSStatusItem?
-    private var gateway: EventKitGateway?
+    private var gateway: GoogleCalendarGateway?
     private var viewModel: ClockViewModel?
     private var oauthClient: GoogleOAuthClient?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // OAuth 依存組み立て：設定ファイルが無ければ nil → 旧挙動を維持。
+        // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
         let oauth = OAuthConfig.load().map { config in
             GoogleOAuthClient(config: config,
                               keychain: KeychainStore(),
                               receiver: LoopbackOAuthReceiver())
         }
-        let googleAPI = oauth.map { GoogleCalendarAPI(oauth: $0) }
         self.oauthClient = oauth
 
-        // 依存の組み立て：Gateway → ViewModel → ClockView。
-        let gw = EventKitGateway(googleAPI: googleAPI)
+        // 依存の組み立て：OAuth → Gateway → ViewModel → ClockView。
+        let gw: GoogleCalendarGateway? = oauth.map { client in
+            GoogleCalendarGateway(oauthClient: client,
+                                  api: GoogleCalendarAPI(oauth: client))
+        }
         let vm = ClockViewModel(gateway: gw)
         gateway = gw
         viewModel = vm
@@ -42,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         w.orderFrontRegardless()
 
-        // ViewModel 起動（権限要求 + 購読開始 + タイマー）
+        // ViewModel 起動（OAuth 接続状態の取り込み + 購読開始 + タイマー）
         Task { await vm.start() }
 
         // メニューバーアイコン + 左クリック toggle / 右クリックメニュー
@@ -110,10 +112,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Google Calendar OAuth 認可フローを開始。ブラウザが立ち上がり同意画面が出る。
+    /// 成功後は ViewModel の接続状態を即時更新し、Gateway を reload して event を取り込む。
     @objc private func handleConnect() {
         Task {
             do {
                 try await oauthClient?.beginAuthorization()
+                await viewModel?.refreshAuthorizationState()
+                await gateway?.reload()
             } catch {
                 print("OAuth connect failed: \(error)")
             }
@@ -121,10 +126,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Google Calendar 連携を解除。refresh_token を Keychain から削除する。
+    /// 解除後は ViewModel の接続状態を即時更新し、Gateway を reload して空 timeline に戻す。
     @objc private func handleDisconnect() {
         Task {
             do {
                 try await oauthClient?.revoke()
+                await viewModel?.refreshAuthorizationState()
+                await gateway?.reload()
             } catch {
                 print("OAuth disconnect failed: \(error)")
             }
