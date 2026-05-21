@@ -69,8 +69,8 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 - 時計と区切る 0.5px ボーダー
 
 ### インタラクション
-- **マウスオーバー**：イベント円弧の上に来ると、中央表示がそのイベント情報に切り替わる（離すと現在に戻る）
-- **左クリック**：そのイベントを純正カレンダー.appで開く
+- **マウスオーバー**：イベント円弧の上に来ると、ツールチップで時刻 + タイトルが表示される（中央表示は現状維持、spec 003 で変更）
+- **左クリック**：そのイベントの日の Google カレンダーをデフォルトブラウザで開く（spec 003 で純正カレンダー.app 連携から変更）
 - **右クリック**：コンテキストメニュー（位置リセット / 再読込 / 終了）
 - **メニューバーアイコン**：クリックで時計の表示／非表示トグル
 
@@ -316,12 +316,18 @@ NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: store)
     .store(in: &cancellables)
 ```
 
-### 純正カレンダー.app を特定イベントで開く
+### イベント円弧クリック時の挙動（spec 003 で変更）
+
 ```swift
-let url = URL(string: "ical://ekevent/\(event.externalIdentifier)?method=show&options=more")!
+let formatted = String(format: "https://calendar.google.com/calendar/u/0/r/day/%04d/%02d/%02d", year, month, day)
+let url = URL(string: formatted)!
 NSWorkspace.shared.open(url)
 ```
-（この URL scheme は非公式だが安定して動く。動かなければ単に `NSWorkspace.shared.open(URL(string: "ical:")!)` で起動だけする）
+
+純正カレンダー.app への `ical://` URL scheme 連携は spec 003 で撤去された。
+Google Calendar の繰り返しイベントの `_R<参照日>` suffix で正しい occurrence を
+開けない問題が実機検証で判明したため、Google Calendar の web 版（今日のビュー）に
+切り替えた。詳細は `specs/003-hover-tooltip-and-browser.md` 参照。
 
 ---
 
