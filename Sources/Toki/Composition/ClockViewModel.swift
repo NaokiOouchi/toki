@@ -36,6 +36,14 @@ final class ClockViewModel: ObservableObject {
         accessGranted = gateway?.isAuthorized ?? false
 
         gateway?.start()
+
+        // @Published isAuthorized を購読して accessGranted を自動同期する。
+        // refresh 失敗で Keychain がクリアされた場合に中央テキストが「右クリックで接続」へ転落する。
+        gateway?.$isAuthorized
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] granted in self?.accessGranted = granted }
+            .store(in: &cancellables)
+
         gateway?.timelineUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] tl in self?.timeline = tl }

@@ -6,12 +6,16 @@ import Combine
 /// 5 分間隔の自動 reload + 接続/切断時の手動 reload に対応。
 /// API 失敗時は last-known timeline を維持（clock 表示を止めない）。
 @MainActor
-final class GoogleCalendarGateway {
+final class GoogleCalendarGateway: ObservableObject {
     private let oauthClient: GoogleOAuthClient
     private let api: GoogleCalendarAPI
     private let calendar: Calendar
     private let subject: CurrentValueSubject<DayTimeline, Never>
     private var reloadTimerCancellable: AnyCancellable?
+
+    /// OAuth 接続状態。reload() 完了時に oauthClient.isAuthorized で再評価し、
+    /// ViewModel は Combine で sink して accessGranted を同期する。
+    @Published private(set) var isAuthorized: Bool = false
 
     init(oauthClient: GoogleOAuthClient,
          api: GoogleCalendarAPI,
@@ -21,6 +25,7 @@ final class GoogleCalendarGateway {
         self.calendar = calendar
         let initialDate = calendar.startOfDay(for: Date())
         self.subject = CurrentValueSubject(DayTimeline(date: initialDate, events: []))
+        self.isAuthorized = oauthClient.isAuthorized
     }
 
     /// DayTimeline の最新値を購読できる Publisher。
@@ -28,15 +33,11 @@ final class GoogleCalendarGateway {
         subject.eraseToAnyPublisher()
     }
 
-    /// OAuth 接続状態を直接公開する（ViewModel の accessGranted を同期するため）。
-    var isAuthorized: Bool {
-        oauthClient.isAuthorized
-    }
-
     /// 初回 reload と 5 分間隔の自動 reload タイマーを開始する。
     /// 多重起動を防ぐため冒頭で既存タイマーを cancel する。
     func start() {
         reloadTimerCancellable?.cancel()
+        isAuthorized = oauthClient.isAuthorized
         Task { await reload() }
         reloadTimerCancellable = Timer.publish(every: 300, on: .main, in: .common)
             .autoconnect()
@@ -54,6 +55,8 @@ final class GoogleCalendarGateway {
     /// 接続/切断時に AppDelegate から呼び出す。
     func reload() async {
         let timeline = await fetchTodayTimeline()
+        // refresh 失敗で Keychain がクリアされていれば isAuthorized=false に転落
+        isAuthorized = oauthClient.isAuthorized
         subject.send(timeline)
     }
 
