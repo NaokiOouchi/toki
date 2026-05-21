@@ -20,7 +20,7 @@ Sources/Toki/
 ├── Window/          # NSWindow 設定（floating, borderless）
 ├── UI/              # SwiftUI Views, Canvas 描画
 ├── Domain/          # 純粋ロジック（TimeOfDay, Event, DayTimeline）
-├── Infrastructure/  # EventKit ↔ Domain の変換
+├── Infrastructure/  # Google Calendar API / OAuth クライアント、Domain への変換
 └── Composition/     # ViewModel, 依存組み立て
 Tests/TokiTests/     # Domain 層のみ
 ```
@@ -39,7 +39,7 @@ App / Window → Composition → UI → Domain
 - **UI** は Domain の値型を受けて描画、Infrastructure 直接参照禁止
 - **Composition** が ViewModel と依存組み立てを担う
 
-IMPORTANT: `EKEvent` などの Infrastructure 型を Domain 層に漏らさない。必ず Domain の `Event` に変換する。
+IMPORTANT: Google Calendar API のレスポンスや認証 token 等の Infrastructure 型を Domain 層に漏らさない。必ず Domain の `Event` に変換する。
 
 ## 命名・スタイル
 
