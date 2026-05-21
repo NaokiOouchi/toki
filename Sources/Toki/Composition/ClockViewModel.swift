@@ -93,7 +93,8 @@ final class ClockViewModel: ObservableObject {
                 color: ev.calendarColor,
                 status: ev.status(at: now),
                 externalIdentifier: ev.externalIdentifier,
-                start: ev.start
+                start: ev.start,
+                end: ev.end
             )
         }
     }

@@ -14,6 +14,8 @@ struct RenderableEvent: Identifiable {
     /// イベントの開始時刻。繰り返しイベントを開く URL scheme で
     /// 発生日を指定するために保持する。
     let start: Date
+    /// イベントの終了時刻。ツールチップで時刻範囲を表示するために保持する。
+    let end: Date
 }
 
 extension RenderableEvent: Equatable {
