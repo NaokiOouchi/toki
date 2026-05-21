@@ -19,6 +19,10 @@ struct RenderableEvent: Identifiable {
     /// イベントが属するカレンダー名（Google の場合はメールアドレス）。
     /// Google event 詳細 URL の eid 生成に必要。
     let calendarTitle: String
+    /// Google Calendar API で取得した event detail URL（htmlLink）。
+    /// 非 Google event / API 取得失敗の場合は nil。
+    /// クリック時は nil なら今日のビュー fallback。
+    let webURL: URL?
 }
 
 extension RenderableEvent: Equatable {

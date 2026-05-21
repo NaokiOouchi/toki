@@ -101,7 +101,8 @@ final class ClockViewModel: ObservableObject {
                 externalIdentifier: ev.externalIdentifier,
                 start: ev.start,
                 end: ev.end,
-                calendarTitle: ev.calendarTitle
+                calendarTitle: ev.calendarTitle,
+                webURL: ev.webURL
             )
         }
     }
