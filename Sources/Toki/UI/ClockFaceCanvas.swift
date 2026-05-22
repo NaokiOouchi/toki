@@ -71,7 +71,7 @@ struct ClockFaceCanvas: View {
         let labels: [(hour: Int, text: String)] = [
             (0, "0"), (6, "6"), (12, "12"), (18, "18")
         ]
-        let labelRadius = geometry.innerRadius - 12
+        let labelRadius = geometry.innerRadius * 0.86
         for label in labels {
             guard let tod = TimeOfDay(hour: label.hour, minute: 0) else { continue }
             let angle = tod.clockAngle
@@ -109,7 +109,8 @@ struct ClockFaceCanvas: View {
     /// 角度計算は呼び出し側（ViewModel）で行い、View はラジアン値を受け取るだけ。
     private func drawHand(in ctx: inout GraphicsContext, geometry: ClockGeometry, angle: Double) {
         // 中央テキスト（3 行 × ~15pt）を避けるためのギャップ半径
-        let handInnerOffset: CGFloat = 28
+        // spec 008: innerRadius に比例（28 / 85 ≈ 0.33）で動的サイズ対応
+        let handInnerOffset: CGFloat = geometry.innerRadius * 0.33
         let startPoint = CGPoint(
             x: geometry.center.x + CGFloat(cos(angle)) * handInnerOffset,
             y: geometry.center.y + CGFloat(sin(angle)) * handInnerOffset

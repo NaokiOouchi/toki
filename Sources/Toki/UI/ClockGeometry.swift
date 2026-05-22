@@ -6,14 +6,15 @@ struct ClockGeometry {
     let innerRadius: CGFloat
     let outerRadius: CGFloat
 
-    /// 与えられたサイズに対する標準ジオメトリ（内径 85 / 外径 105）。
-    /// 280x280 canvas でも 12% 程度の余白が外側にできるよう、
-    /// 円の外径をやや小さく取って中央テキストとの視覚的バランスを取る。
+    /// 与えられたサイズに対するジオメトリ。
+    /// spec 008: 動的サイズ対応のため min(w,h) の比率で innerRadius / outerRadius を算出。
+    /// 280 canvas で inner ≈ 84 / outer ≈ 106（既存値とほぼ同等で視覚回帰なし）。
     static func standard(in size: CGSize) -> ClockGeometry {
-        ClockGeometry(
+        let dim = min(size.width, size.height)
+        return ClockGeometry(
             center: CGPoint(x: size.width / 2, y: size.height / 2),
-            innerRadius: 85,
-            outerRadius: 105
+            innerRadius: dim * 0.30,
+            outerRadius: dim * 0.38
         )
     }
 }
