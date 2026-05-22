@@ -93,16 +93,28 @@ final class GoogleCalendarGateway: ObservableObject {
     /// API event → Domain Event 変換し、(Event, isAllDay) を返す。
     /// dateTime が nil（all-day）の event は isAllDay=true。
     /// Event の failable init が start<end / id 非空を検証する。
+    ///
+    /// spec 008: busy block 判定で webURL を nil 化する。
+    /// 他人のカレンダーから共有されている「予定あり」event は htmlLink を
+    /// 開いてもタイトル / 日時のみが表示され情報価値が低いため、
+    /// 既存 fallback 経路（今日ビュー）にクリックを流す。
     private static func convert(_ ge: GoogleAPIEvent) -> (Event, Bool)? {
         let isAllDay = ge.start.dateTime == nil
         guard let start = ge.start.dateTime ?? ge.start.date,
               let end = ge.end.dateTime ?? ge.end.date else { return nil }
         let id = "\(ge.id)#\(start.timeIntervalSince1970)"
+
+        // busy block 判定：visibility=private OR summary in [予定あり / Busy / 空]
+        let busyTitles: Set<String> = ["予定あり", "Busy", ""]
+        let trimmedSummary = ge.summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isBusyBlock = (ge.visibility == "private") || busyTitles.contains(trimmedSummary)
+        let effectiveWebURL = isBusyBlock ? nil : ge.htmlLink
+
         guard let event = Event(id: id,
                                 title: ge.summary,
                                 start: start, end: end,
                                 calendarColor: ge.calendarColor,
-                                webURL: ge.htmlLink) else { return nil }
+                                webURL: effectiveWebURL) else { return nil }
         return (event, isAllDay)
     }
 }
