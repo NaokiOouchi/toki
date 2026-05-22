@@ -33,6 +33,10 @@ struct AppSettings {
         static let ringThickness = "toki.ringThickness"
         static let handThickness = "toki.handThickness"
         static let circleOutlineThickness = "toki.circleOutlineThickness"
+        static let useCustomCircleColor = "toki.useCustomCircleColor"
+        static let customCircleR = "toki.customCircle.r"
+        static let customCircleG = "toki.customCircle.g"
+        static let customCircleB = "toki.customCircle.b"
     }
 
     /// ウィンドウ透過率（0.05〜1.0）。0.05 = ほぼ透明、1 = 完全不透明。
@@ -123,6 +127,22 @@ struct AppSettings {
             return CircleOutlineThickness(rawValue: raw) ?? .regular
         }
         nonmutating set { defaults.set(newValue.rawValue, forKey: Key.circleOutlineThickness) }
+    }
+
+    /// 円自体の色を任意色で上書きするか。true なら customCircleColor を使う。
+    /// false の場合は `.secondary.opacity(0.6)` の既定色を使う。
+    var useCustomCircleColor: Bool {
+        get { defaults.bool(forKey: Key.useCustomCircleColor) }
+        nonmutating set { defaults.set(newValue, forKey: Key.useCustomCircleColor) }
+    }
+
+    /// 円自体の任意色。useCustomCircleColor == true のときに採用される。
+    var customCircleColor: Color {
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customCircleR, gKey: Key.customCircleG, bKey: Key.customCircleB,
+                             default: .gray) }
+        nonmutating set { Self.writeColor(defaults: defaults, color: newValue,
+                                          rKey: Key.customCircleR, gKey: Key.customCircleG, bKey: Key.customCircleB) }
     }
 
     // MARK: - Color persistence helpers

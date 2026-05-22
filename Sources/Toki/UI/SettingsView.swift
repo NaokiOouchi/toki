@@ -17,6 +17,8 @@ struct SettingsView: View {
     @State private var ringThickness: RingThickness = AppSettings.shared.ringThickness
     @State private var handThickness: HandThickness = AppSettings.shared.handThickness
     @State private var circleOutlineThickness: CircleOutlineThickness = AppSettings.shared.circleOutlineThickness
+    @State private var useCustomCircleColor: Bool = AppSettings.shared.useCustomCircleColor
+    @State private var customCircleColor: Color = AppSettings.shared.customCircleColor
 
     var body: some View {
         ScrollView {
@@ -31,10 +33,11 @@ struct SettingsView: View {
                 ringThicknessSection
                 handThicknessSection
                 circleOutlineThicknessSection
+                customCircleColorSection
             }
             .padding(20)
         }
-        .frame(width: 340, height: 800)
+        .frame(width: 340, height: 860)
         .tokiGlassBackground(cornerRadius: 12)
     }
 
@@ -230,6 +233,32 @@ struct SettingsView: View {
             .onChange(of: circleOutlineThickness) { _, newValue in
                 AppSettings.shared.circleOutlineThickness = newValue
                 NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+            }
+        }
+    }
+
+    /// 円自体の色を任意色で上書きするセクション。
+    /// Toggle OFF で既定の secondary 60%。
+    private var customCircleColorSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Toggle("円の色を上書き", isOn: $useCustomCircleColor)
+                    .font(.system(size: 12, weight: .medium))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .onChange(of: useCustomCircleColor) { _, newValue in
+                        AppSettings.shared.useCustomCircleColor = newValue
+                        NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+                    }
+                Spacer()
+                ColorPicker("", selection: $customCircleColor, supportsOpacity: false)
+                    .labelsHidden()
+                    .frame(width: 32, height: 20)
+                    .disabled(!useCustomCircleColor)
+                    .onChange(of: customCircleColor) { _, newValue in
+                        AppSettings.shared.customCircleColor = newValue
+                        NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+                    }
             }
         }
     }

@@ -20,6 +20,8 @@ struct ClockView: View {
     @State private var ringThickness: RingThickness = AppSettings.shared.ringThickness
     @State private var handThickness: HandThickness = AppSettings.shared.handThickness
     @State private var circleOutlineThickness: CircleOutlineThickness = AppSettings.shared.circleOutlineThickness
+    @State private var useCustomCircleColor: Bool = AppSettings.shared.useCustomCircleColor
+    @State private var customCircleColor: Color = AppSettings.shared.customCircleColor
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -39,6 +41,7 @@ struct ClockView: View {
                         handLineWidth: handThickness.lineWidth,
                         textScale: textScale.factor,
                         circleOutlineLineWidth: circleOutlineThickness.lineWidth,
+                        circleOutlineColor: useCustomCircleColor ? customCircleColor : .secondary.opacity(0.6),
                         onTap: { point, geometry in
                             viewModel.handleArcTap(at: point, geometry: geometry)
                         },
@@ -97,6 +100,8 @@ struct ClockView: View {
             ringThickness = AppSettings.shared.ringThickness
             handThickness = AppSettings.shared.handThickness
             circleOutlineThickness = AppSettings.shared.circleOutlineThickness
+            useCustomCircleColor = AppSettings.shared.useCustomCircleColor
+            customCircleColor = AppSettings.shared.customCircleColor
         }
     }
 
