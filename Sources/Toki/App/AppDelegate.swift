@@ -15,6 +15,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastFocusReloadAt: Date?
     /// 設定パネル（透過率調整）の別ウィンドウ。1 つだけ存続させる。
     private var settingsWindow: NSWindow?
+    /// アプリ全体で共有する AppearanceModel。ClockView と SettingsView が同インスタンスを参照する。
+    /// spec 011 で導入、設定値は @Published 経由で SwiftUI 標準パターンで再描画される。
+    private var appearance: AppearanceModel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
@@ -34,12 +37,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         gateway = gw
         viewModel = vm
 
+        // spec 011: AppearanceModel をアプリ生存期間で 1 インスタンス生成。
+        // 本 task では ClockView / SettingsView の signature 変更は行わず（Task 5 / 6 で実施）、
+        // 生成と保持のみ行う。windowFrame の参照は SettingsStore.shared に切替済み。
+        let appearance = AppearanceModel()
+        self.appearance = appearance
+
         let w = FloatingClockWindow.make(contentView: ClockView(viewModel: vm))
         window = w
 
         // spec 008: 保存フレームの復元（あれば、かつ画面内に表示可能なら）
         // 外部モニタを抜いた等で画面外に行ったフレームは弾き、デフォルト位置にフォールバック。
-        if let saved = AppSettings.shared.windowFrame,
+        if let saved = SettingsStore.shared.windowFrame,
            Self.isFrameVisible(saved) {
             w.setFrame(saved, display: true)
         } else if let screen = NSScreen.main {
@@ -89,7 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             queue: .main
         ) { [weak self] _ in
             guard let w = self?.window else { return }
-            AppSettings.shared.setWindowFrame(w.frame)
+            SettingsStore.shared.setWindowFrame(w.frame)
         }
         NotificationCenter.default.addObserver(
             forName: NSWindow.didResizeNotification,
@@ -97,7 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             queue: .main
         ) { [weak self] _ in
             guard let w = self?.window else { return }
-            AppSettings.shared.setWindowFrame(w.frame)
+            SettingsStore.shared.setWindowFrame(w.frame)
         }
     }
 
@@ -105,7 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 通知漏れがあっても最終位置 / サイズを次回起動に持ち越せるようにする。
     func applicationWillTerminate(_ notification: Notification) {
         if let w = window {
-            AppSettings.shared.setWindowFrame(w.frame)
+            SettingsStore.shared.setWindowFrame(w.frame)
         }
     }
 
