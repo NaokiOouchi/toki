@@ -33,8 +33,14 @@ struct ClockView: View {
                               lastUpdatedText: viewModel.lastUpdatedFormatted)
                     .frame(height: 40)
             }
-            // spec 008: Liquid Glass（macOS 26+）/ Material fallback
-            .tokiGlassBackground(cornerRadius: 12)
+            // spec 008: 背景のみ透過率を可変にする。
+            // 針 / 円弧 / 中央テキストは常に不透明、Liquid Glass / Material 背景のみ
+            // opacity で調整されるよう、.background(content:) 内で .opacity を効かせる。
+            .background {
+                Color.clear
+                    .tokiGlassBackground(cornerRadius: 12)
+                    .opacity(opacity)
+            }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -52,7 +58,6 @@ struct ClockView: View {
                     .transaction { $0.animation = nil }
             }
         }
-        .opacity(opacity)
         .onReceive(NotificationCenter.default.publisher(for: .tokiOpacityChanged)) { _ in
             opacity = AppSettings.shared.opacity
         }
