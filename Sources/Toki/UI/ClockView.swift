@@ -73,6 +73,10 @@ struct ClockView: View {
 
                 // popover 本体。内部のボタン（Meet / Calendar / ×）クリックが効くよう
                 // allowsHitTesting はデフォルト（true）のまま。
+                // 位置は lastTapLocation を起点に X/Y 独立反転で画面端を回避。
+                let tap = viewModel.lastTapLocation
+                    ?? CGPoint(x: Self.canvasWidth / 2, y: Self.canvasWidth / 2)
+                let pos = Self.popoverDisplayPosition(for: tap)
                 EventPreviewPopover(
                     timeLabel: viewModel.previewTimeLabel ?? "",
                     title: preview.title,
@@ -86,7 +90,7 @@ struct ClockView: View {
                     onOpenCalendar: { viewModel.openCalendarURL() },
                     onClose: { viewModel.closePreview() }
                 )
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .offset(x: pos.x, y: pos.y)
                 .transaction { $0.animation = nil }
             }
 
@@ -164,8 +168,15 @@ extension ClockView {
     private static let tooltipHeight: CGFloat = 40
     private static let tooltipOffset: CGFloat = 8
     /// ウィンドウサイズ。ClockView.body の .frame と同じ値を使う。
+    /// spec 011 候補：リサイズ対応のため動的サイズ化する（現状は固定値）。
     private static let canvasWidth: CGFloat = 280
     private static let windowHeight: CGFloat = 320
+
+    /// popover 想定サイズ（最大値）。EventPreviewPopover の maxWidth と一般的な高さに合わせる。
+    /// spec 010 で追加。位置計算は tooltipDisplayPosition と同じ流儀（X/Y 独立反転）。
+    private static let popoverWidth: CGFloat = 280
+    private static let popoverHeight: CGFloat = 280
+    private static let popoverOffset: CGFloat = 8
 
     /// ホバー位置からツールチップを描画する左上座標を計算する。
     /// X/Y 軸独立に判定：右端/下端を超える側だけ反転、左/上端は 0 にクランプ。
@@ -176,6 +187,19 @@ extension ClockView {
         let y: CGFloat = (hover.y + tooltipOffset + tooltipHeight > windowHeight)
             ? max(0, hover.y - tooltipOffset - tooltipHeight)
             : hover.y + tooltipOffset
+        return CGPoint(x: x, y: y)
+    }
+
+    /// クリック位置から popover を描画する左上座標を計算する。
+    /// tooltip と同じ流儀：X/Y 独立に判定、右端/下端を超える側だけ反転、左/上端は 0 にクランプ。
+    /// canvas / window サイズは tooltip 計算と同じ固定値を使う（spec 011 で動的化候補）。
+    static func popoverDisplayPosition(for tap: CGPoint) -> CGPoint {
+        let x: CGFloat = (tap.x + popoverOffset + popoverWidth > canvasWidth)
+            ? max(0, tap.x - popoverOffset - popoverWidth)
+            : tap.x + popoverOffset
+        let y: CGFloat = (tap.y + popoverOffset + popoverHeight > windowHeight)
+            ? max(0, tap.y - popoverOffset - popoverHeight)
+            : tap.y + popoverOffset
         return CGPoint(x: x, y: y)
     }
 }
