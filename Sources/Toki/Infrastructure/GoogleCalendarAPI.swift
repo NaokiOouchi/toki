@@ -121,6 +121,7 @@ final class GoogleCalendarAPI {
               let endDict = item["end"] as? [String: Any] else { return nil }
         let summary = (item["summary"] as? String) ?? "(無題)"
         let htmlLink = (item["htmlLink"] as? String).flatMap { URL(string: $0) }
+        let visibility = item["visibility"] as? String
         return GoogleAPIEvent(
             id: id,
             iCalUID: iCalUID,
@@ -129,7 +130,8 @@ final class GoogleCalendarAPI {
             end: parseEventDate(endDict),
             htmlLink: htmlLink,
             calendarSummary: cal.summary,
-            calendarColor: cal.backgroundColor
+            calendarColor: cal.backgroundColor,
+            visibility: visibility
         )
     }
 
@@ -171,6 +173,9 @@ struct GoogleAPIEvent {
     let htmlLink: URL?
     let calendarSummary: String
     let calendarColor: CGColor
+    /// event の可視性。"default" / "public" / "private" / "confidential" / nil。
+    /// spec 008：他人のカレンダーから共有された "private" event の判定に使う。
+    let visibility: String?
 }
 
 /// event の start / end は `dateTime`（時刻付き）または `date`（終日）のどちらか。
