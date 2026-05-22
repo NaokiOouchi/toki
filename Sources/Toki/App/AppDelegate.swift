@@ -228,9 +228,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        // SettingsView は内部で AppSettings に書き込み + NotificationCenter に post する。
-        // AppDelegate からのコールバックは不要（SettingsView 自身が通知発火）。
-        let view = SettingsView()
+        guard let appearance = self.appearance else { return }
+        // spec 011 Task 6: SettingsView は AppearanceModel を @ObservedObject で受け取る。
+        // 分離済みセクション（Opacity / Theme / ColorScheme / Material）は appearance に
+        // 直接バインドし、didSet 経由で SettingsStore に永続化される。
+        let view = SettingsView(appearance: appearance)
         let hosting = NSHostingView(rootView: view)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 340, height: 860),
