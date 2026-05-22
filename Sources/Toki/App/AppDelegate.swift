@@ -89,7 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { await self.viewModel?.handleReload() }
         }
 
-        // spec 008: ウィンドウ位置 / サイズの変更を AppSettings に永続化する
+        // spec 008: ウィンドウ位置 / サイズの変更を SettingsStore に永続化する（spec 011 で rename）
         // 移動 / リサイズの通知を購読し、その都度 UserDefaults へ書き戻す。
         // didBecomeActiveNotification と同様に [weak self] で参照、強参照ループを防ぐ。
         NotificationCenter.default.addObserver(
@@ -221,7 +221,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// 設定パネル（透過率調整）を開く。既に存在すれば前面化のみ。
     /// NSHostingView で SettingsView を載せ、closable な titled window として表示する。
-    /// Slider の onChange callback で `.tokiOpacityChanged` を発火し、ClockView が購読して反映。
+    /// SettingsView 内のサブ View は AppearanceModel に直接 binding するため、
+    /// @Published の自動 binding で ClockView 側も即座に再描画される（spec 011）。
     @objc private func handleOpenSettings() {
         if let w = settingsWindow {
             w.makeKeyAndOrderFront(nil)
