@@ -128,26 +128,39 @@ struct EventPreviewPopover: View {
     }
 
     /// アクションボタン Row：Meet / Calendar、それぞれ URL 有無で表示制御。
+    /// アイコン上 + テキスト下の 2 行レイアウトで、textScale 拡大時や popover が
+    /// 狭いときに「Meet で開く」「Calendar で開く」の文字が切れないようにする。
     private var actionButtons: some View {
         HStack(spacing: 8) {
             if hasMeetURL {
                 Button(action: onOpenMeet) {
-                    Label("Meet で開く", systemImage: "video.fill")
-                        .font(.system(size: 11 * textScale))
+                    actionButtonContent(systemImage: "video.fill", label: "Meet で開く")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
             if hasCalendarURL {
                 Button(action: onOpenCalendar) {
-                    Label("Calendar で開く", systemImage: "calendar")
-                        .font(.system(size: 11 * textScale))
+                    actionButtonContent(systemImage: "calendar", label: "Calendar で開く")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
             Spacer()
         }
+    }
+
+    /// アクションボタンの中身。アイコン（上）+ テキスト（下）の VStack で構成する。
+    /// 横長ラベルが popover 幅で切れる事象を回避し、textScale 拡大時にも視認性を保つ。
+    private func actionButtonContent(systemImage: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Image(systemName: systemImage)
+                .font(.system(size: 13 * textScale))
+            Text(label)
+                .font(.system(size: 10 * textScale))
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 2)
     }
 
     /// 200 文字を超える note を `…` でトリム。

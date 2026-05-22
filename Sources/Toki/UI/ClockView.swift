@@ -84,7 +84,8 @@ struct ClockView: View {
                     attendees: preview.attendees,
                     note: preview.note,
                     hasMeetURL: preview.meetURL != nil,
-                    hasCalendarURL: preview.webURL != nil,
+                    // Calendar ボタンは常時表示：webURL あり時は event detail、無ければ day view
+                    hasCalendarURL: true,
                     textScale: textScale.factor,
                     onOpenMeet: { viewModel.openMeet() },
                     onOpenCalendar: { viewModel.openCalendarURL() },

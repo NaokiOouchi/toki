@@ -256,21 +256,14 @@ final class ClockViewModel: ObservableObject {
 
     /// イベント円弧のクリックを処理する。
     /// 円弧クリックを処理する（spec 010 で popover 表示方式に変更）。
-    /// webURL あり：popover を開く（Meet / Calendar / 場所 / 参加者を in-app 表示）。
-    /// webURL nil（busy block / 共有 event）：今日のビュー fallback（spec 003 から継続）。
+    /// 全 event で popover を開く（busy block / 共有 event 含めて UX を一貫させる）。
+    /// 「Calendar で開く」ボタン押下時のリンク先は webURL（あれば）/ 今日のビュー（fallback）。
     /// ホバーツールチップは即時消去する（クリックとの UX 競合回避）。
     func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
         guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
         hoveredTooltip = nil
         lastTapLocation = point
-        if event.webURL != nil {
-            // webURL あり：popover を開く（busy block 以外、spec 010）
-            previewedEvent = event
-        } else {
-            // busy block：今日のビュー fallback（既存挙動の維持）
-            guard let dayURL = URL(string: Self.googleCalendarDayURL(for: event.start, calendar: calendar)) else { return }
-            NSWorkspace.shared.open(dayURL)
-        }
+        previewedEvent = event
     }
 
     /// popover を閉じる。背景クリック / ESC / × ボタン / アクションボタン押下後に呼ばれる。
@@ -286,9 +279,17 @@ final class ClockViewModel: ObservableObject {
         closePreview()
     }
 
-    /// "Calendar で開く" アクション。webURL を NSWorkspace で開いて popover を閉じる。
+    /// "Calendar で開く" アクション。webURL があればそれを、無ければ今日のビューを開く。
+    /// 共有「予定あり」event は webURL が nil なので、day view fallback を使う。
     func openCalendarURL() {
-        guard let url = previewedEvent?.webURL else { return }
+        guard let ev = previewedEvent else { return }
+        let url: URL
+        if let webURL = ev.webURL {
+            url = webURL
+        } else {
+            guard let dayURL = URL(string: Self.googleCalendarDayURL(for: ev.start, calendar: calendar)) else { return }
+            url = dayURL
+        }
         NSWorkspace.shared.open(url)
         closePreview()
     }
