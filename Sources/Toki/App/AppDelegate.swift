@@ -82,18 +82,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // spec 008: ウィンドウ位置 / サイズの変更を AppSettings に永続化する
         // 移動 / リサイズの通知を購読し、その都度 UserDefaults へ書き戻す。
+        // didBecomeActiveNotification と同様に [weak self] で参照、強参照ループを防ぐ。
         NotificationCenter.default.addObserver(
             forName: NSWindow.didMoveNotification,
             object: w,
             queue: .main
-        ) { _ in
+        ) { [weak self] _ in
+            guard let w = self?.window else { return }
             AppSettings.shared.setWindowFrame(w.frame)
         }
         NotificationCenter.default.addObserver(
             forName: NSWindow.didResizeNotification,
             object: w,
             queue: .main
-        ) { _ in
+        ) { [weak self] _ in
+            guard let w = self?.window else { return }
             AppSettings.shared.setWindowFrame(w.frame)
         }
     }
