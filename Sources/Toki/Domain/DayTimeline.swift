@@ -41,7 +41,11 @@ struct DayTimeline {
                      start: newStart,
                      end: newEnd,
                      calendarColor: event.calendarColor,
-                     webURL: event.webURL)
+                     webURL: event.webURL,
+                     location: event.location,
+                     note: event.note,
+                     attendees: event.attendees,
+                     meetURL: event.meetURL)
     }
 
     /// 重なりフィルタ：start 昇順前提で earliest start wins ルールを適用。
