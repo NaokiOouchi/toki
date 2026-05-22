@@ -3,7 +3,7 @@ import Combine
 
 /// Google Calendar API 経由で今日の event を取得して Domain `DayTimeline` を公開する Gateway。
 /// EventKit を使わず、`events.list` で event 一覧を直接取得する。
-/// 5 分間隔の自動 reload + 接続/切断時の手動 reload に対応。
+/// 2 分間隔の自動 reload（spec 008 で 5 分→2 分に短縮）+ 接続/切断時の手動 reload に対応。
 /// API 失敗時は last-known timeline を維持（clock 表示を止めない）。
 @MainActor
 final class GoogleCalendarGateway: ObservableObject {
