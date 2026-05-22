@@ -255,21 +255,27 @@ struct DayTimeline {
 - **ClockView tooltip 位置計算の動的サイズ対応**：spec 008 でウィンドウは可変化したが tooltip オフセットは固定値のまま、リサイズ時に微ズレ
 
 ### Phase 3 — 仕上げ・拡張
+
+#### 直近の有力候補（spec 012 / 013 想定）
+
+- **表示するカレンダーを選択**（spec 012 候補）：calendars.list 結果を SettingsView で listing し Toggle で表示 / 非表示。UserDefaults に hidden ID set を保存、Gateway.convert で filter。ユーザーがタスクを Google Calendar の event として管理しているため、「仕事 / 個人 / 共有 calendar」を分離して見たい pain がある（spec 007 §Out of scope → spec 012 候補）
+
+#### 機能拡張（pain 待ち）
+
 - **重なりイベントの 2 段リング**：MVP は 1 段のみ
 - **透明度の Option + scroll 操作**：spec 008 で設定パネル経由の連続スライダーは実装済み。scroll ジェスチャは未対応
-- **in-app event preview**：popover で詳細 + Meet 起動 + 参加可否操作（spec 009 候補）
-- **複数日 navigation**：マウスホイール / 横スクロールで前後日に移動（spec 009 候補）
-- **表示するカレンダーを選択**（spec 012 候補に格上げ）：calendars.list 結果を SettingsView で listing し Toggle で表示 / 非表示。UserDefaults に hidden ID set を保存、Gateway.convert で filter。ユーザーがタスクを Google Calendar の event として管理しているため、「仕事 / 個人 / 共有 calendar」を分離して見たい pain がある（spec 007 §Out of scope → spec 012 候補）
+- **複数日 navigation**：マウスホイール / 横スクロールで前後日に移動
+- **in-app event preview のリッチ化**：popover で参加可否操作（accept / decline / tentative）→ `calendar.events` write scope 昇格 + OAuth 再認可が必要（spec 010 §Non-goals）
+- **起動時自動オン**：LaunchAtLogin（`SMAppService` API）
+- **複数 Google アカウント並列**：MVP は 1 アカウントのみ（spec 005 / 006 §Non-goals 由来）
+- **完全な設定 UI**：client_id 入力、同期間隔（spec 005 / 006 §Non-goals 由来。spec 008 で透明度パネル / spec 009 で 11 軸 / spec 012 候補で calendar 選択）
+- **永続キャッシュ**：オフライン耐性、起動時即時表示（spec 006 §Non-goals 由来）
+- **OAuth client_secret の安全化**：個人利用以外で配布する場合は secret を分離（spec 005 §Open Questions 由来）
 
-#### 検討して見送ったアイデア
+#### 見送ったアイデア（再提案防止）
 
 - **TODO リスト統合**：見送り。ユーザーは Google Calendar の event 自体をタスク管理に使っているため、別 TODO ソース（Google Tasks 等）の統合は不要。event = タスクの運用で完結している
 - **ポモドーロタイマー**：見送り。「時間管理」は別アプリの責務であり、Toki の「今日のカレンダー視覚化」コアから逸脱する
-- **起動時自動オン**：LaunchAtLogin
-- **複数 Google アカウント並列**：MVP は 1 アカウントのみ（spec 005 / 006 §Non-goals 由来）
-- **完全な設定 UI**：client_id 入力、calendar 選択、同期間隔（spec 005 / 006 §Non-goals 由来。spec 008 で透明度パネルは導入済み）
-- **永続キャッシュ**：オフライン耐性、起動時即時表示（spec 006 §Non-goals 由来）
-- **OAuth client_secret の安全化**：個人利用以外で配布する場合は secret を分離（spec 005 §Open Questions 由来）
 
 #### spec 009 由来の構造リファクタ候補（CLAUDE.md「設定 UI は Phase 3」の整理）
 
