@@ -20,6 +20,14 @@ final class ClockViewModel: ObservableObject {
     /// Equatable 比較により同値時の再描画を抑える。
     @Published private(set) var hoveredTooltip: TooltipState? = nil
 
+    /// 円弧クリックで表示される event preview popover の対象 event。
+    /// nil で popover 非表示。spec 010 で追加。
+    /// 背景クリック / ESC / × ボタン / アクション後に closePreview で nil に戻す。
+    @Published private(set) var previewedEvent: RenderableEvent? = nil
+
+    /// 直近のクリック位置（popover 配置基準）。spec 010 Task 11 で位置計算に使用予定。
+    @Published private(set) var lastTapLocation: CGPoint? = nil
+
     /// 最後に Gateway から timeline を受け取った時刻。
     /// Gateway の $lastReloadAt を sink して更新される。
     /// 中央 / 下部表示の「最終更新 X 分前」算出に使う。
@@ -247,20 +255,49 @@ final class ClockViewModel: ObservableObject {
     // MARK: - クリックハンドラ
 
     /// イベント円弧のクリックを処理する。
-    /// Google Calendar API 経由で取得した webURL があればそれを開く（spec 005）。
-    /// なければ今日のビュー fallback（spec 003 から継続）。
+    /// 円弧クリックを処理する（spec 010 で popover 表示方式に変更）。
+    /// webURL あり：popover を開く（Meet / Calendar / 場所 / 参加者を in-app 表示）。
+    /// webURL nil（busy block / 共有 event）：今日のビュー fallback（spec 003 から継続）。
     /// ホバーツールチップは即時消去する（クリックとの UX 競合回避）。
     func handleArcTap(at point: CGPoint, geometry: ClockGeometry) {
         guard let event = hitTest(point: point, events: canvasEvents, geometry: geometry) else { return }
         hoveredTooltip = nil
-        let url: URL
-        if let webURL = event.webURL {
-            url = webURL
+        lastTapLocation = point
+        if event.webURL != nil {
+            // webURL あり：popover を開く（busy block 以外、spec 010）
+            previewedEvent = event
         } else {
+            // busy block：今日のビュー fallback（既存挙動の維持）
             guard let dayURL = URL(string: Self.googleCalendarDayURL(for: event.start, calendar: calendar)) else { return }
-            url = dayURL
+            NSWorkspace.shared.open(dayURL)
         }
+    }
+
+    /// popover を閉じる。背景クリック / ESC / × ボタン / アクションボタン押下後に呼ばれる。
+    func closePreview() {
+        previewedEvent = nil
+        lastTapLocation = nil
+    }
+
+    /// "Meet で開く" アクション。meetURL を NSWorkspace で開いて popover を閉じる。
+    func openMeet() {
+        guard let url = previewedEvent?.meetURL else { return }
         NSWorkspace.shared.open(url)
+        closePreview()
+    }
+
+    /// "Calendar で開く" アクション。webURL を NSWorkspace で開いて popover を閉じる。
+    func openCalendarURL() {
+        guard let url = previewedEvent?.webURL else { return }
+        NSWorkspace.shared.open(url)
+        closePreview()
+    }
+
+    /// popover ヘッダーに表示する時刻範囲文字列 "HH:MM - HH:MM"。
+    /// previewedEvent が nil のときは nil。
+    var previewTimeLabel: String? {
+        guard let ev = previewedEvent else { return nil }
+        return Self.formatTimeRange(ev.start, ev.end, calendar: calendar)
     }
 
     /// イベント開始日から Google Calendar の day view URL を組み立てる。
