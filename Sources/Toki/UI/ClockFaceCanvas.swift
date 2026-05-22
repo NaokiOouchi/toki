@@ -17,6 +17,8 @@ struct ClockFaceCanvas: View {
     var handLineWidth: CGFloat = 1.5
     /// 文字サイズスケール（時刻マーク 0/6/12/18 用）。
     var textScale: CGFloat = 1.0
+    /// 円自体（リング輪郭線）の lineWidth。
+    var circleOutlineLineWidth: CGFloat = 0.75
     /// 円弧クリック時に呼ばれる。位置は Canvas のローカル座標、geometry は描画時と同じ前提。
     var onTap: ((CGPoint, ClockGeometry) -> Void)? = nil
     /// マウスホバー時に呼ばれる。`.active(location)` / `.ended` の HoverPhase と
@@ -59,7 +61,7 @@ struct ClockFaceCanvas: View {
             width: geometry.innerRadius * 2,
             height: geometry.innerRadius * 2
         ))
-        ctx.stroke(inner, with: .color(.secondary.opacity(0.6)), lineWidth: 0.75)
+        ctx.stroke(inner, with: .color(.secondary.opacity(0.6)), lineWidth: circleOutlineLineWidth)
     }
 
     /// 針の根元にある小さなドット。テーマカラーで強調する。

@@ -19,6 +19,7 @@ struct ClockView: View {
     @State private var textScale: TextScale = AppSettings.shared.textScale
     @State private var ringThickness: RingThickness = AppSettings.shared.ringThickness
     @State private var handThickness: HandThickness = AppSettings.shared.handThickness
+    @State private var circleOutlineThickness: CircleOutlineThickness = AppSettings.shared.circleOutlineThickness
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -37,6 +38,7 @@ struct ClockView: View {
                         ringThickness: ringThickness.factor,
                         handLineWidth: handThickness.lineWidth,
                         textScale: textScale.factor,
+                        circleOutlineLineWidth: circleOutlineThickness.lineWidth,
                         onTap: { point, geometry in
                             viewModel.handleArcTap(at: point, geometry: geometry)
                         },
@@ -94,6 +96,7 @@ struct ClockView: View {
             textScale = AppSettings.shared.textScale
             ringThickness = AppSettings.shared.ringThickness
             handThickness = AppSettings.shared.handThickness
+            circleOutlineThickness = AppSettings.shared.circleOutlineThickness
         }
     }
 

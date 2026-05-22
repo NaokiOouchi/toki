@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var textScale: TextScale = AppSettings.shared.textScale
     @State private var ringThickness: RingThickness = AppSettings.shared.ringThickness
     @State private var handThickness: HandThickness = AppSettings.shared.handThickness
+    @State private var circleOutlineThickness: CircleOutlineThickness = AppSettings.shared.circleOutlineThickness
 
     var body: some View {
         ScrollView {
@@ -29,10 +30,11 @@ struct SettingsView: View {
                 textScaleSection
                 ringThicknessSection
                 handThicknessSection
+                circleOutlineThicknessSection
             }
             .padding(20)
         }
-        .frame(width: 340, height: 720)
+        .frame(width: 340, height: 800)
         .tokiGlassBackground(cornerRadius: 12)
     }
 
@@ -208,6 +210,25 @@ struct SettingsView: View {
             .labelsHidden()
             .onChange(of: handThickness) { _, newValue in
                 AppSettings.shared.handThickness = newValue
+                NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+            }
+        }
+    }
+
+    /// 円自体（時間トラック内縁の輪郭線）の太さ。
+    private var circleOutlineThicknessSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("円の太さ")
+                .font(.system(size: 12, weight: .medium))
+            Picker("", selection: $circleOutlineThickness) {
+                ForEach(CircleOutlineThickness.allCases) { thickness in
+                    Text(thickness.displayName).tag(thickness)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .onChange(of: circleOutlineThickness) { _, newValue in
+                AppSettings.shared.circleOutlineThickness = newValue
                 NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
             }
         }

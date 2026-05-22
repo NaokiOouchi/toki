@@ -32,6 +32,7 @@ struct AppSettings {
         static let textScale = "toki.textScale"
         static let ringThickness = "toki.ringThickness"
         static let handThickness = "toki.handThickness"
+        static let circleOutlineThickness = "toki.circleOutlineThickness"
     }
 
     /// ウィンドウ透過率（0.05〜1.0）。0.05 = ほぼ透明、1 = 完全不透明。
@@ -113,6 +114,15 @@ struct AppSettings {
             return HandThickness(rawValue: raw) ?? .regular
         }
         nonmutating set { defaults.set(newValue.rawValue, forKey: Key.handThickness) }
+    }
+
+    /// 円自体（時間トラックの内縁を示すリング輪郭線）の太さ。
+    var circleOutlineThickness: CircleOutlineThickness {
+        get {
+            let raw = defaults.string(forKey: Key.circleOutlineThickness) ?? CircleOutlineThickness.regular.rawValue
+            return CircleOutlineThickness(rawValue: raw) ?? .regular
+        }
+        nonmutating set { defaults.set(newValue.rawValue, forKey: Key.circleOutlineThickness) }
     }
 
     // MARK: - Color persistence helpers
@@ -293,6 +303,31 @@ enum RingThickness: String, CaseIterable, Identifiable, Hashable {
         case .regular: return 0.08
         case .thick: return 0.12
         case .extraThick: return 0.16
+        }
+    }
+}
+
+/// 円自体（時間トラック内縁を示すリング輪郭線）の太さ。
+enum CircleOutlineThickness: String, CaseIterable, Identifiable, Hashable {
+    case thin, regular, thick, extraThick
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .thin: return "細"
+        case .regular: return "標準"
+        case .thick: return "太"
+        case .extraThick: return "極太"
+        }
+    }
+
+    var lineWidth: CGFloat {
+        switch self {
+        case .thin: return 0.5
+        case .regular: return 0.75
+        case .thick: return 1.5
+        case .extraThick: return 3.0
         }
     }
 }
