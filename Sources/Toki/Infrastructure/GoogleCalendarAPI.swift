@@ -122,6 +122,11 @@ final class GoogleCalendarAPI {
         let summary = (item["summary"] as? String) ?? "(無題)"
         let htmlLink = (item["htmlLink"] as? String).flatMap { URL(string: $0) }
         let visibility = item["visibility"] as? String
+        let location = item["location"] as? String
+        let description = item["description"] as? String
+        let hangoutLink = (item["hangoutLink"] as? String).flatMap { URL(string: $0) }
+        let attendees = parseAttendees(item)
+        let conferenceVideoURL = parseConferenceVideoURL(item)
         return GoogleAPIEvent(
             id: id,
             iCalUID: iCalUID,
@@ -131,8 +136,36 @@ final class GoogleCalendarAPI {
             htmlLink: htmlLink,
             calendarSummary: cal.summary,
             calendarColor: cal.backgroundColor,
-            visibility: visibility
+            visibility: visibility,
+            location: location,
+            description: description,
+            attendees: attendees,
+            hangoutLink: hangoutLink,
+            conferenceVideoURL: conferenceVideoURL
         )
+    }
+
+    /// event JSON の `attendees[]` を GoogleAPIAttendee 配列に変換する。
+    /// 空 email の attendee（self-resource 等の特殊レコード）は除外する。
+    private static func parseAttendees(_ item: [String: Any]) -> [GoogleAPIAttendee] {
+        let raw = (item["attendees"] as? [[String: Any]]) ?? []
+        return raw.compactMap { dict in
+            guard let email = dict["email"] as? String, !email.isEmpty else { return nil }
+            return GoogleAPIAttendee(
+                email: email,
+                displayName: dict["displayName"] as? String,
+                responseStatus: dict["responseStatus"] as? String
+            )
+        }
+    }
+
+    /// `conferenceData.entryPoints[type=video].uri` を fallback Meet URL として抽出する。
+    /// `hangoutLink` が無くて conferenceData ある event のためのロジック。
+    private static func parseConferenceVideoURL(_ item: [String: Any]) -> URL? {
+        guard let conf = item["conferenceData"] as? [String: Any],
+              let entries = conf["entryPoints"] as? [[String: Any]] else { return nil }
+        let videoEntry = entries.first { ($0["entryPointType"] as? String) == "video" }
+        return (videoEntry?["uri"] as? String).flatMap { URL(string: $0) }
     }
 
     /// `{"dateTime":"2026-05-21T10:00:00+09:00"}` or `{"date":"2026-05-21"}` を変換。
@@ -176,6 +209,26 @@ struct GoogleAPIEvent {
     /// event の可視性。"default" / "public" / "private" / "confidential" / nil。
     /// spec 008：他人のカレンダーから共有された "private" event の判定に使う。
     let visibility: String?
+    /// 場所文字列（API の `location`）。spec 010 で追加。
+    let location: String?
+    /// description（API 由来名。Domain では note にマップ）。spec 010 で追加。
+    let description: String?
+    /// 参加者リスト。空配列許容。spec 010 で追加。
+    let attendees: [GoogleAPIAttendee]
+    /// Meet URL（API の `hangoutLink`）。spec 010 で追加。
+    let hangoutLink: URL?
+    /// conferenceData.entryPoints[type=video].uri からの fallback Meet URL。spec 010 で追加。
+    let conferenceVideoURL: URL?
+}
+
+/// Google Calendar API の attendees[] 1 件分の中間型。
+/// Domain Attendee への変換は Gateway.convert で行う。
+struct GoogleAPIAttendee {
+    let email: String
+    let displayName: String?
+    /// `accepted` / `declined` / `tentative` / `needsAction` 等の raw 文字列。
+    /// Domain 変換時に ResponseStatus.from(apiString:) で enum 化する。
+    let responseStatus: String?
 }
 
 /// event の start / end は `dateTime`（時刻付き）または `date`（終日）のどちらか。
