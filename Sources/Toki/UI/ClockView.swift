@@ -11,6 +11,12 @@ struct ClockView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
+            // 背景レイヤー（spec 008）：opacity で調整可。
+            // 別レイヤーに分離することで、上に重なるコンテンツ（時計 / テキスト）
+            // が透過設定の影響を受けないようにする。
+            glassBackgroundLayer
+
+            // 前景コンテンツ（時計 / テキスト）：常時 100% 表示
             VStack(spacing: 0) {
                 ZStack {
                     ClockFaceCanvas(
@@ -33,19 +39,6 @@ struct ClockView: View {
                               lastUpdatedText: viewModel.lastUpdatedFormatted)
                     .frame(height: 40)
             }
-            // spec 008: 背景のみ透過率を可変にする。
-            // 針 / 円弧 / 中央テキストは常に不透明、Liquid Glass / Material 背景のみ
-            // opacity で調整されるよう、.background(content:) 内で .opacity を効かせる。
-            .background {
-                Color.clear
-                    .tokiGlassBackground(cornerRadius: 12)
-                    .opacity(opacity)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
-            )
 
             // ツールチップ最前面オーバーレイ
             // 想定サイズで右端/下端を検知し、X/Y 軸独立に位置を反転する。
@@ -58,8 +51,29 @@ struct ClockView: View {
                     .transaction { $0.animation = nil }
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
+        )
         .onReceive(NotificationCenter.default.publisher(for: .tokiOpacityChanged)) { _ in
             opacity = AppSettings.shared.opacity
+        }
+    }
+
+    /// 背景レイヤー。macOS 26+ なら Liquid Glass、それ未満は `.regularMaterial`。
+    /// `.opacity()` で透過率を調整できるよう独立 View として切り出す。
+    @ViewBuilder
+    private var glassBackgroundLayer: some View {
+        if #available(macOS 26.0, *) {
+            Rectangle()
+                .fill(.clear)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+                .opacity(opacity)
+        } else {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.regularMaterial)
+                .opacity(opacity)
         }
     }
 }
