@@ -1,0 +1,231 @@
+import AppKit
+import Foundation
+import SwiftUI
+
+/// UserDefaults wrapper。AppearanceModel が単一の永続化バックエンドとして利用する。
+/// SwiftUI Color の R/G/B 分解は内部で完結する（呼び出し側は Color のみ扱う）。
+/// キー名は AppSettings 時代の rawValue を完全維持（spec 011 §Non-goals「UserDefaults キー rename は別 spec」）。
+/// @MainActor 付与で spec 009 H-7 を副次解消。
+@MainActor
+final class SettingsStore {
+    static let shared = SettingsStore()
+    private let defaults = UserDefaults.standard
+
+    private enum Key {
+        static let opacity = "toki.opacity"
+        static let windowFrameX = "toki.windowFrame.x"
+        static let windowFrameY = "toki.windowFrame.y"
+        static let windowFrameW = "toki.windowFrame.w"
+        static let windowFrameH = "toki.windowFrame.h"
+        static let themeColor = "toki.themeColor"
+        static let materialStrength = "toki.materialStrength"
+        static let colorSchemeMode = "toki.colorSchemeMode"
+        static let customColorR = "toki.customColor.r"
+        static let customColorG = "toki.customColor.g"
+        static let customColorB = "toki.customColor.b"
+        static let useCustomBackground = "toki.useCustomBackground"
+        static let customBackgroundR = "toki.customBackground.r"
+        static let customBackgroundG = "toki.customBackground.g"
+        static let customBackgroundB = "toki.customBackground.b"
+        static let useCustomTextColor = "toki.useCustomTextColor"
+        static let customTextR = "toki.customText.r"
+        static let customTextG = "toki.customText.g"
+        static let customTextB = "toki.customText.b"
+        static let textScale = "toki.textScale"
+        static let ringThickness = "toki.ringThickness"
+        static let handThickness = "toki.handThickness"
+        static let circleOutlineThickness = "toki.circleOutlineThickness"
+        static let useCustomCircleColor = "toki.useCustomCircleColor"
+        static let customCircleR = "toki.customCircle.r"
+        static let customCircleG = "toki.customCircle.g"
+        static let customCircleB = "toki.customCircle.b"
+    }
+
+    /// ウィンドウ透過率（0.05〜1.0）。0.05 = ほぼ透明、1 = 完全不透明。
+    /// 下限を 0.05 にすることで、極端な低 opacity で Liquid Glass がレンダリング
+    /// 破綻したり、ウィンドウのドラッグハンドルを失う事象を回避する。
+    /// 未設定（初回起動）は 1.0。
+    var opacity: Double {
+        get {
+            guard defaults.object(forKey: Key.opacity) != nil else { return 1.0 }
+            return max(0.05, min(1.0, defaults.double(forKey: Key.opacity)))
+        }
+        set {
+            defaults.set(max(0.05, min(1.0, newValue)), forKey: Key.opacity)
+        }
+    }
+
+    /// 針 / 中心ドット / 現在 event アウトラインに使うテーマカラー。
+    /// 未設定時はシステムアクセントカラー（System Settings の "強調色"）。
+    var themeColor: ThemeColor {
+        get {
+            let raw = defaults.string(forKey: Key.themeColor) ?? ThemeColor.accent.rawValue
+            return ThemeColor(rawValue: raw) ?? .accent
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Key.themeColor)
+        }
+    }
+
+    /// ThemeColor.custom 選択時に使う任意色。SwiftUI Color を sRGB で 3 つの Double に分解保存。
+    /// 未設定時は Indigo 相当のデフォルトを返す。
+    var customThemeColor: Color {
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customColorR, gKey: Key.customColorG, bKey: Key.customColorB,
+                             default: .indigo) }
+        set { Self.writeColor(defaults: defaults, color: newValue,
+                              rKey: Key.customColorR, gKey: Key.customColorG, bKey: Key.customColorB) }
+    }
+
+    /// ウィンドウ背景 material の濃さ。白背景上での視認性調整に使う。
+    /// 未設定時は `.regular`。
+    var materialStrength: MaterialStrength {
+        get {
+            let raw = defaults.string(forKey: Key.materialStrength) ?? MaterialStrength.regular.rawValue
+            return MaterialStrength(rawValue: raw) ?? .regular
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Key.materialStrength)
+        }
+    }
+
+    /// 配色モード。auto は macOS 外観設定に追従、light / dark は強制適用。
+    /// 文字色 / 背景マテリアル / アイコン色が連動する SwiftUI の preferredColorScheme で実装。
+    var colorSchemeMode: ColorSchemeMode {
+        get {
+            let raw = defaults.string(forKey: Key.colorSchemeMode) ?? ColorSchemeMode.auto.rawValue
+            return ColorSchemeMode(rawValue: raw) ?? .auto
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Key.colorSchemeMode)
+        }
+    }
+
+    /// 背景色カスタム上書きを有効にするか。true なら customBackgroundColor を背景に使う。
+    var useCustomBackground: Bool {
+        get { defaults.bool(forKey: Key.useCustomBackground) }
+        set { defaults.set(newValue, forKey: Key.useCustomBackground) }
+    }
+
+    /// ウィンドウ背景の任意色。useCustomBackground == true のときに Liquid Glass / Material を上書き。
+    var customBackgroundColor: Color {
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customBackgroundR, gKey: Key.customBackgroundG, bKey: Key.customBackgroundB,
+                             default: Color(red: 0.1, green: 0.1, blue: 0.15)) }
+        set { Self.writeColor(defaults: defaults, color: newValue,
+                              rKey: Key.customBackgroundR, gKey: Key.customBackgroundG, bKey: Key.customBackgroundB) }
+    }
+
+    /// 文字色カスタム上書きを有効にするか。true なら customTextColor を `.foregroundStyle` に適用。
+    var useCustomTextColor: Bool {
+        get { defaults.bool(forKey: Key.useCustomTextColor) }
+        set { defaults.set(newValue, forKey: Key.useCustomTextColor) }
+    }
+
+    /// 文字色の任意色。useCustomTextColor == true のときに primary 系の foregroundStyle を上書き。
+    var customTextColor: Color {
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customTextR, gKey: Key.customTextG, bKey: Key.customTextB,
+                             default: .primary) }
+        set { Self.writeColor(defaults: defaults, color: newValue,
+                              rKey: Key.customTextR, gKey: Key.customTextG, bKey: Key.customTextB) }
+    }
+
+    /// 文字サイズスケール（小 / 標準 / 大 / 特大）。各 Text の font size に factor を掛ける。
+    var textScale: TextScale {
+        get {
+            let raw = defaults.string(forKey: Key.textScale) ?? TextScale.regular.rawValue
+            return TextScale(rawValue: raw) ?? .regular
+        }
+        set { defaults.set(newValue.rawValue, forKey: Key.textScale) }
+    }
+
+    /// リングの太さ（event 円弧の幅）。ClockGeometry の outerRadius - innerRadius を制御。
+    var ringThickness: RingThickness {
+        get {
+            let raw = defaults.string(forKey: Key.ringThickness) ?? RingThickness.regular.rawValue
+            return RingThickness(rawValue: raw) ?? .regular
+        }
+        set { defaults.set(newValue.rawValue, forKey: Key.ringThickness) }
+    }
+
+    /// 針の太さ（時計の針の lineWidth）。
+    var handThickness: HandThickness {
+        get {
+            let raw = defaults.string(forKey: Key.handThickness) ?? HandThickness.regular.rawValue
+            return HandThickness(rawValue: raw) ?? .regular
+        }
+        set { defaults.set(newValue.rawValue, forKey: Key.handThickness) }
+    }
+
+    /// 円自体（時間トラックの内縁を示すリング輪郭線）の太さ。
+    var circleOutlineThickness: CircleOutlineThickness {
+        get {
+            let raw = defaults.string(forKey: Key.circleOutlineThickness) ?? CircleOutlineThickness.regular.rawValue
+            return CircleOutlineThickness(rawValue: raw) ?? .regular
+        }
+        set { defaults.set(newValue.rawValue, forKey: Key.circleOutlineThickness) }
+    }
+
+    /// 円自体の色を任意色で上書きするか。true なら customCircleColor を使う。
+    /// false の場合は `.secondary.opacity(0.6)` の既定色を使う。
+    var useCustomCircleColor: Bool {
+        get { defaults.bool(forKey: Key.useCustomCircleColor) }
+        set { defaults.set(newValue, forKey: Key.useCustomCircleColor) }
+    }
+
+    /// 円自体の任意色。useCustomCircleColor == true のときに採用される。
+    var customCircleColor: Color {
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customCircleR, gKey: Key.customCircleG, bKey: Key.customCircleB,
+                             default: .gray) }
+        set { Self.writeColor(defaults: defaults, color: newValue,
+                              rKey: Key.customCircleR, gKey: Key.customCircleG, bKey: Key.customCircleB) }
+    }
+
+    /// 前回のウィンドウフレーム。x/y/w/h の 4 つのキーに分解して保存。
+    /// いずれかが欠落していたら nil（初回起動扱い）。
+    var windowFrame: NSRect? {
+        guard defaults.object(forKey: Key.windowFrameX) != nil,
+              defaults.object(forKey: Key.windowFrameY) != nil,
+              defaults.object(forKey: Key.windowFrameW) != nil,
+              defaults.object(forKey: Key.windowFrameH) != nil else {
+            return nil
+        }
+        let x = defaults.double(forKey: Key.windowFrameX)
+        let y = defaults.double(forKey: Key.windowFrameY)
+        let w = defaults.double(forKey: Key.windowFrameW)
+        let h = defaults.double(forKey: Key.windowFrameH)
+        return NSRect(x: x, y: y, width: w, height: h)
+    }
+
+    func setWindowFrame(_ rect: NSRect) {
+        defaults.set(rect.origin.x, forKey: Key.windowFrameX)
+        defaults.set(rect.origin.y, forKey: Key.windowFrameY)
+        defaults.set(rect.size.width, forKey: Key.windowFrameW)
+        defaults.set(rect.size.height, forKey: Key.windowFrameH)
+    }
+
+    // MARK: - Color persistence helpers
+
+    /// 3 キーの RGB Double を読んで SwiftUI Color に復元する。
+    /// 未設定（r キーが存在しない）なら default を返す。
+    private static func readColor(defaults: UserDefaults,
+                                  rKey: String, gKey: String, bKey: String,
+                                  default defaultColor: Color) -> Color {
+        guard defaults.object(forKey: rKey) != nil else { return defaultColor }
+        let r = defaults.double(forKey: rKey)
+        let g = defaults.double(forKey: gKey)
+        let b = defaults.double(forKey: bKey)
+        return Color(red: r, green: g, blue: b)
+    }
+
+    /// SwiftUI Color を NSColor 経由で sRGB 成分に分解して 3 キーに保存する。
+    private static func writeColor(defaults: UserDefaults, color: Color,
+                                   rKey: String, gKey: String, bKey: String) {
+        let nsColor = NSColor(color).usingColorSpace(.sRGB) ?? .black
+        defaults.set(Double(nsColor.redComponent), forKey: rKey)
+        defaults.set(Double(nsColor.greenComponent), forKey: gKey)
+        defaults.set(Double(nsColor.blueComponent), forKey: bKey)
+    }
+}
