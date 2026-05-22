@@ -268,18 +268,19 @@ struct DayTimeline {
 
 #### spec 009 由来の構造リファクタ候補（CLAUDE.md「設定 UI は Phase 3」の整理）
 
-実験的に追加した設定 UI 11 軸の構造的負債整理。spec 009 §Out of scope を参照：
+実験的に追加した設定 UI 11 軸の構造的負債整理。spec 009 §Out of scope を参照。
+**H-1〜H-4 + H-7 + H-8 は spec 011 で完了済み**：
 
-- **AppSettings の構造分割**（H-1）：`Composition/SettingsStore.swift`（永続化）+ `UI/AppearanceTokens.swift`（enum 群）+ `Composition/AppearanceModel.swift`（`@MainActor ObservableObject`）への 3 ファイル分割
-- **AppearanceModel への移行**（H-2）：ClockView の `@State` 13 個 + 通知 1 本の手動 broadcast を `@StateObject` で集約、SwiftUI の `@Published` 経由で再描画
-- **SettingsView の細分化**（H-3）：11 セクションをファイル単位で分割、`UI/Settings/<項目>Section.swift` 配下に整理
-- **ThemeColor 循環依存解消**（H-4）：`ThemeColor.color` が `AppSettings.shared.customThemeColor` を読み戻す構造を `resolvedColor(customFallback:)` に変更
-- **UserDefaults キー rename**（H-5）：`customColor.r` → `customThemeColor.r` 等、命名一貫化 + マイグレーション
-- **tokiGlassBackground 拡張**（H-6）：material 引数を受け取り、EventTooltip / SettingsView の背景にも `materialStrength` を反映
-- **`@MainActor` 付与**（H-7）：`AppSettings` のスレッド安全性を明示
-- **円の色既定値集約**（H-8）：`.secondary.opacity(0.6)` リテラルを AppSettings 側に集約
-- **ColorPicker `supportsOpacity` の見直し**：文字色 / 円の色は alpha 可にする検討
-- **設定ウィンドウ高さの screen clamp**：860pt 固定は 13-inch MBP で画面外にはみ出る
+- ✅ **AppSettings の構造分割**（H-1、spec 011 完了）：`Composition/SettingsStore.swift`（永続化）+ `UI/AppearanceTokens.swift`（enum 群）+ `Composition/AppearanceModel.swift`（`@MainActor ObservableObject`）への 3 ファイル分割完了、`AppSettings.swift` は撤廃
+- ✅ **AppearanceModel への移行**（H-2、spec 011 完了）：ClockView の `@State` 13 個 + 通知 1 本の手動 broadcast を `@ObservedObject AppearanceModel` で集約、`@Published` の自動 binding で再描画
+- ✅ **SettingsView の細分化**（H-3、spec 011 完了）：11 セクションを `UI/Settings/<Topic>Section.swift` 11 ファイルに分割、SettingsView は 292 行 → 32 行のコンテナに縮小
+- ✅ **ThemeColor 循環依存解消**（H-4、spec 011 完了）：`.custom` ケースを `.accentColor` フォールバックに変更、resolved 値は `AppearanceModel.resolvedThemeColor` で一意供給
+- ✅ **`@MainActor` 付与**（H-7、spec 011 完了）：`SettingsStore` / `AppearanceModel` に明示付与
+- ✅ **円の色既定値集約**（H-8、spec 011 完了）：`AppearanceModel.resolvedCircleOutlineColor` でリテラル `.secondary.opacity(0.6)` を集約
+- **UserDefaults キー rename**（H-5、spec 012 候補）：`customColor.r` → `customThemeColor.r` 等、命名一貫化 + マイグレーション
+- **tokiGlassBackground 拡張**（H-6、spec 012 候補）：material 引数を受け取り、EventTooltip / SettingsView の背景にも `materialStrength` を反映
+- **ColorPicker `supportsOpacity` の見直し**（spec 012 / 013 候補）：文字色 / 円の色は alpha 可にする検討
+- **設定ウィンドウ高さの screen clamp**（spec 012 / 013 候補）：860pt 固定は 13-inch MBP で画面外にはみ出る
 
 ---
 
