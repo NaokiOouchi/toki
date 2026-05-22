@@ -18,16 +18,41 @@ struct AppSettings {
         static let themeColor = "toki.themeColor"
         static let materialStrength = "toki.materialStrength"
         static let colorSchemeMode = "toki.colorSchemeMode"
+        static let customColorR = "toki.customColor.r"
+        static let customColorG = "toki.customColor.g"
+        static let customColorB = "toki.customColor.b"
     }
 
-    /// ウィンドウ透過率（0.5〜1.0）。未設定時は 1.0。
+    /// ウィンドウ透過率（0.0〜1.0）。0 = 完全透明、1 = 完全不透明。
+    /// 未設定（初回起動）は 1.0。0.0 を明示保存できるよう object(forKey:) で存在判定する。
     var opacity: Double {
         get {
-            let v = defaults.double(forKey: Key.opacity)
-            return v == 0 ? 1.0 : max(0.5, min(1.0, v))
+            guard defaults.object(forKey: Key.opacity) != nil else { return 1.0 }
+            return max(0.0, min(1.0, defaults.double(forKey: Key.opacity)))
         }
         nonmutating set {
-            defaults.set(max(0.5, min(1.0, newValue)), forKey: Key.opacity)
+            defaults.set(max(0.0, min(1.0, newValue)), forKey: Key.opacity)
+        }
+    }
+
+    /// ThemeColor.custom 選択時に使う任意色。SwiftUI Color を sRGB で 3 つの Double に分解保存。
+    /// 未設定時は Indigo 相当のデフォルトを返す。
+    var customThemeColor: Color {
+        get {
+            guard defaults.object(forKey: Key.customColorR) != nil else {
+                return .indigo
+            }
+            let r = defaults.double(forKey: Key.customColorR)
+            let g = defaults.double(forKey: Key.customColorG)
+            let b = defaults.double(forKey: Key.customColorB)
+            return Color(red: r, green: g, blue: b)
+        }
+        nonmutating set {
+            // SwiftUI Color → NSColor → sRGB 成分で永続化
+            let nsColor = NSColor(newValue).usingColorSpace(.sRGB) ?? .black
+            defaults.set(Double(nsColor.redComponent), forKey: Key.customColorR)
+            defaults.set(Double(nsColor.greenComponent), forKey: Key.customColorG)
+            defaults.set(Double(nsColor.blueComponent), forKey: Key.customColorB)
         }
     }
 
@@ -92,8 +117,9 @@ struct AppSettings {
 }
 
 /// テーマカラーのプリセット。針 / 中心ドット等に使う SwiftUI Color を提供。
+/// `custom` の場合は AppSettings.shared.customThemeColor を返す。
 enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
-    case accent, indigo, blue, teal, mint, green, yellow, orange, red, pink, purple, brown
+    case accent, indigo, blue, cyan, teal, mint, green, yellow, orange, red, pink, purple, brown, gray, custom
 
     var id: String { rawValue }
 
@@ -102,6 +128,7 @@ enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
         case .accent: return "システム"
         case .indigo: return "インディゴ"
         case .blue: return "ブルー"
+        case .cyan: return "シアン"
         case .teal: return "ティール"
         case .mint: return "ミント"
         case .green: return "グリーン"
@@ -111,6 +138,8 @@ enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
         case .pink: return "ピンク"
         case .purple: return "パープル"
         case .brown: return "ブラウン"
+        case .gray: return "グレー"
+        case .custom: return "カスタム"
         }
     }
 
@@ -119,6 +148,7 @@ enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
         case .accent: return .accentColor
         case .indigo: return .indigo
         case .blue: return .blue
+        case .cyan: return .cyan
         case .teal: return .teal
         case .mint: return .mint
         case .green: return .green
@@ -128,6 +158,8 @@ enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
         case .pink: return .pink
         case .purple: return .purple
         case .brown: return .brown
+        case .gray: return .gray
+        case .custom: return AppSettings.shared.customThemeColor
         }
     }
 }

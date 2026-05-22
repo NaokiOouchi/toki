@@ -15,22 +15,44 @@ mkdir -p "$CONTENTS/Resources"
 cp "$BIN_DIR/Toki" "$CONTENTS/MacOS/Toki"
 cp "Resources/Info.plist" "$CONTENTS/Info.plist"
 
-# 開発用の自己署名証明書で署名。これにより rebuild しても署名が安定し、
+# 開発用の証明書で署名。これにより rebuild しても署名が安定し、
 # macOS Keychain ACL（OAuth token アクセス権限）が永続化する。
-# ユーザーが Keychain Access.app の Certificate Assistant で
-# "Toki Dev" という名前の Code Signing 証明書（Self Signed Root）を
-# 作成しておく必要がある（一度だけのセットアップ）。
-# CODESIGN_IDENTITY 環境変数で署名 ID を上書き可能、未指定なら "Toki Dev"。
-# 証明書が無い環境ではスキップして警告のみ（CI 等で codesign が無くてもビルドは通す）。
-CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-Toki Dev}"
-if security find-identity -p codesigning -v | grep -q "$CODESIGN_IDENTITY"; then
-    codesign --sign "$CODESIGN_IDENTITY" --force --deep --options runtime "$APP_DIR"
-    echo "Signed with: $CODESIGN_IDENTITY"
+#
+# 優先順位（最初に見つかったものを使用）：
+#   1. CODESIGN_IDENTITY 環境変数で明示指定された identity
+#   2. "Toki Dev"（ユーザー自身が Keychain Access で作成した自己署名）
+#   3. 任意の "Apple Development: ..." identity（Xcode サインインで取得済み）
+#   4. どれも無ければスキップして警告（CI 等向け）
+pick_codesign_identity() {
+    if [ -n "${CODESIGN_IDENTITY:-}" ]; then
+        echo "$CODESIGN_IDENTITY"
+        return
+    fi
+    if security find-identity -p codesigning -v 2>/dev/null | grep -q "Toki Dev"; then
+        echo "Toki Dev"
+        return
+    fi
+    local apple_dev_id
+    apple_dev_id=$(security find-identity -p codesigning -v 2>/dev/null \
+        | grep -oE '"Apple Development:[^"]*"' \
+        | head -1 \
+        | sed 's/^"//;s/"$//')
+    if [ -n "$apple_dev_id" ]; then
+        echo "$apple_dev_id"
+        return
+    fi
+    echo ""
+}
+
+CODESIGN_IDENTITY_RESOLVED=$(pick_codesign_identity)
+if [ -n "$CODESIGN_IDENTITY_RESOLVED" ]; then
+    codesign --sign "$CODESIGN_IDENTITY_RESOLVED" --force --deep --options runtime "$APP_DIR"
+    echo "Signed with: $CODESIGN_IDENTITY_RESOLVED"
 else
-    echo "Warning: codesign identity '$CODESIGN_IDENTITY' not found. Skipping signing."
+    echo "Warning: no codesigning identity found. Skipping signing."
     echo "  -> Keychain prompts will recur after each rebuild."
     echo "  -> Create one in Keychain Access.app: Certificate Assistant > Create a Certificate..."
-    echo "     Name: $CODESIGN_IDENTITY / Identity Type: Self Signed Root / Certificate Type: Code Signing"
+    echo "     Name: Toki Dev / Identity Type: Self Signed Root / Certificate Type: Code Signing"
 fi
 
 echo "Built $APP_DIR"

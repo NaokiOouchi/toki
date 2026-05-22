@@ -6,12 +6,13 @@ import SwiftUI
 struct SettingsView: View {
     @State private var opacity: Double = AppSettings.shared.opacity
     @State private var themeColor: ThemeColor = AppSettings.shared.themeColor
+    @State private var customThemeColor: Color = AppSettings.shared.customThemeColor
     @State private var materialStrength: MaterialStrength = AppSettings.shared.materialStrength
     @State private var colorSchemeMode: ColorSchemeMode = AppSettings.shared.colorSchemeMode
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // 透過率セクション
+            // 透過率セクション（0% 完全透明 〜 100% 完全不透明）
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("透過率")
@@ -21,17 +22,30 @@ struct SettingsView: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
-                Slider(value: $opacity, in: 0.5...1.0)
+                Slider(value: $opacity, in: 0.0...1.0)
                     .onChange(of: opacity) { _, newValue in
                         AppSettings.shared.opacity = newValue
                         NotificationCenter.default.post(name: .tokiOpacityChanged, object: nil)
                     }
             }
 
-            // テーマカラーセクション
+            // テーマカラーセクション（プリセット + カスタム）
             VStack(alignment: .leading, spacing: 6) {
-                Text("テーマカラー")
-                    .font(.system(size: 12, weight: .medium))
+                HStack {
+                    Text("テーマカラー")
+                        .font(.system(size: 12, weight: .medium))
+                    Spacer()
+                    // custom 選択時のみ ColorPicker を inline 表示
+                    if themeColor == .custom {
+                        ColorPicker("", selection: $customThemeColor, supportsOpacity: false)
+                            .labelsHidden()
+                            .frame(width: 32, height: 20)
+                            .onChange(of: customThemeColor) { _, newValue in
+                                AppSettings.shared.customThemeColor = newValue
+                                NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+                            }
+                    }
+                }
                 Picker("", selection: $themeColor) {
                     ForEach(ThemeColor.allCases) { color in
                         HStack {
