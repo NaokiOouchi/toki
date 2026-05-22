@@ -1,27 +1,73 @@
 import SwiftUI
 
-/// 透過率調整の軽量設定 UI。AppDelegate が別 NSWindow で表示する。
-/// onChange callback で AppSettings.opacity を即時更新し、
-/// NotificationCenter で `.tokiOpacityChanged` を発火、ClockView が購読して反映する。
+/// 軽量設定 UI。AppDelegate が別 NSWindow で表示する。
+/// 透過率 / テーマカラー / 背景マテリアル濃度をユーザーが調整できる。
+/// 各値は即時に AppSettings へ書き込み、NotificationCenter で View 側に通知する。
 struct SettingsView: View {
     @State private var opacity: Double = AppSettings.shared.opacity
-    var onChange: (Double) -> Void
+    @State private var themeColor: ThemeColor = AppSettings.shared.themeColor
+    @State private var materialStrength: MaterialStrength = AppSettings.shared.materialStrength
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("透過率")
-                .font(.system(size: 12, weight: .medium))
-            Slider(value: $opacity, in: 0.5...1.0)
-                .onChange(of: opacity) { _, newValue in
-                    AppSettings.shared.opacity = newValue
-                    onChange(newValue)
+        VStack(alignment: .leading, spacing: 16) {
+            // 透過率セクション
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("透過率")
+                        .font(.system(size: 12, weight: .medium))
+                    Spacer()
+                    Text("\(Int(opacity * 100))%")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
                 }
-            Text("\(Int(opacity * 100))%")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                Slider(value: $opacity, in: 0.5...1.0)
+                    .onChange(of: opacity) { _, newValue in
+                        AppSettings.shared.opacity = newValue
+                        NotificationCenter.default.post(name: .tokiOpacityChanged, object: nil)
+                    }
+            }
+
+            // テーマカラーセクション
+            VStack(alignment: .leading, spacing: 6) {
+                Text("テーマカラー")
+                    .font(.system(size: 12, weight: .medium))
+                Picker("", selection: $themeColor) {
+                    ForEach(ThemeColor.allCases) { color in
+                        HStack {
+                            Circle()
+                                .fill(color.color)
+                                .frame(width: 10, height: 10)
+                            Text(color.displayName)
+                        }
+                        .tag(color)
+                    }
+                }
+                .labelsHidden()
+                .onChange(of: themeColor) { _, newValue in
+                    AppSettings.shared.themeColor = newValue
+                    NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+                }
+            }
+
+            // 背景マテリアル濃度セクション（白背景での視認性調整）
+            VStack(alignment: .leading, spacing: 6) {
+                Text("背景の濃さ")
+                    .font(.system(size: 12, weight: .medium))
+                Picker("", selection: $materialStrength) {
+                    ForEach(MaterialStrength.allCases) { strength in
+                        Text(strength.displayName).tag(strength)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .onChange(of: materialStrength) { _, newValue in
+                    AppSettings.shared.materialStrength = newValue
+                    NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+                }
+            }
         }
         .padding(20)
-        .frame(width: 260, height: 120)
+        .frame(width: 320, height: 280)
         // spec 008: Liquid Glass（macOS 26+）/ Material fallback
         .tokiGlassBackground(cornerRadius: 12)
     }

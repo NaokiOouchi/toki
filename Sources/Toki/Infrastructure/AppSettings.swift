@@ -1,7 +1,8 @@
 import Foundation
 import AppKit
+import SwiftUI
 
-/// UserDefaults wrapper for app-level settings (opacity / windowFrame).
+/// UserDefaults wrapper for app-level settings (opacity / windowFrame / theme / material).
 /// シングルトン的に `AppSettings.shared` でアクセス、struct 値型で内部状態を持たない。
 /// 個別キーで UserDefaults に保存し、必要に応じて clamp / 検証する。
 struct AppSettings {
@@ -14,6 +15,8 @@ struct AppSettings {
         static let windowFrameY = "toki.windowFrame.y"
         static let windowFrameW = "toki.windowFrame.w"
         static let windowFrameH = "toki.windowFrame.h"
+        static let themeColor = "toki.themeColor"
+        static let materialStrength = "toki.materialStrength"
     }
 
     /// ウィンドウ透過率（0.5〜1.0）。未設定時は 1.0。
@@ -24,6 +27,30 @@ struct AppSettings {
         }
         nonmutating set {
             defaults.set(max(0.5, min(1.0, newValue)), forKey: Key.opacity)
+        }
+    }
+
+    /// 針 / 中心ドット / 現在 event アウトラインに使うテーマカラー。
+    /// 未設定時はシステムアクセントカラー（System Settings の "強調色"）。
+    var themeColor: ThemeColor {
+        get {
+            let raw = defaults.string(forKey: Key.themeColor) ?? ThemeColor.accent.rawValue
+            return ThemeColor(rawValue: raw) ?? .accent
+        }
+        nonmutating set {
+            defaults.set(newValue.rawValue, forKey: Key.themeColor)
+        }
+    }
+
+    /// ウィンドウ背景 material の濃さ。白背景上での視認性調整に使う。
+    /// 未設定時は `.regular`。
+    var materialStrength: MaterialStrength {
+        get {
+            let raw = defaults.string(forKey: Key.materialStrength) ?? MaterialStrength.regular.rawValue
+            return MaterialStrength(rawValue: raw) ?? .regular
+        }
+        nonmutating set {
+            defaults.set(newValue.rawValue, forKey: Key.materialStrength)
         }
     }
 
@@ -51,7 +78,77 @@ struct AppSettings {
     }
 }
 
+/// テーマカラーのプリセット。針 / 中心ドット等に使う SwiftUI Color を提供。
+enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
+    case accent, indigo, blue, teal, mint, green, yellow, orange, red, pink, purple, brown
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .accent: return "システム"
+        case .indigo: return "インディゴ"
+        case .blue: return "ブルー"
+        case .teal: return "ティール"
+        case .mint: return "ミント"
+        case .green: return "グリーン"
+        case .yellow: return "イエロー"
+        case .orange: return "オレンジ"
+        case .red: return "レッド"
+        case .pink: return "ピンク"
+        case .purple: return "パープル"
+        case .brown: return "ブラウン"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .accent: return .accentColor
+        case .indigo: return .indigo
+        case .blue: return .blue
+        case .teal: return .teal
+        case .mint: return .mint
+        case .green: return .green
+        case .yellow: return .yellow
+        case .orange: return .orange
+        case .red: return .red
+        case .pink: return .pink
+        case .purple: return .purple
+        case .brown: return .brown
+        }
+    }
+}
+
+/// 背景 material の濃さプリセット。白背景での視認性調整用。
+enum MaterialStrength: String, CaseIterable, Identifiable, Hashable {
+    case ultraThin, thin, regular, thick, ultraThick
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .ultraThin: return "極薄"
+        case .thin: return "薄め"
+        case .regular: return "標準"
+        case .thick: return "濃いめ"
+        case .ultraThick: return "極濃"
+        }
+    }
+
+    var swiftUIMaterial: Material {
+        switch self {
+        case .ultraThin: return .ultraThinMaterial
+        case .thin: return .thinMaterial
+        case .regular: return .regularMaterial
+        case .thick: return .thickMaterial
+        case .ultraThick: return .ultraThickMaterial
+        }
+    }
+}
+
 extension Notification.Name {
     /// 透過率設定が変更されたときに送出される通知。ClockView が購読して opacity 反映。
     static let tokiOpacityChanged = Notification.Name("toki.opacityChanged")
+    /// テーマカラー / 背景マテリアル等の見た目設定が変更されたときの通知。
+    static let tokiAppearanceChanged = Notification.Name("toki.appearanceChanged")
 }

@@ -8,6 +8,8 @@ import SwiftUI
 struct ClockView: View {
     @ObservedObject var viewModel: ClockViewModel
     @State private var opacity: Double = AppSettings.shared.opacity
+    @State private var themeColor: ThemeColor = AppSettings.shared.themeColor
+    @State private var materialStrength: MaterialStrength = AppSettings.shared.materialStrength
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -22,6 +24,7 @@ struct ClockView: View {
                     ClockFaceCanvas(
                         nowAngle: viewModel.nowAngle,
                         events: viewModel.canvasEvents,
+                        themeColor: themeColor.color,
                         onTap: { point, geometry in
                             viewModel.handleArcTap(at: point, geometry: geometry)
                         },
@@ -53,26 +56,32 @@ struct ClockView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
+            // ボーダーはテーマカラーで薄く着色して窓の輪郭を白背景でも分かりやすくする。
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
+                .stroke(themeColor.color.opacity(0.5), lineWidth: 0.75)
         )
         .onReceive(NotificationCenter.default.publisher(for: .tokiOpacityChanged)) { _ in
             opacity = AppSettings.shared.opacity
         }
+        .onReceive(NotificationCenter.default.publisher(for: .tokiAppearanceChanged)) { _ in
+            themeColor = AppSettings.shared.themeColor
+            materialStrength = AppSettings.shared.materialStrength
+        }
     }
 
-    /// 背景レイヤー。macOS 26+ なら Liquid Glass、それ未満は `.regularMaterial`。
+    /// 背景レイヤー。macOS 26+ なら Liquid Glass、それ未満は AppSettings の MaterialStrength を反映。
     /// `.opacity()` で透過率を調整できるよう独立 View として切り出す。
     @ViewBuilder
     private var glassBackgroundLayer: some View {
         if #available(macOS 26.0, *) {
+            // Liquid Glass を主に、material 濃度を背景 fill の thickness で追加調整。
             Rectangle()
-                .fill(.clear)
+                .fill(materialStrength.swiftUIMaterial)
                 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .opacity(opacity)
         } else {
             RoundedRectangle(cornerRadius: 12)
-                .fill(.regularMaterial)
+                .fill(materialStrength.swiftUIMaterial)
                 .opacity(opacity)
         }
     }

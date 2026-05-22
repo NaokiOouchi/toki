@@ -8,6 +8,9 @@ struct ClockFaceCanvas: View {
     /// View は計算済みの値を受け取るだけにする。
     let nowAngle: Double
     let events: [RenderableEvent]
+    /// 針 / 中心ドット / 現在 event アウトラインのテーマカラー。
+    /// 旧来の `.primary` から差し替え、ユーザー設定で変更可能（spec 008 拡張）。
+    var themeColor: Color = .accentColor
     /// 円弧クリック時に呼ばれる。位置は Canvas のローカル座標、geometry は描画時と同じ前提。
     var onTap: ((CGPoint, ClockGeometry) -> Void)? = nil
     /// マウスホバー時に呼ばれる。`.active(location)` / `.ended` の HoverPhase と
@@ -53,7 +56,7 @@ struct ClockFaceCanvas: View {
         ctx.stroke(inner, with: .color(.secondary.opacity(0.6)), lineWidth: 0.75)
     }
 
-    /// 針の根元にある小さなドット。
+    /// 針の根元にある小さなドット。テーマカラーで強調する。
     private func drawCenterDot(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
         let dotRadius: CGFloat = 2.5
         let rect = CGRect(
@@ -62,7 +65,7 @@ struct ClockFaceCanvas: View {
             width: dotRadius * 2,
             height: dotRadius * 2
         )
-        ctx.fill(Path(ellipseIn: rect), with: .color(.primary))
+        ctx.fill(Path(ellipseIn: rect), with: .color(themeColor))
     }
 
     /// 0 / 6 / 12 / 18 の時刻マークをリングの内側に描く。
@@ -122,6 +125,6 @@ struct ClockFaceCanvas: View {
         var path = Path()
         path.move(to: startPoint)
         path.addLine(to: endPoint)
-        ctx.stroke(path, with: .color(.primary), lineWidth: 1.5)
+        ctx.stroke(path, with: .color(themeColor), lineWidth: 1.5)
     }
 }

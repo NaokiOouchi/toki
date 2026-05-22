@@ -219,12 +219,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        let view = SettingsView { _ in
-            NotificationCenter.default.post(name: .tokiOpacityChanged, object: nil)
-        }
+        // SettingsView は内部で AppSettings に書き込み + NotificationCenter に post する。
+        // AppDelegate からのコールバックは不要（SettingsView 自身が通知発火）。
+        let view = SettingsView()
         let hosting = NSHostingView(rootView: view)
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 260, height: 120),
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 280),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
