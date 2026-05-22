@@ -20,6 +20,15 @@ final class ClockViewModel: ObservableObject {
     /// Equatable 比較により同値時の再描画を抑える。
     @Published private(set) var hoveredTooltip: TooltipState? = nil
 
+    /// 最後に Gateway から timeline を受け取った時刻。
+    /// Gateway の $lastReloadAt を sink して更新される。
+    /// 中央 / 下部表示の「最終更新 X 分前」算出に使う。
+    @Published private(set) var lastUpdatedAt: Date? = nil
+
+    /// OAuth 接続フロー中か。AppDelegate が beginAuthorization 開始 / 完了で叩く。
+    /// 中央テキストに「接続中…」を表示するための flag。
+    @Published private(set) var isConnecting: Bool = false
+
     private let gateway: GoogleCalendarGateway?
     private let calendar: Calendar
     private var cancellables = Set<AnyCancellable>()
@@ -68,6 +77,27 @@ final class ClockViewModel: ObservableObject {
     /// AppDelegate が beginAuthorization / revoke 完了後に呼び出して即時 UI 反映する。
     func refreshAuthorizationState() {
         accessGranted = gateway?.isAuthorized ?? false
+    }
+
+    /// 手動再読込。右クリック「再読込」メニューから呼ばれる。
+    /// isConnecting は変えない（接続フロー専用）。
+    func handleReload() async {
+        await gateway?.reload()
+    }
+
+    /// 接続フロー中フラグを更新する。AppDelegate.handleConnect から呼ばれる。
+    func setConnecting(_ value: Bool) {
+        isConnecting = value
+    }
+
+    /// 最後の reload からの経過時間を人間可読な形式に整形する。
+    /// 60 秒未満は「最終更新 たった今」、それ以上は「最終更新 X 分前」。
+    /// lastUpdatedAt が nil（一度も成功 reload してない）の場合は nil。
+    var lastUpdatedFormatted: String? {
+        guard let updated = lastUpdatedAt else { return nil }
+        let elapsed = Int(now.timeIntervalSince(updated))
+        if elapsed < 60 { return "最終更新 たった今" }
+        return "最終更新 \(elapsed / 60) 分前"
     }
 
     /// 次の :00 までの差分を待ってから 60 秒ごとのタイマーを開始する。
@@ -120,6 +150,9 @@ final class ClockViewModel: ObservableObject {
     /// 権限なし / 未取得 / 進行中 / 次あり / 予定なし の 5 パターンを網羅する。
     var centerState: CenterState {
         let timeStr = Self.formatHHMM(now, calendar: calendar)
+        if isConnecting {
+            return .freeTime(time: timeStr, subtitle: "接続中…")
+        }
         if !accessGranted {
             return .freeTime(time: timeStr, subtitle: "右クリックで接続")
         }
