@@ -10,6 +10,7 @@ struct ClockView: View {
     @State private var opacity: Double = AppSettings.shared.opacity
     @State private var themeColor: ThemeColor = AppSettings.shared.themeColor
     @State private var materialStrength: MaterialStrength = AppSettings.shared.materialStrength
+    @State private var colorSchemeMode: ColorSchemeMode = AppSettings.shared.colorSchemeMode
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -60,12 +61,15 @@ struct ClockView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(themeColor.color.opacity(0.5), lineWidth: 0.75)
         )
+        // 配色モード：auto なら nil（システム追従）、light/dark なら強制
+        .preferredColorScheme(colorSchemeMode.swiftUIColorScheme)
         .onReceive(NotificationCenter.default.publisher(for: .tokiOpacityChanged)) { _ in
             opacity = AppSettings.shared.opacity
         }
         .onReceive(NotificationCenter.default.publisher(for: .tokiAppearanceChanged)) { _ in
             themeColor = AppSettings.shared.themeColor
             materialStrength = AppSettings.shared.materialStrength
+            colorSchemeMode = AppSettings.shared.colorSchemeMode
         }
     }
 

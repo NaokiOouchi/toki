@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var opacity: Double = AppSettings.shared.opacity
     @State private var themeColor: ThemeColor = AppSettings.shared.themeColor
     @State private var materialStrength: MaterialStrength = AppSettings.shared.materialStrength
+    @State private var colorSchemeMode: ColorSchemeMode = AppSettings.shared.colorSchemeMode
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -49,6 +50,23 @@ struct SettingsView: View {
                 }
             }
 
+            // 配色モードセクション（文字色 + 背景色を一括切替）
+            VStack(alignment: .leading, spacing: 6) {
+                Text("配色")
+                    .font(.system(size: 12, weight: .medium))
+                Picker("", selection: $colorSchemeMode) {
+                    ForEach(ColorSchemeMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .onChange(of: colorSchemeMode) { _, newValue in
+                    AppSettings.shared.colorSchemeMode = newValue
+                    NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+                }
+            }
+
             // 背景マテリアル濃度セクション（白背景での視認性調整）
             VStack(alignment: .leading, spacing: 6) {
                 Text("背景の濃さ")
@@ -67,7 +85,7 @@ struct SettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 320, height: 280)
+        .frame(width: 320, height: 340)
         // spec 008: Liquid Glass（macOS 26+）/ Material fallback
         .tokiGlassBackground(cornerRadius: 12)
     }

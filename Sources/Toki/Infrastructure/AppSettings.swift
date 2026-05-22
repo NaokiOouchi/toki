@@ -17,6 +17,7 @@ struct AppSettings {
         static let windowFrameH = "toki.windowFrame.h"
         static let themeColor = "toki.themeColor"
         static let materialStrength = "toki.materialStrength"
+        static let colorSchemeMode = "toki.colorSchemeMode"
     }
 
     /// ウィンドウ透過率（0.5〜1.0）。未設定時は 1.0。
@@ -51,6 +52,18 @@ struct AppSettings {
         }
         nonmutating set {
             defaults.set(newValue.rawValue, forKey: Key.materialStrength)
+        }
+    }
+
+    /// 配色モード。auto は macOS 外観設定に追従、light / dark は強制適用。
+    /// 文字色 / 背景マテリアル / アイコン色が連動する SwiftUI の preferredColorScheme で実装。
+    var colorSchemeMode: ColorSchemeMode {
+        get {
+            let raw = defaults.string(forKey: Key.colorSchemeMode) ?? ColorSchemeMode.auto.rawValue
+            return ColorSchemeMode(rawValue: raw) ?? .auto
+        }
+        nonmutating set {
+            defaults.set(newValue.rawValue, forKey: Key.colorSchemeMode)
         }
     }
 
@@ -146,9 +159,36 @@ enum MaterialStrength: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
+/// 配色モード（ライト / ダーク / 自動）プリセット。
+/// SwiftUI の `.preferredColorScheme()` で実装し、文字色・背景マテリアル・
+/// アイコン色を一括で切り替える。
+enum ColorSchemeMode: String, CaseIterable, Identifiable, Hashable {
+    case auto, light, dark
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .auto: return "自動"
+        case .light: return "ライト"
+        case .dark: return "ダーク"
+        }
+    }
+
+    /// SwiftUI の `.preferredColorScheme(_:)` に渡す値。
+    /// auto は nil で「強制しない＝システム追従」を表現する。
+    var swiftUIColorScheme: ColorScheme? {
+        switch self {
+        case .auto: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 extension Notification.Name {
     /// 透過率設定が変更されたときに送出される通知。ClockView が購読して opacity 反映。
     static let tokiOpacityChanged = Notification.Name("toki.opacityChanged")
-    /// テーマカラー / 背景マテリアル等の見た目設定が変更されたときの通知。
+    /// テーマカラー / 背景マテリアル / 配色モード等の見た目設定が変更されたときの通知。
     static let tokiAppearanceChanged = Notification.Name("toki.appearanceChanged")
 }
