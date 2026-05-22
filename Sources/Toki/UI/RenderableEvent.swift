@@ -19,6 +19,14 @@ struct RenderableEvent: Identifiable {
     /// API 取得失敗の場合は nil。
     /// クリック時は nil なら今日のビュー fallback。
     let webURL: URL?
+    /// 場所文字列（spec 010 で追加、popover 表示に使用）。
+    let location: String?
+    /// description（spec 010 で追加、popover 表示に使用）。Domain Event.note と対応。
+    let note: String?
+    /// 参加者リスト（spec 010 で追加、popover 表示に使用）。空配列許容。
+    let attendees: [Attendee]
+    /// Meet URL（spec 010 で追加、popover の「Meet で開く」ボタンで使用）。
+    let meetURL: URL?
 }
 
 extension RenderableEvent: Equatable {

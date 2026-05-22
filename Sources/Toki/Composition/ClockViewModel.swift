@@ -147,7 +147,11 @@ final class ClockViewModel: ObservableObject {
                 status: ev.status(at: now),
                 start: ev.start,
                 end: ev.end,
-                webURL: ev.webURL
+                webURL: ev.webURL,
+                location: ev.location,
+                note: ev.note,
+                attendees: ev.attendees,
+                meetURL: ev.meetURL
             )
         }
     }
