@@ -2,9 +2,17 @@ import Foundation
 import AppKit
 import SwiftUI
 
-/// UserDefaults wrapper for app-level settings (opacity / windowFrame / theme / material).
+/// UserDefaults wrapper for app-level settings (opacity / windowFrame / theme / material 等)。
 /// シングルトン的に `AppSettings.shared` でアクセス、struct 値型で内部状態を持たない。
 /// 個別キーで UserDefaults に保存し、必要に応じて clamp / 検証する。
+///
+/// レイヤー的位置付け：spec 008 拡張時 Infrastructure 配下に配置していたが、
+/// SwiftUI Color / AppKit NSColor / SwiftUI Material 等の UI 型を返すため
+/// Infrastructure（Foundation + Security + Domain のみ）の制約に違反していた。
+/// spec 009 のレビュー指摘 C-1 で Composition 配下に移動し、ViewModel と並ぶ
+/// アプリ全体設定として位置付ける。
+/// なお UI 層が直接 `AppSettings.shared` を参照する構造は残っており、
+/// 本来は ViewModel 経由で渡すべき。これは spec 009 のリファクタ候補（HIGH H-2）。
 struct AppSettings {
     static let shared = AppSettings()
     private let defaults = UserDefaults.standard

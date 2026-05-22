@@ -266,6 +266,21 @@ struct DayTimeline {
 - **永続キャッシュ**：オフライン耐性、起動時即時表示（spec 006 §Non-goals 由来）
 - **OAuth client_secret の安全化**：個人利用以外で配布する場合は secret を分離（spec 005 §Open Questions 由来）
 
+#### spec 009 由来の構造リファクタ候補（CLAUDE.md「設定 UI は Phase 3」の整理）
+
+実験的に追加した設定 UI 11 軸の構造的負債整理。spec 009 §Out of scope を参照：
+
+- **AppSettings の構造分割**（H-1）：`Composition/SettingsStore.swift`（永続化）+ `UI/AppearanceTokens.swift`（enum 群）+ `Composition/AppearanceModel.swift`（`@MainActor ObservableObject`）への 3 ファイル分割
+- **AppearanceModel への移行**（H-2）：ClockView の `@State` 13 個 + 通知 1 本の手動 broadcast を `@StateObject` で集約、SwiftUI の `@Published` 経由で再描画
+- **SettingsView の細分化**（H-3）：11 セクションをファイル単位で分割、`UI/Settings/<項目>Section.swift` 配下に整理
+- **ThemeColor 循環依存解消**（H-4）：`ThemeColor.color` が `AppSettings.shared.customThemeColor` を読み戻す構造を `resolvedColor(customFallback:)` に変更
+- **UserDefaults キー rename**（H-5）：`customColor.r` → `customThemeColor.r` 等、命名一貫化 + マイグレーション
+- **tokiGlassBackground 拡張**（H-6）：material 引数を受け取り、EventTooltip / SettingsView の背景にも `materialStrength` を反映
+- **`@MainActor` 付与**（H-7）：`AppSettings` のスレッド安全性を明示
+- **円の色既定値集約**（H-8）：`.secondary.opacity(0.6)` リテラルを AppSettings 側に集約
+- **ColorPicker `supportsOpacity` の見直し**：文字色 / 円の色は alpha 可にする検討
+- **設定ウィンドウ高さの screen clamp**：860pt 固定は 13-inch MBP で画面外にはみ出る
+
 ---
 
 ## 7. 実装メモ・落とし穴
