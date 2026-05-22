@@ -13,6 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var oauthClient: GoogleOAuthClient?
     /// focus reload の最後の実行時刻。30 秒 debounce 用。
     private var lastFocusReloadAt: Date?
+    /// 設定パネル（透過率調整）の別ウィンドウ。1 つだけ存続させる。
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
@@ -165,6 +167,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 )
                 menu.addItem(reloadItem)
             }
+            let settingsItem = NSMenuItem(
+                title: "設定…",
+                action: #selector(handleOpenSettings),
+                keyEquivalent: ","
+            )
+            menu.addItem(settingsItem)
             menu.addItem(NSMenuItem.separator())
         }
 
@@ -197,6 +205,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 右クリックメニューの「再読込」から呼ばれる。ViewModel 経由で gateway.reload() を実行。
     @objc private func handleReload() {
         Task { await viewModel?.handleReload() }
+    }
+
+    /// 設定パネル（透過率調整）を開く。既に存在すれば前面化のみ。
+    /// NSHostingView で SettingsView を載せ、closable な titled window として表示する。
+    /// Slider の onChange callback で `.tokiOpacityChanged` を発火し、ClockView が購読して反映。
+    @objc private func handleOpenSettings() {
+        if let w = settingsWindow {
+            w.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let view = SettingsView { _ in
+            NotificationCenter.default.post(name: .tokiOpacityChanged, object: nil)
+        }
+        let hosting = NSHostingView(rootView: view)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 260, height: 120),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Toki 設定"
+        window.contentView = hosting
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        self.settingsWindow = window
     }
 
     /// Google Calendar 連携を解除。refresh_token を Keychain から削除する。

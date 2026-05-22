@@ -7,6 +7,7 @@ import SwiftUI
 /// VM から直接取得する。
 struct ClockView: View {
     @ObservedObject var viewModel: ClockViewModel
+    @State private var opacity: Double = AppSettings.shared.opacity
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -49,6 +50,10 @@ struct ClockView: View {
                     .allowsHitTesting(false)
                     .transaction { $0.animation = nil }
             }
+        }
+        .opacity(opacity)
+        .onReceive(NotificationCenter.default.publisher(for: .tokiOpacityChanged)) { _ in
+            opacity = AppSettings.shared.opacity
         }
     }
 }
