@@ -53,6 +53,12 @@ final class ClockViewModel: ObservableObject {
             .sink { [weak self] granted in self?.accessGranted = granted }
             .store(in: &cancellables)
 
+        // spec 008: Gateway の reload 完了時刻を sink して「最終更新 X 分前」表示に使う。
+        gateway?.$lastReloadAt
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] date in self?.lastUpdatedAt = date }
+            .store(in: &cancellables)
+
         gateway?.timelineUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] tl in self?.timeline = tl }

@@ -17,6 +17,11 @@ final class GoogleCalendarGateway: ObservableObject {
     /// ViewModel は Combine で sink して accessGranted を同期する。
     @Published private(set) var isAuthorized: Bool = false
 
+    /// 最後に reload() が完了した時刻。
+    /// ViewModel が sink して「最終更新 X 分前」表示に使う。
+    /// nil は一度も reload してない状態（初回起動直後）を示す。
+    @Published private(set) var lastReloadAt: Date? = nil
+
     init(oauthClient: GoogleOAuthClient,
          api: GoogleCalendarAPI,
          calendar: Calendar = .current) {
@@ -58,6 +63,8 @@ final class GoogleCalendarGateway: ObservableObject {
         let timeline = await fetchTodayTimeline()
         // refresh 失敗で Keychain がクリアされていれば isAuthorized=false に転落
         isAuthorized = oauthClient.isAuthorized
+        // spec 008: reload 完了時刻を発火、ViewModel が「最終更新 X 分前」表示に使う
+        lastReloadAt = Date()
         subject.send(timeline)
     }
 
