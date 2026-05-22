@@ -61,6 +61,35 @@ struct ClockView: View {
                     .frame(height: 40)
             }
 
+            // popover 表示中：透明 backdrop（外側クリックで close）+ popover 本体
+            // spec 010: 円弧クリックで Meet / Calendar / 場所 / 参加者を in-app 表示
+            // 位置決めは Task 11 で対応するため、本 Task では中央寄せの仮配置とする。
+            if let preview = viewModel.previewedEvent {
+                // 透明 backdrop。allowsHitTesting(true) で外側クリックを拾う。
+                // ZStack 内では先に描画されるものが背面、後ろが手前なので popover の前に置く。
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { viewModel.closePreview() }
+
+                // popover 本体。内部のボタン（Meet / Calendar / ×）クリックが効くよう
+                // allowsHitTesting はデフォルト（true）のまま。
+                EventPreviewPopover(
+                    timeLabel: viewModel.previewTimeLabel ?? "",
+                    title: preview.title,
+                    location: preview.location,
+                    attendees: preview.attendees,
+                    note: preview.note,
+                    hasMeetURL: preview.meetURL != nil,
+                    hasCalendarURL: preview.webURL != nil,
+                    textScale: textScale.factor,
+                    onOpenMeet: { viewModel.openMeet() },
+                    onOpenCalendar: { viewModel.openCalendarURL() },
+                    onClose: { viewModel.closePreview() }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .transaction { $0.animation = nil }
+            }
+
             // ツールチップ最前面オーバーレイ
             // 想定サイズで右端/下端を検知し、X/Y 軸独立に位置を反転する。
             // spec §Non-goals「アニメーション無し」のため transaction で animation を抑制
