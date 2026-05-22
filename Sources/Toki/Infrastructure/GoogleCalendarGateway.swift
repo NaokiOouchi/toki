@@ -33,13 +33,14 @@ final class GoogleCalendarGateway: ObservableObject {
         subject.eraseToAnyPublisher()
     }
 
-    /// 初回 reload と 5 分間隔の自動 reload タイマーを開始する。
+    /// 初回 reload と 2 分間隔の自動 reload タイマーを開始する。
     /// 多重起動を防ぐため冒頭で既存タイマーを cancel する。
+    /// spec 008: 5 分 → 2 分に短縮。Google で event 編集後の反映遅延を半減。
     func start() {
         reloadTimerCancellable?.cancel()
         isAuthorized = oauthClient.isAuthorized
         Task { await reload() }
-        reloadTimerCancellable = Timer.publish(every: 300, on: .main, in: .common)
+        reloadTimerCancellable = Timer.publish(every: 120, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 Task { await self?.reload() }
