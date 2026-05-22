@@ -23,12 +23,13 @@
 ## 2. UI仕様
 
 ### ウィンドウ
-- サイズ：280 × 320 px（時計直径 約240px + 上下余白）
-- 背景：不透明（システムテーマ追従、白 or 黒）
+- サイズ：可変（最小 220 × 260 px、最大 420 × 500 px、デフォルト 280 × 320 px、spec 008 で可変化）
+- 背景：Liquid Glass material（macOS 26 Tahoe 以降、`.glassEffect()` API）。macOS 14 / 15 では `.regularMaterial` にフォールバック（spec 008）
 - 角丸：12px
 - 枠線：0.5px の薄いボーダー
 - タイトルバーなし、ボーダーレス
 - 背景ドラッグで移動可能
+- ウィンドウ位置 / サイズは `UserDefaults` に記憶し起動時に復元（spec 008）
 
 ### 時計
 - 24時間アナログ時計（0:00 が真上、12:00 が真下、時計回り）
@@ -67,6 +68,7 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 ```
 - フォント 11px、secondary色
 - 時計と区切る 0.5px ボーダー
+- さらに下部に「最終更新 X 分前」を控えめに表示（11px、tertiary色、spec 008）
 
 ### インタラクション
 - **マウスオーバー**：イベント円弧の上に来ると、ツールチップで時刻 + タイトルが表示される（中央表示は現状維持、ツールチップ表示は spec 003 で追加）
@@ -74,8 +76,9 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 - **左クリック**：そのイベントを Google Calendar で開く（spec 006 以降は常に Google Calendar API 経由で取得した URL を使用）
   - 接続済み event → API から取得した `htmlLink` で event detail を開く
   - 未接続 / `htmlLink` 取得失敗 → `/r/day/YYYY/MM/DD` の今日のビュー fallback
-- **右クリック**：コンテキストメニュー（Google Calendar 接続 / 切断、終了など。接続項目は spec 005 で動的追加。「再読込」は Phase 2 で追加予定、spec 006 §Out of scope 参照）
+- **右クリック**：コンテキストメニュー（Google Calendar 接続 / 切断、「再読込」、「設定…」、終了など。接続項目は spec 005 で動的追加、「再読込」「設定…」は spec 008 で追加）
 - **メニューバーアイコン**：クリックで時計の表示／非表示トグル
+- **設定パネル**（spec 008）：右クリック → 「設定…」で透明度（連続スライダー）など UI 調整を可能にする
 
 ---
 
@@ -86,6 +89,7 @@ DeNA 1on1       ← 今の予定（15px、weight 500、primary）
 - SwiftPM（シングルパッケージ、ターゲット1つ）
 - AppKit（`NSApplication`, `NSWindow`, `NSStatusBar`）
 - SwiftUI（描画、状態管理）
+- Liquid Glass material（macOS 26 Tahoe 以降の `.glassEffect()` API、spec 008 で導入。旧 macOS では `.regularMaterial` にフォールバック）
 - Google Calendar API（OAuth 2.0 + REST、event 取得。spec 006 で EventKit を完全撤去し API 単独運用へ）
 - Security.framework（Keychain で OAuth token を永続化）
 - Combine（時刻・イベント変更のストリーム）
@@ -231,11 +235,16 @@ struct DayTimeline {
 すでに完了：
 - マウスホバーでイベント円弧 → ツールチップ表示（spec 003 / 004）
 - クリックで Google Calendar event detail を開く（spec 005 / 006）
+- 右クリック「再読込」：手動で events 再取得（✅ 完了 spec 008）
+- ウィンドウ位置 / サイズ `UserDefaults` 記憶：起動時に前回状態を復元（✅ 完了 spec 008）
+- 接続中スピナー：OAuth consent → loopback 受領中に進捗を可視化（✅ 完了 spec 008）
+- ウィンドウ可変サイズ化（220×260 〜 420×500、✅ 完了 spec 008）
+- Liquid Glass material 適用（✅ 完了 spec 008、macOS 26+。旧 OS は `.regularMaterial` fallback）
+- 「最終更新 X 分前」下部表示（✅ 完了 spec 008）
+- データ鮮度向上：ポーリング 120 秒化 + focus reload（✅ 完了 spec 008）
+- 共有 event の busy block fallback 表示（✅ 完了 spec 008）
 
 候補（順不同、必要になったら spec で起こす）：
-- **右クリック「再読込」**：5 分タイマーを待たずに手動で events 再取得（spec 006 / 007 §Out of scope 由来）
-- **ウィンドウ位置 `UserDefaults` 記憶**：起動時に前回位置を復元
-- **接続中スピナー**：OAuth consent → loopback 受領中に進捗を可視化（spec 006 §Out of scope 由来）
 - **`print` → `os_log` 共通化**：Console.app での絞り込み性向上、log prefix 統一（spec 007 review M1 由来）
 - **`ISO8601DateFormatter` キャッシュ**：parseEventDate のたびに new していたのを 1 個に（spec 007 review M3 由来）
 - **ClockView 定数集約**：tooltipWidth / canvasWidth 等のハードコードを 1 箇所に（spec 007 review M5 由来）
@@ -243,17 +252,19 @@ struct DayTimeline {
 - **ViewModel 二重初期評価コメント化 or 削除**：`@Published` 初回 emit との重複を明示（spec 007 review M-007-1 由来）
 - **wake handler 同期コメント化**：`reload()` async 待ちの保険である意図を明記（spec 007 review M-007-2 由来）
 - **`webURL` 値伝播 Domain テスト追加**：`Event` / `DayTimeline.clip` で webURL 保持を確認（spec 007 §Non-goals 由来）
+- **ClockView tooltip 位置計算の動的サイズ対応**：spec 008 でウィンドウは可変化したが tooltip オフセットは固定値のまま、リサイズ時に微ズレ
 
 ### Phase 3 — 仕上げ・拡張
 - **重なりイベントの 2 段リング**：MVP は 1 段のみ
-- **透明度調整**：Option + scroll
+- **透明度の Option + scroll 操作**：spec 008 で設定パネル経由の連続スライダーは実装済み。scroll ジェスチャは未対応
+- **in-app event preview**：popover で詳細 + Meet 起動 + 参加可否操作（spec 009 候補）
+- **複数日 navigation**：マウスホイール / 横スクロールで前後日に移動（spec 009 候補）
 - **メニューバーから対象カレンダー選択**：calendar 別に表示切替、`calendarTitle` を再導入（spec 007 §Out of scope 由来）
 - **起動時自動オン**：LaunchAtLogin
 - **複数 Google アカウント並列**：MVP は 1 アカウントのみ（spec 005 / 006 §Non-goals 由来）
-- **完全な設定 UI**：client_id / client_secret 入力、calendar 選択、同期間隔（spec 005 / 006 §Non-goals 由来）
+- **完全な設定 UI**：client_id 入力、calendar 選択、同期間隔（spec 005 / 006 §Non-goals 由来。spec 008 で透明度パネルは導入済み）
 - **永続キャッシュ**：オフライン耐性、起動時即時表示（spec 006 §Non-goals 由来）
 - **OAuth client_secret の安全化**：個人利用以外で配布する場合は secret を分離（spec 005 §Open Questions 由来）
-- **UI / UX 全面見直し**：Liquid Glass 等の最新 Apple デザイン言語適用、要 macOS 26+（要別 spec）
 
 ---
 
@@ -288,7 +299,7 @@ setup 3 ステップ（README 連携想定）：
 ```swift
 let window = NSWindow(
     contentRect: NSRect(x: 0, y: 0, width: 280, height: 320),
-    styleMask: [.borderless, .fullSizeContentView],
+    styleMask: [.borderless, .fullSizeContentView, .resizable],
     backing: .buffered,
     defer: false
 )
@@ -298,10 +309,27 @@ window.isOpaque = false
 window.backgroundColor = .clear
 window.hasShadow = true
 window.isMovableByWindowBackground = true
+window.minSize = NSSize(width: 220, height: 260)   // spec 008
+window.maxSize = NSSize(width: 420, height: 500)   // spec 008
 window.contentView = NSHostingView(rootView: ClockView())
 ```
 
 `canJoinAllSpaces` だけだと Mission Control 切替で消えるので、`stationary` も必須。
+spec 008 で `.resizable` を追加しウィンドウサイズを可変化。位置 / サイズは `UserDefaults`
+（key: `toki.window.frame`）に保存して起動時に復元する。
+
+### Liquid Glass material（spec 008）
+
+macOS 26 Tahoe で導入された `.glassEffect()` を背景に適用。旧 OS では半透明感が損なわれるため
+`if #available(macOS 26, *)` で分岐し、それ以前は `.regularMaterial` にフォールバックする。
+
+```swift
+if #available(macOS 26, *) {
+    contentView.background(.glassEffect())
+} else {
+    contentView.background(.regularMaterial)
+}
+```
 
 ### SwiftUI Canvas で annulus segment
 ```swift
@@ -345,16 +373,30 @@ DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(secondsToNextMinute)) 
 }
 ```
 
-### イベント変更購読（spec 006 以降）
+### イベント変更購読（spec 006 / 008 以降）
 
-EventKit の `EKEventStoreChanged` は撤去された。spec 006 では以下のトリガで再取得する：
+EventKit の `EKEventStoreChanged` は撤去された。spec 008 では以下のトリガで再取得する：
 
+- 定期ポーリング：120 秒間隔（spec 008 で旧 5 分から短縮、データ鮮度向上）
 - 接続状態変化（OAuth connect / disconnect）
 - access token の自動 refresh 完了
 - ウィンドウ表示トグルなどの明示的なライフサイクル契機
-- 手動「再読込」メニュー項目は Phase 2 で追加予定（spec 006 §Out of scope）
+- focus reload：`NSApplication.didBecomeActiveNotification` を購読し、30 秒 debounce で再取得（spec 008）
+- 手動「再読込」：右クリックメニューから即時実行（spec 008）
 
 push 通知 / watch API は MVP では使わない（Phase 3 検討）。
+
+### 共有 event の busy block fallback（spec 008）
+
+他カレンダー（同僚など）から共有された event は権限により `summary` が `"予定あり"` や `"Busy"`、
+あるいは空文字になることがある。これらを以下で判定し、UI 上は「予定あり」ブロックとして
+リング描画する：
+
+- `visibility == "private"` の event
+- `summary` が `"予定あり" / "Busy" / ""` のいずれか
+
+タイトルは「予定あり」に置き換え、tooltip / 中央テキストでも同様に表示する。
+クリック時の `webURL` 解決は通常 event と同じ。
 
 ### イベント円弧クリック時の挙動（spec 003 / 005 / 006）
 
@@ -392,6 +434,8 @@ spec 004 の reverse-engineered eid 経路（`base64("<base_uid> <calendar_email
 - `specs/004-event-detail-and-tooltip-flip.md`（reverse-engineered eid、後に spec 005 で置換）
 - `specs/005-google-calendar-api.md`（Google Calendar API 連携導入）
 - `specs/006-google-only.md`（EventKit 完全撤去、Google Calendar API 単独運用）
+- `specs/007-*.md`（review / 整理。詳細は specs/ 配下参照）
+- `specs/008-visual-polish.md`（データ鮮度向上、可変ウィンドウ、共有 event 対応、Liquid Glass 適用）
 
 ---
 
