@@ -117,11 +117,24 @@ final class GoogleCalendarGateway: ObservableObject {
         let isBusyBlock = (ge.visibility == "private") || busyTitles.contains(trimmedSummary)
         let effectiveWebURL = isBusyBlock ? nil : ge.htmlLink
 
+        // spec 010: attendees を Domain Attendee に変換、Meet URL を解決。
+        // hangoutLink 優先、無ければ conferenceData.entryPoints[type=video] fallback。
+        let attendees: [Attendee] = ge.attendees.map { a in
+            Attendee(email: a.email,
+                     displayName: a.displayName,
+                     responseStatus: ResponseStatus.from(apiString: a.responseStatus))
+        }
+        let meetURL: URL? = ge.hangoutLink ?? ge.conferenceVideoURL
+
         guard let event = Event(id: id,
                                 title: ge.summary,
                                 start: start, end: end,
                                 calendarColor: ge.calendarColor,
-                                webURL: effectiveWebURL) else { return nil }
+                                webURL: effectiveWebURL,
+                                location: ge.location,
+                                note: ge.description,
+                                attendees: attendees,
+                                meetURL: meetURL) else { return nil }
         return (event, isAllDay)
     }
 }
