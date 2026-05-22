@@ -137,7 +137,7 @@ extension ClockView {
     private static let tooltipHeight: CGFloat = 40
     private static let tooltipOffset: CGFloat = 8
     /// ウィンドウサイズ。ClockView.body の .frame と同じ値を使う。
-    /// spec 011 候補：リサイズ対応のため動的サイズ化する（現状は固定値）。
+    /// spec 013 候補（spec 010 H-010-1）：リサイズ対応のため動的サイズ化する（現状は固定値）。
     private static let canvasWidth: CGFloat = 280
     private static let windowHeight: CGFloat = 320
 
@@ -161,7 +161,7 @@ extension ClockView {
 
     /// クリック位置から popover を描画する左上座標を計算する。
     /// tooltip と同じ流儀：X/Y 独立に判定、右端/下端を超える側だけ反転、左/上端は 0 にクランプ。
-    /// canvas / window サイズは tooltip 計算と同じ固定値を使う（spec 011 で動的化候補）。
+    /// canvas / window サイズは tooltip 計算と同じ固定値を使う（spec 013 候補で動的化）。
     static func popoverDisplayPosition(for tap: CGPoint) -> CGPoint {
         let x: CGFloat = (tap.x + popoverOffset + popoverWidth > canvasWidth)
             ? max(0, tap.x - popoverOffset - popoverWidth)

@@ -24,7 +24,7 @@ Phase 2.6（本 iteration 完了時）に達成する状態：
 2. **popover 内容**：時刻範囲 / タイトル / 場所 / 参加者リスト / description 要約
 3. **アクションボタン**：「Meet で開く」（`hangoutLink` あれば）/ 「Google Calendar で開く」（既存挙動）
 4. **閉じる**：外側クリック / ESC キー / 右上 × ボタン
-5. **busy block / 共有 event の挙動維持**：`webURL == nil` の event は popover 表示せず、既存通り今日のビュー fallback
+5. **全 event で popover 表示**（実装中に方針変更）：busy block / 共有 event を含めて常に popover を開き、Calendar ボタンは `webURL` 非 nil なら detail、nil なら day view fallback で開く。当初仕様の「popover 非表示で day view 直行」より UX 一貫性を優先（commit `7ad9f12` で変更）
 6. **Liquid Glass material 適用**（macOS 26+、25 以下は `.regularMaterial` fallback）
 7. **ホバーツールチップは無変更**：軽い情報はホバー、詳細はクリック、という階層
 8. **Domain `Event` 拡張**：`attendees` / `location` / `description` / `meetURL` フィールド追加
@@ -51,8 +51,8 @@ Phase 2.6（本 iteration 完了時）に達成する状態：
 ### 表示制御
 
 #### popover の開閉
-- When 円弧をクリック（既存 `handleArcTap`）したとき、`event.webURL` が非 nil なら popover overlay を表示する
-- When `webURL` が nil（busy block / 共有 event）のとき、popover は表示せず既存挙動（今日のビュー fallback）を維持する
+- When 円弧をクリック（既存 `handleArcTap`）したとき、event 種別に関わらず popover overlay を表示する（commit `7ad9f12` で全 event に統一）
+- When `webURL` が nil（busy block / 共有 event）のとき、Calendar ボタンは day view fallback を開き、Meet ボタンは非表示
 - When 外側クリックしたとき、popover を閉じる
 - When ESC キー押下したとき、popover を閉じる
 - When popover 内の × ボタンをクリックしたとき、popover を閉じる

@@ -37,9 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         gateway = gw
         viewModel = vm
 
-        // spec 011: AppearanceModel をアプリ生存期間で 1 インスタンス生成。
-        // 本 task では ClockView / SettingsView の signature 変更は行わず（Task 5 / 6 で実施）、
-        // 生成と保持のみ行う。windowFrame の参照は SettingsStore.shared に切替済み。
+        // spec 011: AppearanceModel をアプリ生存期間で 1 インスタンス生成し、
+        // ClockView と SettingsView に @ObservedObject で共有する。
+        // 全 11 設定軸の永続化は AppearanceModel.@Published の didSet で SettingsStore に集約。
         let appearance = AppearanceModel()
         self.appearance = appearance
 
