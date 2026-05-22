@@ -43,7 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appearance = AppearanceModel()
         self.appearance = appearance
 
-        let w = FloatingClockWindow.make(contentView: ClockView(viewModel: vm))
+        let w = FloatingClockWindow.make(contentView: ClockView(viewModel: vm, appearance: appearance))
         window = w
 
         // spec 008: 保存フレームの復元（あれば、かつ画面内に表示可能なら）

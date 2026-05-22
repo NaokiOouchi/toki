@@ -2,26 +2,12 @@ import AppKit
 import SwiftUI
 
 /// 円形時計型ウィンドウのルート View。
-/// ClockViewModel を `@ObservedObject` で受け取り、描画に必要な派生 state を
-/// （nowAngle / canvasEvents / centerState / nextLineState / hoveredTooltip）
-/// VM から直接取得する。
+/// ClockViewModel と AppearanceModel を `@ObservedObject` で受け取り、
+/// 描画に必要な派生 state を VM から、見た目関連の設定値を AppearanceModel から取得する。
+/// spec 011 で @State 13 個 + onReceive 2 個を撤廃し、AppearanceModel ベースに移行。
 struct ClockView: View {
     @ObservedObject var viewModel: ClockViewModel
-    @State private var opacity: Double = AppSettings.shared.opacity
-    // resolved Color を保持する（enum のままだと .custom 内の色変化を検知できないため）
-    @State private var themeColorValue: Color = AppSettings.shared.themeColor.color
-    @State private var materialStrength: MaterialStrength = AppSettings.shared.materialStrength
-    @State private var colorSchemeMode: ColorSchemeMode = AppSettings.shared.colorSchemeMode
-    @State private var useCustomBackground: Bool = AppSettings.shared.useCustomBackground
-    @State private var customBackgroundColor: Color = AppSettings.shared.customBackgroundColor
-    @State private var useCustomTextColor: Bool = AppSettings.shared.useCustomTextColor
-    @State private var customTextColor: Color = AppSettings.shared.customTextColor
-    @State private var textScale: TextScale = AppSettings.shared.textScale
-    @State private var ringThickness: RingThickness = AppSettings.shared.ringThickness
-    @State private var handThickness: HandThickness = AppSettings.shared.handThickness
-    @State private var circleOutlineThickness: CircleOutlineThickness = AppSettings.shared.circleOutlineThickness
-    @State private var useCustomCircleColor: Bool = AppSettings.shared.useCustomCircleColor
-    @State private var customCircleColor: Color = AppSettings.shared.customCircleColor
+    @ObservedObject var appearance: AppearanceModel
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -36,12 +22,12 @@ struct ClockView: View {
                     ClockFaceCanvas(
                         nowAngle: viewModel.nowAngle,
                         events: viewModel.canvasEvents,
-                        themeColor: themeColorValue,
-                        ringThickness: ringThickness.factor,
-                        handLineWidth: handThickness.lineWidth,
-                        textScale: textScale.factor,
-                        circleOutlineLineWidth: circleOutlineThickness.lineWidth,
-                        circleOutlineColor: useCustomCircleColor ? customCircleColor : .secondary.opacity(0.6),
+                        themeColor: appearance.resolvedThemeColor,
+                        ringThickness: appearance.ringThickness.factor,
+                        handLineWidth: appearance.handThickness.lineWidth,
+                        textScale: appearance.textScale.factor,
+                        circleOutlineLineWidth: appearance.circleOutlineThickness.lineWidth,
+                        circleOutlineColor: appearance.resolvedCircleOutlineColor,
                         onTap: { point, geometry in
                             viewModel.handleArcTap(at: point, geometry: geometry)
                         },
@@ -49,7 +35,8 @@ struct ClockView: View {
                             viewModel.handleHover(phase: phase, geometry: geometry)
                         }
                     )
-                    CurrentEventLabel(state: viewModel.centerState, textScale: textScale.factor)
+                    CurrentEventLabel(state: viewModel.centerState,
+                                      textScale: appearance.textScale.factor)
                         .allowsHitTesting(false)  // 中央テキストが円弧クリックを奪わないようにする
                 }
 
@@ -57,13 +44,12 @@ struct ClockView: View {
 
                 NextEventLine(state: viewModel.nextLineState,
                               lastUpdatedText: viewModel.lastUpdatedFormatted,
-                              textScale: textScale.factor)
+                              textScale: appearance.textScale.factor)
                     .frame(height: 40)
             }
 
             // popover 表示中：透明 backdrop（外側クリックで close）+ popover 本体
             // spec 010: 円弧クリックで Meet / Calendar / 場所 / 参加者を in-app 表示
-            // 位置決めは Task 11 で対応するため、本 Task では中央寄せの仮配置とする。
             if let preview = viewModel.previewedEvent {
                 // 透明 backdrop。allowsHitTesting(true) で外側クリックを拾う。
                 // ZStack 内では先に描画されるものが背面、後ろが手前なので popover の前に置く。
@@ -86,7 +72,7 @@ struct ClockView: View {
                     hasMeetURL: preview.meetURL != nil,
                     // Calendar ボタンは常時表示：webURL あり時は event detail、無ければ day view
                     hasCalendarURL: true,
-                    textScale: textScale.factor,
+                    textScale: appearance.textScale.factor,
                     onOpenMeet: { viewModel.openMeet() },
                     onOpenCalendar: { viewModel.openCalendarURL() },
                     onClose: { viewModel.closePreview() }
@@ -100,7 +86,9 @@ struct ClockView: View {
             // spec §Non-goals「アニメーション無し」のため transaction で animation を抑制
             if let tooltip = viewModel.hoveredTooltip {
                 let position = Self.tooltipDisplayPosition(for: tooltip.position)
-                EventTooltip(timeLabel: tooltip.startEndLabel, title: tooltip.title, textScale: textScale.factor)
+                EventTooltip(timeLabel: tooltip.startEndLabel,
+                             title: tooltip.title,
+                             textScale: appearance.textScale.factor)
                     .offset(x: position.x, y: position.y)
                     .allowsHitTesting(false)
                     .transaction { $0.animation = nil }
@@ -110,33 +98,13 @@ struct ClockView: View {
         .overlay(
             // ボーダーはテーマカラーで薄く着色して窓の輪郭を白背景でも分かりやすくする。
             RoundedRectangle(cornerRadius: 12)
-                .stroke(themeColorValue.opacity(0.5), lineWidth: 0.75)
+                .stroke(appearance.resolvedThemeColor.opacity(0.5), lineWidth: 0.75)
         )
         // 文字色カスタム：primary を上書き。secondary/tertiary は影響しないが
         // 中央テキスト主タイトル等の主要表示は変更される。
-        .foregroundStyle(useCustomTextColor ? customTextColor : .primary)
+        .foregroundStyle(appearance.useCustomTextColor ? appearance.customTextColor : .primary)
         // 配色モード：auto なら nil（システム追従）、light/dark なら強制
-        .preferredColorScheme(colorSchemeMode.swiftUIColorScheme)
-        .onReceive(NotificationCenter.default.publisher(for: .tokiOpacityChanged)) { _ in
-            opacity = AppSettings.shared.opacity
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .tokiAppearanceChanged)) { _ in
-            // resolved Color を毎回 AppSettings から取り直して再描画させる。
-            // enum 値が `.custom` のままで色だけ変わるケースにも対応。
-            themeColorValue = AppSettings.shared.themeColor.color
-            materialStrength = AppSettings.shared.materialStrength
-            colorSchemeMode = AppSettings.shared.colorSchemeMode
-            useCustomBackground = AppSettings.shared.useCustomBackground
-            customBackgroundColor = AppSettings.shared.customBackgroundColor
-            useCustomTextColor = AppSettings.shared.useCustomTextColor
-            customTextColor = AppSettings.shared.customTextColor
-            textScale = AppSettings.shared.textScale
-            ringThickness = AppSettings.shared.ringThickness
-            handThickness = AppSettings.shared.handThickness
-            circleOutlineThickness = AppSettings.shared.circleOutlineThickness
-            useCustomCircleColor = AppSettings.shared.useCustomCircleColor
-            customCircleColor = AppSettings.shared.customCircleColor
-        }
+        .preferredColorScheme(appearance.colorSchemeMode.swiftUIColorScheme)
     }
 
     /// 背景レイヤー。優先順位：
@@ -146,19 +114,19 @@ struct ClockView: View {
     /// いずれも `.opacity()` を最後にかけて透過率調整。
     @ViewBuilder
     private var glassBackgroundLayer: some View {
-        if useCustomBackground {
+        if appearance.useCustomBackground {
             RoundedRectangle(cornerRadius: 12)
-                .fill(customBackgroundColor)
-                .opacity(opacity)
+                .fill(appearance.customBackgroundColor)
+                .opacity(appearance.opacity)
         } else if #available(macOS 26.0, *) {
             Rectangle()
-                .fill(materialStrength.swiftUIMaterial)
+                .fill(appearance.materialStrength.swiftUIMaterial)
                 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                .opacity(opacity)
+                .opacity(appearance.opacity)
         } else {
             RoundedRectangle(cornerRadius: 12)
-                .fill(materialStrength.swiftUIMaterial)
-                .opacity(opacity)
+                .fill(appearance.materialStrength.swiftUIMaterial)
+                .opacity(appearance.opacity)
         }
     }
 }
