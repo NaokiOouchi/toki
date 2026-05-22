@@ -111,10 +111,14 @@ final class GoogleCalendarGateway: ObservableObject {
               let end = ge.end.dateTime ?? ge.end.date else { return nil }
         let id = "\(ge.id)#\(start.timeIntervalSince1970)"
 
-        // busy block 判定：visibility=private OR summary in [予定あり / Busy / 空]
+        // busy block 判定（spec 010 で改修）：タイトルベースのみ。
+        // 旧 spec 008 では visibility=private も busy 扱いしていたが、ユーザー自身が
+        // 所有する private event（自分の Meet を private に設定する等）まで誤判定して
+        // Calendar ボタンが day view にフォールバックしてしまう問題があった。
+        // 「予定あり」「Busy」「空タイトル」のみを busy block とし、visibility は無視する。
         let busyTitles: Set<String> = ["予定あり", "Busy", ""]
         let trimmedSummary = ge.summary.trimmingCharacters(in: .whitespacesAndNewlines)
-        let isBusyBlock = (ge.visibility == "private") || busyTitles.contains(trimmedSummary)
+        let isBusyBlock = busyTitles.contains(trimmedSummary)
         let effectiveWebURL = isBusyBlock ? nil : ge.htmlLink
 
         // spec 010: attendees を Domain Attendee に変換、Meet URL を解決。
