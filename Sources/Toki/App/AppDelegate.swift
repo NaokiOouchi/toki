@@ -11,6 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var gateway: GoogleCalendarGateway?
     private var viewModel: ClockViewModel?
     private var oauthClient: GoogleOAuthClient?
+    /// focus reload の最後の実行時刻。30 秒 debounce 用。
+    private var lastFocusReloadAt: Date?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
@@ -55,6 +57,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.target = self
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         statusItem = item
+
+        // spec 008: フォアグラウンド復帰時に reload を trigger（30 秒 debounce）
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            if let last = self.lastFocusReloadAt,
+               Date().timeIntervalSince(last) < 30 {
+                return
+            }
+            self.lastFocusReloadAt = Date()
+            Task { await self.viewModel?.handleReload() }
+        }
     }
 
     /// 左クリック → ウィンドウ toggle、右クリック → コンテキストメニュー（終了）。
@@ -98,6 +115,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     keyEquivalent: ""
                 ))
             }
+            if oauth.isAuthorized {
+                let reloadItem = NSMenuItem(
+                    title: "再読込",
+                    action: #selector(handleReload),
+                    keyEquivalent: "r"
+                )
+                menu.addItem(reloadItem)
+            }
             menu.addItem(NSMenuItem.separator())
         }
 
@@ -115,6 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 成功後は ViewModel の接続状態を即時更新し、Gateway を reload して event を取り込む。
     @objc private func handleConnect() {
         Task {
+            await viewModel?.setConnecting(true)
             do {
                 try await oauthClient?.beginAuthorization()
                 await viewModel?.refreshAuthorizationState()
@@ -122,7 +148,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } catch {
                 print("OAuth connect failed: \(error)")
             }
+            await viewModel?.setConnecting(false)
         }
+    }
+
+    /// 右クリックメニューの「再読込」から呼ばれる。ViewModel 経由で gateway.reload() を実行。
+    @objc private func handleReload() {
+        Task { await viewModel?.handleReload() }
     }
 
     /// Google Calendar 連携を解除。refresh_token を Keychain から削除する。
