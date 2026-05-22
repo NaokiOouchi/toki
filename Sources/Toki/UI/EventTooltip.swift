@@ -19,10 +19,8 @@ struct EventTooltip: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .frame(maxWidth: 200, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color(NSColor.controlBackgroundColor))
-        )
+        // spec 008: Liquid Glass（macOS 26+）/ Material fallback
+        .tokiGlassBackground(cornerRadius: 6)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color.secondary.opacity(0.35), lineWidth: 0.5)

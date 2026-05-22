@@ -22,7 +22,7 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(width: 260, height: 120)
-        // Liquid Glass 適用は Task 12 で。本タスクでは Material 背景に留める。
-        .background(Color(NSColor.windowBackgroundColor))
+        // spec 008: Liquid Glass（macOS 26+）/ Material fallback
+        .tokiGlassBackground(cornerRadius: 12)
     }
 }

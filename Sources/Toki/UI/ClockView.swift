@@ -33,7 +33,8 @@ struct ClockView: View {
                               lastUpdatedText: viewModel.lastUpdatedFormatted)
                     .frame(height: 40)
             }
-            .background(Color(NSColor.windowBackgroundColor))
+            // spec 008: Liquid Glass（macOS 26+）/ Material fallback
+            .tokiGlassBackground(cornerRadius: 12)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
