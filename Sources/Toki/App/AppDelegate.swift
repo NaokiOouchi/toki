@@ -35,8 +35,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let w = FloatingClockWindow.make(contentView: ClockView(viewModel: vm))
         window = w
 
-        // 初回位置：メインスクリーンの右上 16px インセット
-        if let screen = NSScreen.main {
+        // spec 008: 保存フレームの復元（あれば、かつ画面内に表示可能なら）
+        // 外部モニタを抜いた等で画面外に行ったフレームは弾き、デフォルト位置にフォールバック。
+        if let saved = AppSettings.shared.windowFrame,
+           Self.isFrameVisible(saved) {
+            w.setFrame(saved, display: true)
+        } else if let screen = NSScreen.main {
+            // 初回位置：メインスクリーンの右上 16px インセット
             let visible = screen.visibleFrame
             let origin = NSPoint(
                 x: visible.maxX - w.frame.width - 16,
@@ -72,6 +77,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.lastFocusReloadAt = Date()
             Task { await self.viewModel?.handleReload() }
         }
+
+        // spec 008: ウィンドウ位置 / サイズの変更を AppSettings に永続化する
+        // 移動 / リサイズの通知を購読し、その都度 UserDefaults へ書き戻す。
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didMoveNotification,
+            object: w,
+            queue: .main
+        ) { _ in
+            AppSettings.shared.setWindowFrame(w.frame)
+        }
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didResizeNotification,
+            object: w,
+            queue: .main
+        ) { _ in
+            AppSettings.shared.setWindowFrame(w.frame)
+        }
+    }
+
+    /// 終了直前にもウィンドウフレームを保険として保存する。
+    /// 通知漏れがあっても最終位置 / サイズを次回起動に持ち越せるようにする。
+    func applicationWillTerminate(_ notification: Notification) {
+        if let w = window {
+            AppSettings.shared.setWindowFrame(w.frame)
+        }
+    }
+
+    /// 保存フレームが現在のスクリーン構成内で表示可能かを判定する。
+    /// 全 NSScreen の visibleFrame と intersects するなら true。
+    /// 外部モニタを抜いた等で画面外に行ったフレームを弾く目的。
+    private static func isFrameVisible(_ frame: NSRect) -> Bool {
+        for screen in NSScreen.screens {
+            if screen.visibleFrame.intersects(frame) {
+                return true
+            }
+        }
+        return false
     }
 
     /// 左クリック → ウィンドウ toggle、右クリック → コンテキストメニュー（終了）。
