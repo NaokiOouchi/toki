@@ -8,9 +8,14 @@ import SwiftUI
 struct ClockView: View {
     @ObservedObject var viewModel: ClockViewModel
     @State private var opacity: Double = AppSettings.shared.opacity
-    @State private var themeColor: ThemeColor = AppSettings.shared.themeColor
+    // resolved Color を保持する（enum のままだと .custom 内の色変化を検知できないため）
+    @State private var themeColorValue: Color = AppSettings.shared.themeColor.color
     @State private var materialStrength: MaterialStrength = AppSettings.shared.materialStrength
     @State private var colorSchemeMode: ColorSchemeMode = AppSettings.shared.colorSchemeMode
+    @State private var useCustomBackground: Bool = AppSettings.shared.useCustomBackground
+    @State private var customBackgroundColor: Color = AppSettings.shared.customBackgroundColor
+    @State private var useCustomTextColor: Bool = AppSettings.shared.useCustomTextColor
+    @State private var customTextColor: Color = AppSettings.shared.customTextColor
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -25,7 +30,7 @@ struct ClockView: View {
                     ClockFaceCanvas(
                         nowAngle: viewModel.nowAngle,
                         events: viewModel.canvasEvents,
-                        themeColor: themeColor.color,
+                        themeColor: themeColorValue,
                         onTap: { point, geometry in
                             viewModel.handleArcTap(at: point, geometry: geometry)
                         },
@@ -59,26 +64,41 @@ struct ClockView: View {
         .overlay(
             // ボーダーはテーマカラーで薄く着色して窓の輪郭を白背景でも分かりやすくする。
             RoundedRectangle(cornerRadius: 12)
-                .stroke(themeColor.color.opacity(0.5), lineWidth: 0.75)
+                .stroke(themeColorValue.opacity(0.5), lineWidth: 0.75)
         )
+        // 文字色カスタム：primary を上書き。secondary/tertiary は影響しないが
+        // 中央テキスト主タイトル等の主要表示は変更される。
+        .foregroundStyle(useCustomTextColor ? customTextColor : .primary)
         // 配色モード：auto なら nil（システム追従）、light/dark なら強制
         .preferredColorScheme(colorSchemeMode.swiftUIColorScheme)
         .onReceive(NotificationCenter.default.publisher(for: .tokiOpacityChanged)) { _ in
             opacity = AppSettings.shared.opacity
         }
         .onReceive(NotificationCenter.default.publisher(for: .tokiAppearanceChanged)) { _ in
-            themeColor = AppSettings.shared.themeColor
+            // resolved Color を毎回 AppSettings から取り直して再描画させる。
+            // enum 値が `.custom` のままで色だけ変わるケースにも対応。
+            themeColorValue = AppSettings.shared.themeColor.color
             materialStrength = AppSettings.shared.materialStrength
             colorSchemeMode = AppSettings.shared.colorSchemeMode
+            useCustomBackground = AppSettings.shared.useCustomBackground
+            customBackgroundColor = AppSettings.shared.customBackgroundColor
+            useCustomTextColor = AppSettings.shared.useCustomTextColor
+            customTextColor = AppSettings.shared.customTextColor
         }
     }
 
-    /// 背景レイヤー。macOS 26+ なら Liquid Glass、それ未満は AppSettings の MaterialStrength を反映。
-    /// `.opacity()` で透過率を調整できるよう独立 View として切り出す。
+    /// 背景レイヤー。優先順位：
+    /// 1. useCustomBackground == true → 任意の単色背景（Liquid Glass / Material を上書き）
+    /// 2. macOS 26+ → Liquid Glass + Material（MaterialStrength で濃度調整）
+    /// 3. macOS 25 以下 → Material のみ
+    /// いずれも `.opacity()` を最後にかけて透過率調整。
     @ViewBuilder
     private var glassBackgroundLayer: some View {
-        if #available(macOS 26.0, *) {
-            // Liquid Glass を主に、material 濃度を背景 fill の thickness で追加調整。
+        if useCustomBackground {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(customBackgroundColor)
+                .opacity(opacity)
+        } else if #available(macOS 26.0, *) {
             Rectangle()
                 .fill(materialStrength.swiftUIMaterial)
                 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))

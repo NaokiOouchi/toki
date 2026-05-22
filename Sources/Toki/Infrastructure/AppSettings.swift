@@ -21,39 +21,91 @@ struct AppSettings {
         static let customColorR = "toki.customColor.r"
         static let customColorG = "toki.customColor.g"
         static let customColorB = "toki.customColor.b"
+        static let useCustomBackground = "toki.useCustomBackground"
+        static let customBackgroundR = "toki.customBackground.r"
+        static let customBackgroundG = "toki.customBackground.g"
+        static let customBackgroundB = "toki.customBackground.b"
+        static let useCustomTextColor = "toki.useCustomTextColor"
+        static let customTextR = "toki.customText.r"
+        static let customTextG = "toki.customText.g"
+        static let customTextB = "toki.customText.b"
     }
 
-    /// ウィンドウ透過率（0.0〜1.0）。0 = 完全透明、1 = 完全不透明。
-    /// 未設定（初回起動）は 1.0。0.0 を明示保存できるよう object(forKey:) で存在判定する。
+    /// ウィンドウ透過率（0.05〜1.0）。0.05 = ほぼ透明、1 = 完全不透明。
+    /// 下限を 0.05 にすることで、極端な低 opacity で Liquid Glass がレンダリング
+    /// 破綻したり、ウィンドウのドラッグハンドルを失う事象を回避する。
+    /// 未設定（初回起動）は 1.0。
     var opacity: Double {
         get {
             guard defaults.object(forKey: Key.opacity) != nil else { return 1.0 }
-            return max(0.0, min(1.0, defaults.double(forKey: Key.opacity)))
+            return max(0.05, min(1.0, defaults.double(forKey: Key.opacity)))
         }
         nonmutating set {
-            defaults.set(max(0.0, min(1.0, newValue)), forKey: Key.opacity)
+            defaults.set(max(0.05, min(1.0, newValue)), forKey: Key.opacity)
         }
     }
 
     /// ThemeColor.custom 選択時に使う任意色。SwiftUI Color を sRGB で 3 つの Double に分解保存。
     /// 未設定時は Indigo 相当のデフォルトを返す。
     var customThemeColor: Color {
-        get {
-            guard defaults.object(forKey: Key.customColorR) != nil else {
-                return .indigo
-            }
-            let r = defaults.double(forKey: Key.customColorR)
-            let g = defaults.double(forKey: Key.customColorG)
-            let b = defaults.double(forKey: Key.customColorB)
-            return Color(red: r, green: g, blue: b)
-        }
-        nonmutating set {
-            // SwiftUI Color → NSColor → sRGB 成分で永続化
-            let nsColor = NSColor(newValue).usingColorSpace(.sRGB) ?? .black
-            defaults.set(Double(nsColor.redComponent), forKey: Key.customColorR)
-            defaults.set(Double(nsColor.greenComponent), forKey: Key.customColorG)
-            defaults.set(Double(nsColor.blueComponent), forKey: Key.customColorB)
-        }
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customColorR, gKey: Key.customColorG, bKey: Key.customColorB,
+                             default: .indigo) }
+        nonmutating set { Self.writeColor(defaults: defaults, color: newValue,
+                                          rKey: Key.customColorR, gKey: Key.customColorG, bKey: Key.customColorB) }
+    }
+
+    /// 背景色カスタム上書きを有効にするか。true なら customBackgroundColor を背景に使う。
+    var useCustomBackground: Bool {
+        get { defaults.bool(forKey: Key.useCustomBackground) }
+        nonmutating set { defaults.set(newValue, forKey: Key.useCustomBackground) }
+    }
+
+    /// ウィンドウ背景の任意色。useCustomBackground == true のときに Liquid Glass / Material を上書き。
+    var customBackgroundColor: Color {
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customBackgroundR, gKey: Key.customBackgroundG, bKey: Key.customBackgroundB,
+                             default: Color(red: 0.1, green: 0.1, blue: 0.15)) }
+        nonmutating set { Self.writeColor(defaults: defaults, color: newValue,
+                                          rKey: Key.customBackgroundR, gKey: Key.customBackgroundG, bKey: Key.customBackgroundB) }
+    }
+
+    /// 文字色カスタム上書きを有効にするか。true なら customTextColor を `.foregroundStyle` に適用。
+    var useCustomTextColor: Bool {
+        get { defaults.bool(forKey: Key.useCustomTextColor) }
+        nonmutating set { defaults.set(newValue, forKey: Key.useCustomTextColor) }
+    }
+
+    /// 文字色の任意色。useCustomTextColor == true のときに primary 系の foregroundStyle を上書き。
+    var customTextColor: Color {
+        get { Self.readColor(defaults: defaults,
+                             rKey: Key.customTextR, gKey: Key.customTextG, bKey: Key.customTextB,
+                             default: .primary) }
+        nonmutating set { Self.writeColor(defaults: defaults, color: newValue,
+                                          rKey: Key.customTextR, gKey: Key.customTextG, bKey: Key.customTextB) }
+    }
+
+    // MARK: - Color persistence helpers
+
+    /// 3 キーの RGB Double を読んで SwiftUI Color に復元する。
+    /// 未設定（r キーが存在しない）なら default を返す。
+    private static func readColor(defaults: UserDefaults,
+                                  rKey: String, gKey: String, bKey: String,
+                                  default defaultColor: Color) -> Color {
+        guard defaults.object(forKey: rKey) != nil else { return defaultColor }
+        let r = defaults.double(forKey: rKey)
+        let g = defaults.double(forKey: gKey)
+        let b = defaults.double(forKey: bKey)
+        return Color(red: r, green: g, blue: b)
+    }
+
+    /// SwiftUI Color を NSColor 経由で sRGB 成分に分解して 3 キーに保存する。
+    private static func writeColor(defaults: UserDefaults, color: Color,
+                                   rKey: String, gKey: String, bKey: String) {
+        let nsColor = NSColor(color).usingColorSpace(.sRGB) ?? .black
+        defaults.set(Double(nsColor.redComponent), forKey: rKey)
+        defaults.set(Double(nsColor.greenComponent), forKey: gKey)
+        defaults.set(Double(nsColor.blueComponent), forKey: bKey)
     }
 
     /// 針 / 中心ドット / 現在 event アウトラインに使うテーマカラー。
