@@ -11,6 +11,12 @@ struct ClockFaceCanvas: View {
     /// 針 / 中心ドット / 現在 event アウトラインのテーマカラー。
     /// 旧来の `.primary` から差し替え、ユーザー設定で変更可能（spec 008 拡張）。
     var themeColor: Color = .accentColor
+    /// リングの太さ（event 円弧幅）。dim に対する比率（標準 0.08）。
+    var ringThickness: CGFloat = 0.08
+    /// 針の太さ（lineWidth、pt）。
+    var handLineWidth: CGFloat = 1.5
+    /// 文字サイズスケール（時刻マーク 0/6/12/18 用）。
+    var textScale: CGFloat = 1.0
     /// 円弧クリック時に呼ばれる。位置は Canvas のローカル座標、geometry は描画時と同じ前提。
     var onTap: ((CGPoint, ClockGeometry) -> Void)? = nil
     /// マウスホバー時に呼ばれる。`.active(location)` / `.ended` の HoverPhase と
@@ -22,7 +28,7 @@ struct ClockFaceCanvas: View {
         // 親 frame が変わってもヒットテストと描画がズレないようにする。
         GeometryReader { proxy in
             Canvas { ctx, size in
-                let geometry = ClockGeometry.standard(in: size)
+                let geometry = ClockGeometry.standard(in: size, ringThickness: ringThickness)
                 drawRingOutlines(in: &ctx, geometry: geometry)
                 drawHourMarks(in: &ctx, geometry: geometry)
                 drawEventArcs(in: &ctx, geometry: geometry)
@@ -33,12 +39,12 @@ struct ClockFaceCanvas: View {
             .gesture(
                 SpatialTapGesture(coordinateSpace: .local)
                     .onEnded { value in
-                        let geometry = ClockGeometry.standard(in: proxy.size)
+                        let geometry = ClockGeometry.standard(in: proxy.size, ringThickness: ringThickness)
                         onTap?(value.location, geometry)
                     }
             )
             .onContinuousHover(coordinateSpace: .local) { phase in
-                let geometry = ClockGeometry.standard(in: proxy.size)
+                let geometry = ClockGeometry.standard(in: proxy.size, ringThickness: ringThickness)
                 onHover?(phase, geometry)
             }
         }
@@ -83,7 +89,7 @@ struct ClockFaceCanvas: View {
                 y: geometry.center.y + CGFloat(sin(angle)) * labelRadius
             )
             let text = Text(label.text)
-                .font(.system(size: 9))
+                .font(.system(size: 9 * textScale))
                 .foregroundStyle(.secondary)
             ctx.draw(text, at: position, anchor: .center)
         }
@@ -125,6 +131,6 @@ struct ClockFaceCanvas: View {
         var path = Path()
         path.move(to: startPoint)
         path.addLine(to: endPoint)
-        ctx.stroke(path, with: .color(themeColor), lineWidth: 1.5)
+        ctx.stroke(path, with: .color(themeColor), lineWidth: handLineWidth)
     }
 }

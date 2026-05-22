@@ -13,17 +13,18 @@ struct NextLineState: Equatable {
 struct NextEventLine: View {
     let state: NextLineState?
     let lastUpdatedText: String?
+    var textScale: CGFloat = 1.0
 
     var body: some View {
         if state != nil || lastUpdatedText != nil {
             HStack {
                 if let s = state {
                     Text("次")
-                        .font(.system(size: 11))
+                        .font(.system(size: 11 * textScale))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text("\(s.timeHHMM) \(s.title)")
-                        .font(.system(size: 11))
+                        .font(.system(size: 11 * textScale))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                         .truncationMode(.tail)
@@ -32,7 +33,7 @@ struct NextEventLine: View {
                 }
                 if let text = lastUpdatedText {
                     Text(text)
-                        .font(.system(size: 9))
+                        .font(.system(size: 9 * textScale))
                         .foregroundStyle(.tertiary)
                 }
             }

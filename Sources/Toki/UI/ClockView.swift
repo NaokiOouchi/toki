@@ -16,6 +16,9 @@ struct ClockView: View {
     @State private var customBackgroundColor: Color = AppSettings.shared.customBackgroundColor
     @State private var useCustomTextColor: Bool = AppSettings.shared.useCustomTextColor
     @State private var customTextColor: Color = AppSettings.shared.customTextColor
+    @State private var textScale: TextScale = AppSettings.shared.textScale
+    @State private var ringThickness: RingThickness = AppSettings.shared.ringThickness
+    @State private var handThickness: HandThickness = AppSettings.shared.handThickness
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -31,6 +34,9 @@ struct ClockView: View {
                         nowAngle: viewModel.nowAngle,
                         events: viewModel.canvasEvents,
                         themeColor: themeColorValue,
+                        ringThickness: ringThickness.factor,
+                        handLineWidth: handThickness.lineWidth,
+                        textScale: textScale.factor,
                         onTap: { point, geometry in
                             viewModel.handleArcTap(at: point, geometry: geometry)
                         },
@@ -38,14 +44,15 @@ struct ClockView: View {
                             viewModel.handleHover(phase: phase, geometry: geometry)
                         }
                     )
-                    CurrentEventLabel(state: viewModel.centerState)
+                    CurrentEventLabel(state: viewModel.centerState, textScale: textScale.factor)
                         .allowsHitTesting(false)  // 中央テキストが円弧クリックを奪わないようにする
                 }
 
                 Divider().frame(height: 0.5)
 
                 NextEventLine(state: viewModel.nextLineState,
-                              lastUpdatedText: viewModel.lastUpdatedFormatted)
+                              lastUpdatedText: viewModel.lastUpdatedFormatted,
+                              textScale: textScale.factor)
                     .frame(height: 40)
             }
 
@@ -54,7 +61,7 @@ struct ClockView: View {
             // spec §Non-goals「アニメーション無し」のため transaction で animation を抑制
             if let tooltip = viewModel.hoveredTooltip {
                 let position = Self.tooltipDisplayPosition(for: tooltip.position)
-                EventTooltip(timeLabel: tooltip.startEndLabel, title: tooltip.title)
+                EventTooltip(timeLabel: tooltip.startEndLabel, title: tooltip.title, textScale: textScale.factor)
                     .offset(x: position.x, y: position.y)
                     .allowsHitTesting(false)
                     .transaction { $0.animation = nil }
@@ -84,6 +91,9 @@ struct ClockView: View {
             customBackgroundColor = AppSettings.shared.customBackgroundColor
             useCustomTextColor = AppSettings.shared.useCustomTextColor
             customTextColor = AppSettings.shared.customTextColor
+            textScale = AppSettings.shared.textScale
+            ringThickness = AppSettings.shared.ringThickness
+            handThickness = AppSettings.shared.handThickness
         }
     }
 

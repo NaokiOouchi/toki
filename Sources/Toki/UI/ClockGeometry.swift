@@ -9,12 +9,15 @@ struct ClockGeometry {
     /// 与えられたサイズに対するジオメトリ。
     /// spec 008: 動的サイズ対応のため min(w,h) の比率で innerRadius / outerRadius を算出。
     /// 280 canvas で inner ≈ 84 / outer ≈ 106（既存値とほぼ同等で視覚回帰なし）。
-    static func standard(in size: CGSize) -> ClockGeometry {
+    /// `ringThickness` は (outerRadius - innerRadius) の比率（dim に対する係数）。
+    static func standard(in size: CGSize, ringThickness: CGFloat = 0.08) -> ClockGeometry {
         let dim = min(size.width, size.height)
+        let inner = dim * 0.30
+        let outer = inner + dim * ringThickness
         return ClockGeometry(
             center: CGPoint(x: size.width / 2, y: size.height / 2),
-            innerRadius: dim * 0.30,
-            outerRadius: dim * 0.38
+            innerRadius: inner,
+            outerRadius: outer
         )
     }
 }

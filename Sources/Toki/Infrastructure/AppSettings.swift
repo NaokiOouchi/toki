@@ -29,6 +29,9 @@ struct AppSettings {
         static let customTextR = "toki.customText.r"
         static let customTextG = "toki.customText.g"
         static let customTextB = "toki.customText.b"
+        static let textScale = "toki.textScale"
+        static let ringThickness = "toki.ringThickness"
+        static let handThickness = "toki.handThickness"
     }
 
     /// ウィンドウ透過率（0.05〜1.0）。0.05 = ほぼ透明、1 = 完全不透明。
@@ -83,6 +86,33 @@ struct AppSettings {
                              default: .primary) }
         nonmutating set { Self.writeColor(defaults: defaults, color: newValue,
                                           rKey: Key.customTextR, gKey: Key.customTextG, bKey: Key.customTextB) }
+    }
+
+    /// 文字サイズスケール（小 / 標準 / 大 / 特大）。各 Text の font size に factor を掛ける。
+    var textScale: TextScale {
+        get {
+            let raw = defaults.string(forKey: Key.textScale) ?? TextScale.regular.rawValue
+            return TextScale(rawValue: raw) ?? .regular
+        }
+        nonmutating set { defaults.set(newValue.rawValue, forKey: Key.textScale) }
+    }
+
+    /// リングの太さ（event 円弧の幅）。ClockGeometry の outerRadius - innerRadius を制御。
+    var ringThickness: RingThickness {
+        get {
+            let raw = defaults.string(forKey: Key.ringThickness) ?? RingThickness.regular.rawValue
+            return RingThickness(rawValue: raw) ?? .regular
+        }
+        nonmutating set { defaults.set(newValue.rawValue, forKey: Key.ringThickness) }
+    }
+
+    /// 針の太さ（時計の針の lineWidth）。
+    var handThickness: HandThickness {
+        get {
+            let raw = defaults.string(forKey: Key.handThickness) ?? HandThickness.regular.rawValue
+            return HandThickness(rawValue: raw) ?? .regular
+        }
+        nonmutating set { defaults.set(newValue.rawValue, forKey: Key.handThickness) }
     }
 
     // MARK: - Color persistence helpers
@@ -212,6 +242,82 @@ enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
         case .brown: return .brown
         case .gray: return .gray
         case .custom: return AppSettings.shared.customThemeColor
+        }
+    }
+}
+
+/// 文字サイズスケール。各 Text の font size に factor を掛けて拡縮する。
+enum TextScale: String, CaseIterable, Identifiable, Hashable {
+    case small, regular, large, xLarge
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .small: return "小"
+        case .regular: return "標準"
+        case .large: return "大"
+        case .xLarge: return "特大"
+        }
+    }
+
+    var factor: CGFloat {
+        switch self {
+        case .small: return 0.85
+        case .regular: return 1.0
+        case .large: return 1.2
+        case .xLarge: return 1.4
+        }
+    }
+}
+
+/// リングの太さ（event 円弧の幅）。`outerRadius - innerRadius = dim * factor`。
+enum RingThickness: String, CaseIterable, Identifiable, Hashable {
+    case thin, regular, thick, extraThick
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .thin: return "細"
+        case .regular: return "標準"
+        case .thick: return "太"
+        case .extraThick: return "極太"
+        }
+    }
+
+    /// dim（min(width, height)）に対する比率。standard=0.08（既存値）。
+    var factor: CGFloat {
+        switch self {
+        case .thin: return 0.05
+        case .regular: return 0.08
+        case .thick: return 0.12
+        case .extraThick: return 0.16
+        }
+    }
+}
+
+/// 針の太さ（lineWidth）。固定 pt で指定。
+enum HandThickness: String, CaseIterable, Identifiable, Hashable {
+    case thin, regular, thick, extraThick
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .thin: return "細"
+        case .regular: return "標準"
+        case .thick: return "太"
+        case .extraThick: return "極太"
+        }
+    }
+
+    var lineWidth: CGFloat {
+        switch self {
+        case .thin: return 1.0
+        case .regular: return 1.5
+        case .thick: return 2.5
+        case .extraThick: return 4.0
         }
     }
 }

@@ -5,14 +5,15 @@ import SwiftUI
 struct EventTooltip: View {
     let timeLabel: String   // "14:00 - 15:00"
     let title: String
+    var textScale: CGFloat = 1.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(timeLabel)
-                .font(.system(size: 11))
+                .font(.system(size: 11 * textScale))
                 .foregroundStyle(.secondary)
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 12 * textScale, weight: .medium))
                 .lineLimit(1)
                 .truncationMode(.tail)
         }

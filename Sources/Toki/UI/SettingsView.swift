@@ -13,6 +13,9 @@ struct SettingsView: View {
     @State private var customBackgroundColor: Color = AppSettings.shared.customBackgroundColor
     @State private var useCustomTextColor: Bool = AppSettings.shared.useCustomTextColor
     @State private var customTextColor: Color = AppSettings.shared.customTextColor
+    @State private var textScale: TextScale = AppSettings.shared.textScale
+    @State private var ringThickness: RingThickness = AppSettings.shared.ringThickness
+    @State private var handThickness: HandThickness = AppSettings.shared.handThickness
 
     var body: some View {
         ScrollView {
@@ -23,10 +26,13 @@ struct SettingsView: View {
                 materialSection
                 customBackgroundSection
                 customTextColorSection
+                textScaleSection
+                ringThicknessSection
+                handThicknessSection
             }
             .padding(20)
         }
-        .frame(width: 340, height: 520)
+        .frame(width: 340, height: 720)
         .tokiGlassBackground(cornerRadius: 12)
     }
 
@@ -146,6 +152,63 @@ struct SettingsView: View {
                         AppSettings.shared.customBackgroundColor = newValue
                         NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
                     }
+            }
+        }
+    }
+
+    /// 文字サイズスケール（小 / 標準 / 大 / 特大）。
+    private var textScaleSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("文字サイズ")
+                .font(.system(size: 12, weight: .medium))
+            Picker("", selection: $textScale) {
+                ForEach(TextScale.allCases) { scale in
+                    Text(scale.displayName).tag(scale)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .onChange(of: textScale) { _, newValue in
+                AppSettings.shared.textScale = newValue
+                NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+            }
+        }
+    }
+
+    /// リングの太さ（細 / 標準 / 太 / 極太）。
+    private var ringThicknessSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("リングの太さ")
+                .font(.system(size: 12, weight: .medium))
+            Picker("", selection: $ringThickness) {
+                ForEach(RingThickness.allCases) { thickness in
+                    Text(thickness.displayName).tag(thickness)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .onChange(of: ringThickness) { _, newValue in
+                AppSettings.shared.ringThickness = newValue
+                NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
+            }
+        }
+    }
+
+    /// 針の太さ（細 / 標準 / 太 / 極太）。
+    private var handThicknessSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("針の太さ")
+                .font(.system(size: 12, weight: .medium))
+            Picker("", selection: $handThickness) {
+                ForEach(HandThickness.allCases) { thickness in
+                    Text(thickness.displayName).tag(thickness)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .onChange(of: handThickness) { _, newValue in
+                AppSettings.shared.handThickness = newValue
+                NotificationCenter.default.post(name: .tokiAppearanceChanged, object: nil)
             }
         }
     }
