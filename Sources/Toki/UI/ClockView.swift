@@ -29,7 +29,8 @@ struct ClockView: View {
 
                 Divider().frame(height: 0.5)
 
-                NextEventLine(state: viewModel.nextLineState)
+                NextEventLine(state: viewModel.nextLineState,
+                              lastUpdatedText: viewModel.lastUpdatedFormatted)
                     .frame(height: 40)
             }
             .frame(width: 280, height: 320)
