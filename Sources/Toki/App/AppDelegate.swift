@@ -155,11 +155,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             SettingsStore.shared.setWindowFrame(w.frame)
         }
-        // spec 013 改修：didResize の代わりに didEndLiveResize を使う。
-        // didResize は programmatic な setFrame でも発火するため、hover animation の
-        // 中間値で baseline が drift する race が避けられなかった。
-        // didEndLiveResize は user が resize handle を掴んで離した時のみ発火し、
-        // hover-driven setFrame では発火しないため確実に「user 操作」を判定できる。
+        // spec 013 改修：didResize の代わりに didEndLiveResize を使う + isHoverResizing 判定。
+        // ログ解析で判明：animator().setFrame() でも didEndLiveResize が発火する
+        // （Apple ドキュメントの「user drag のみ」記述に反して programmatic resize でも発火）。
+        // isHoverResizing flag で hover animation 中 + completion 後 0.5s buffer 内の
+        // 発火を skip し、frame 値判定（lastHoverDrivenFrame）を保険として併用する。
         NotificationCenter.default.addObserver(
             forName: NSWindow.didEndLiveResizeNotification,
             object: w,
@@ -167,6 +167,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             guard let self else { return }
             guard let w = self.window else { return }
+            if self.isHoverResizing {
+                hoverLog.info("didEndLiveResize ignored: isHoverResizing=true frame=\(NSStringFromRect(w.frame), privacy: .public)")
+                return
+            }
+            if let lastHover = self.lastHoverDrivenFrame,
+               NSEqualRects(w.frame, lastHover) {
+                hoverLog.info("didEndLiveResize ignored: matches lastHoverDrivenFrame")
+                return
+            }
+            hoverLog.info("didEndLiveResize saved: height=\(w.frame.height, privacy: .public)")
             SettingsStore.shared.setWindowFrame(w.frame)
             // user 手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
             self.hoverBaselineHeight = w.frame.height
