@@ -27,9 +27,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 経由で届かないため、NSEvent monitor で直接捕捉する fallback 実装。
     private var scrollMonitor: Any?
 
-    /// spec 013 改修：BottomInfoArea hover で window を伸ばした分の delta。
-    /// 0 = 通常、>0 = hover 拡張中。`handleBottomHover` で更新。
-    private var hoverExpandedDelta: CGFloat = 0
+    /// spec 013 改修：hover 拡張前の window 高さ（baseline）。
+    /// ユーザーが設定した「通常時」の高さを保持し、hover アニメ中の中間値や
+    /// 拡張ぶんを排除した安定基準値として使う。
+    /// didResize（ユーザー操作）で更新、hover による setFrame では更新しない。
+    /// 初回 handleBottomHover で frame.height を記録。
+    private var hoverBaselineHeight: CGFloat?
     /// hover による window resize 中の didMove / didResize 通知を skip するフラグ。
     /// hover 起動 setFrame の前後で立てて、ユーザー設定の windowFrame を上書きしないよう保護。
     private var isHoverResizing: Bool = false
@@ -150,37 +153,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard !self.isHoverResizing else { return }
             guard let w = self.window else { return }
             SettingsStore.shared.setWindowFrame(w.frame)
+            // ユーザー手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
+            self.hoverBaselineHeight = w.frame.height
         }
     }
 
     /// BottomInfoArea の hover 状態に応じて window を下方向に伸縮する（spec 013 改修）。
-    /// 通常時を 0、hover 時を +28pt（1 行 + padding ぶん）として、上端固定で下に拡張。
+    /// 通常時 = baseline、hover 時 = baseline + 28pt、上端固定で下に拡張。
     /// NSAnimationContext で SwiftUI .animation(.easeInOut(0.2)) と同じ duration / curve に揃え、
-    /// BottomInfoArea の SwiftUI アニメと NSWindow リサイズを同期させて Divider 位置を固定する。
+    /// BottomInfoArea の SwiftUI アニメと NSWindow リサイズを同期させる。
     /// 拡張中の didMove / didResize 通知は isHoverResizing で skip し、
     /// ユーザー設定の windowFrame を上書きしないよう保護する。
+    ///
+    /// baseline 方式（spec 013 改修フィードバック対応）：
+    /// 旧実装は「現在の frame.height + diff」で target を計算していたが、アニメ進行中の
+    /// 中間値（例 268pt）を基準にしてしまい、再 hover で target=296pt のような過剰拡張や
+    /// 戻り先の中途半端な値（253 ではなく 268）が発生していた。
+    /// 「baseline + (hover 時 28pt or 0pt)」の絶対値方式に変更して中間値を排除する。
     private func handleBottomHover(_ isHovered: Bool) {
         guard let w = window else { return }
-        let targetDelta: CGFloat = isHovered ? 28 : 0
-        let diff = targetDelta - hoverExpandedDelta
-        guard diff != 0 else {
-            hoverLog.info("skip: isHovered=\(isHovered, privacy: .public) delta=\(self.hoverExpandedDelta, privacy: .public)")
+        let frame = w.frame
+        let topY = frame.maxY  // NSWindow は bottom-left 原点、maxY = top
+
+        // baseline 確保：初回 handleBottomHover で frame.height を記録、
+        // 以降は didResize（ユーザー操作）でのみ更新。
+        let baseline: CGFloat
+        if let bh = hoverBaselineHeight {
+            baseline = bh
+        } else {
+            baseline = frame.height
+            hoverBaselineHeight = baseline
+        }
+
+        let expandDelta: CGFloat = isHovered ? 28 : 0
+        let targetHeight = baseline + expandDelta
+        let targetOriginY = topY - targetHeight
+        let newFrame = NSRect(x: frame.minX, y: targetOriginY,
+                              width: frame.width, height: targetHeight)
+
+        // すでに target と一致しているなら skip（重複 setFrame を避ける）
+        guard abs(frame.height - targetHeight) > 0.5 else {
+            hoverLog.info("skip already at target=\(targetHeight, privacy: .public) frame=\(NSStringFromRect(frame), privacy: .public)")
             return
         }
 
-        let frame = w.frame
-        let topY = frame.maxY  // NSWindow は bottom-left 原点、maxY = top
-        let newHeight = frame.height + diff
-        let newOriginY = topY - newHeight  // 上端固定
-        let newFrame = NSRect(x: frame.minX, y: newOriginY,
-                              width: frame.width, height: newHeight)
+        hoverLog.info("isHovered=\(isHovered, privacy: .public) baseline=\(baseline, privacy: .public) target=\(targetHeight, privacy: .public) before=\(NSStringFromRect(frame), privacy: .public) after=\(NSStringFromRect(newFrame), privacy: .public)")
 
-        hoverLog.info("isHovered=\(isHovered, privacy: .public) diff=\(diff, privacy: .public) before=\(NSStringFromRect(frame), privacy: .public) after=\(NSStringFromRect(newFrame), privacy: .public)")
-
-        hoverExpandedDelta = targetDelta
         isHoverResizing = true
 
         // SwiftUI の .animation(.easeInOut(0.2)) と同じ duration / curve で同期。
+        // 既に animation 中なら自動的にキャンセルして新しい animation に切り替わる。
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
