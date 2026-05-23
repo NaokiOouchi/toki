@@ -457,6 +457,8 @@ final class ClockViewModel: ObservableObject {
 
     /// debounce 後に呼ばれる本体。hover 中グループに対して index を循環更新する（spec 013）。
     /// hover 外 / 重なりなしグループは no-op。
+    /// index 更新後、tooltip と popover も新 current event に同期する
+    /// （scroll しても hover / popover が前 event のままになる問題を回避）。
     private func applyScroll(steps: Int) {
         guard steps != 0,
               let point = lastHoverPoint,
@@ -467,7 +469,25 @@ final class ClockViewModel: ObservableObject {
         }
         let current = overlapIndices[group.id] ?? 0
         let c = group.count
-        overlapIndices[group.id] = ((current + steps) % c + c) % c
+        let newIndex = ((current + steps) % c + c) % c
+        overlapIndices[group.id] = newIndex
+
+        // 新 current event に tooltip / popover を同期する。
+        let newCurrent = group.event(at: newIndex)
+
+        // hover tooltip 再構築（hover 中なので current event の TooltipState を作る）
+        let newTooltip = TooltipState(
+            startEndLabel: Self.formatTimeRange(newCurrent.start, newCurrent.end, calendar: calendar),
+            title: newCurrent.title,
+            position: point
+        )
+        if hoveredTooltip != newTooltip { hoveredTooltip = newTooltip }
+
+        // popover 表示中で、対象 group 内の event を表示しているなら新 current に置換。
+        // 別 group の popover 表示中は影響させない。
+        if let prev = previewedEvent, group.events.contains(where: { $0.id == prev.id }) {
+            previewedEvent = makeRenderable(newCurrent)
+        }
     }
 
     /// hover 位置から OverlapGroup を特定する（spec 013）。
