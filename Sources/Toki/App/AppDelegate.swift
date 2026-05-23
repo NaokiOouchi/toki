@@ -19,6 +19,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// spec 011 で導入、設定値は @Published 経由で SwiftUI 標準パターンで再描画される。
     private var appearance: AppearanceModel?
 
+    /// spec 013：scroll wheel イベントを ClockView の window に届けるための local event monitor。
+    /// SwiftUI overlay 内の NSViewRepresentable（ScrollCatcher）では scrollWheel が responder chain
+    /// 経由で届かないため、NSEvent monitor で直接捕捉する fallback 実装。
+    private var scrollMonitor: Any?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
         let oauth = OAuthConfig.load().map { config in
@@ -64,6 +69,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // ViewModel 起動（OAuth 接続状態の取り込み + 購読開始 + タイマー）
         Task { await vm.start() }
+
+        // spec 013: scroll wheel monitor を登録。ClockView の window に来た
+        // scroll イベントのみ ViewModel に転送、他 window（settings 等）は影響なし。
+        // event 自体は return で pass through し、通常処理は維持する。
+        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+            guard let self else { return event }
+            if event.window === self.window {
+                Task { @MainActor in
+                    self.viewModel?.handleScrollRaw(deltaY: event.scrollingDeltaY)
+                }
+            }
+            return event
+        }
 
         // メニューバーアイコン + 左クリック toggle / 右クリックメニュー
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)

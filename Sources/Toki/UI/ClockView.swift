@@ -36,12 +36,9 @@ struct ClockView: View {
                             viewModel.handleHover(phase: phase, geometry: geometry)
                         }
                     )
-                    .overlay(
-                        // spec 013: scroll wheel を受けて重なり event を cycle
-                        ScrollCatcher { deltaY in
-                            viewModel.handleScrollRaw(deltaY: deltaY)
-                        }
-                    )
+                    // spec 013：scroll wheel は AppDelegate の NSEvent.addLocalMonitorForEvents
+                    // で捕捉し ViewModel.handleScrollRaw に転送する（SwiftUI overlay 経由では
+                    // scrollWheel が responder chain で届かないため、global monitor で対応）。
                     CurrentEventLabel(state: viewModel.centerState,
                                       textScale: appearance.textScale.factor)
                         .allowsHitTesting(false)  // 中央テキストが円弧クリックを奪わないようにする
