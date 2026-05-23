@@ -296,6 +296,31 @@ final class ClockViewModel: ObservableObject {
         return nil
     }
 
+    /// hover 時に BottomInfoArea が下に伸びる高さ（spec 013 改修）。
+    /// AppDelegate がこの値を使って window を伸ばすことで、clock 領域を保ったまま
+    /// 拡張表示できる。固定値ではなく動的計算するのは、extras の組み合わせで
+    /// 必要な高さが変わるため（0 / 1 行 / 2 行）。
+    /// estimates（default textScale=1.0 前提）：
+    /// - AllDayEventLine row：~20pt（11pt font + 内部 padding）
+    /// - lastUpdated row：~16pt（9pt font + 内部 padding）
+    /// - VStack 行間 spacing：4pt
+    var hoverExpansionDelta: CGFloat {
+        let hasNext = nextLineState != nil
+        let hasAllDay = allDayLineState != nil
+        let hasUpdated = lastUpdatedFormatted != nil
+
+        var delta: CGFloat = 0
+        // primary が next の時、extra に allDay 1 行が追加される
+        if hasNext && hasAllDay {
+            delta += 4 + 20  // spacing + AllDayEventLine row
+        }
+        // event がある時、最終更新が hover 時末尾に表示される
+        if (hasNext || hasAllDay) && hasUpdated {
+            delta += 4 + 16  // spacing + lastUpdated row
+        }
+        return delta
+    }
+
     /// HH:MM 形式の時刻文字列を返す。
     private static func formatHHMM(_ date: Date, calendar: Calendar) -> String {
         let c = calendar.dateComponents([.hour, .minute], from: date)

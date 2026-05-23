@@ -184,7 +184,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// BottomInfoArea の hover 状態に応じて window を下方向に伸縮する（spec 013 改修）。
-    /// 通常時 = baseline、hover 時 = baseline + 28pt、上端固定で下に拡張。
+    /// 通常時 = baseline、hover 時 = baseline + ViewModel.hoverExpansionDelta、上端固定で下に拡張。
+    /// 拡張量は content の extras に合わせて動的計算するため、clock 領域が hover で
+    /// 変動しない（固定 28pt だと content と一致せず clock サイズが変わる事象を回避）。
     /// NSAnimationContext で SwiftUI .animation(.easeInOut(0.2)) と同じ duration / curve に揃え、
     /// BottomInfoArea の SwiftUI アニメと NSWindow リサイズを同期させる。
     /// 拡張中の didMove / didResize 通知は isHoverResizing で skip し、
@@ -210,7 +212,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             hoverBaselineHeight = baseline
         }
 
-        let expandDelta: CGFloat = isHovered ? 28 : 0
+        // ViewModel から動的計算した必要拡張量を取得（content と完全一致させて
+        // clock 領域変動を防ぐ）。viewModel 取得失敗時は fallback 28pt。
+        let expandDelta: CGFloat = isHovered ? (viewModel?.hoverExpansionDelta ?? 28) : 0
         let targetHeight = baseline + expandDelta
         let targetOriginY = topY - targetHeight
         let newFrame = NSRect(x: frame.minX, y: targetOriginY,
