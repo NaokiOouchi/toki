@@ -73,7 +73,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             viewModel: vm,
             appearance: appearance,
             onBottomHoverChanged: { [weak self] hovered in
-                self?.handleBottomHover(hovered)
+                // ClockViewModel (@MainActor) アクセスのため明示的に MainActor で実行。
+                Task { @MainActor in
+                    self?.handleBottomHover(hovered)
+                }
             }
         )
         let w = FloatingClockWindow.make(contentView: clockView)
@@ -197,6 +200,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 中間値（例 268pt）を基準にしてしまい、再 hover で target=296pt のような過剰拡張や
     /// 戻り先の中途半端な値（253 ではなく 268）が発生していた。
     /// 「baseline + (hover 時 28pt or 0pt)」の絶対値方式に変更して中間値を排除する。
+    @MainActor
     private func handleBottomHover(_ isHovered: Bool) {
         guard let w = window else { return }
         let frame = w.frame
