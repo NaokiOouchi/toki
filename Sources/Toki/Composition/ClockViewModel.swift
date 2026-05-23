@@ -363,10 +363,17 @@ final class ClockViewModel: ObservableObject {
             lastHoverPoint = location
             lastHoverGeometry = geometry
             if let event = hitTest(point: location, events: canvasEvents, geometry: geometry) {
+                // spec 013: 重なりグループに属する event なら "i/N" を tooltip にも出す
+                // （円弧外側の badge が tooltip に隠れて見えない場合の補完）
+                let cycle = canvasGroups.first { $0.current.id == event.id }
+                    .flatMap { g -> String? in
+                        g.totalCount > 1 ? "\(g.currentIndex)/\(g.totalCount)" : nil
+                    }
                 let tooltip = TooltipState(
                     startEndLabel: Self.formatTimeRange(event.start, event.end, calendar: calendar),
                     title: event.title,
-                    position: location
+                    position: location,
+                    cycleIndicator: cycle
                 )
                 if hoveredTooltip != tooltip {
                     hoveredTooltip = tooltip
@@ -486,10 +493,12 @@ final class ClockViewModel: ObservableObject {
         let newCurrent = group.event(at: newIndex)
 
         // hover tooltip 再構築（hover 中なので current event の TooltipState を作る）
+        // spec 013：cycleIndicator も新 index で更新
         let newTooltip = TooltipState(
             startEndLabel: Self.formatTimeRange(newCurrent.start, newCurrent.end, calendar: calendar),
             title: newCurrent.title,
-            position: point
+            position: point,
+            cycleIndicator: "\(newIndex + 1)/\(group.count)"
         )
         if hoveredTooltip != newTooltip { hoveredTooltip = newTooltip }
 

@@ -93,6 +93,7 @@ struct ClockView: View {
                 let position = Self.tooltipDisplayPosition(for: tooltip.position)
                 EventTooltip(timeLabel: tooltip.startEndLabel,
                              title: tooltip.title,
+                             cycleIndicator: tooltip.cycleIndicator,
                              textScale: appearance.textScale.factor)
                     .offset(x: position.x, y: position.y)
                     .allowsHitTesting(false)
