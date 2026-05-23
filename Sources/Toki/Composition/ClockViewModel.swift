@@ -42,10 +42,27 @@ final class ClockViewModel: ObservableObject {
     /// 中央テキストに「接続中…」を表示するための flag。
     @Published private(set) var isConnecting: Bool = false
 
+    /// 各重なりグループの選択 index（key = OverlapGroup.id）。spec 013 で導入。
+    /// scroll で hover 中グループの index を増減、modulo で循環。
+    /// 未操作グループは存在しない or 0 扱い（取得時 default 0）。
+    @Published private(set) var overlapIndices: [String: Int] = [:]
+
     private let gateway: GoogleCalendarGateway?
     private let calendar: Calendar
     private var cancellables = Set<AnyCancellable>()
     private var minuteTimerCancellable: AnyCancellable?
+
+    /// 直近の hover 位置（local 座標、Canvas 内）。spec 013 で導入。
+    /// scroll handler が hover 中グループを特定するために使用。nil = hover 外。
+    /// @Published にしない（scroll handler が読むだけで UI 再描画は不要）。
+    private var lastHoverPoint: CGPoint? = nil
+    /// hover 時に保存した geometry（scroll handler の hitTestGroup で使用）。
+    private var lastHoverGeometry: ClockGeometry? = nil
+
+    /// scroll debounce 用の累積 step と Task。spec 013 §Open Questions §7。
+    /// 200ms 以内の連続 scroll を 1 step として集計する。
+    private var pendingScrollSteps: Int = 0
+    private var scrollDebounceTask: Task<Void, Never>? = nil
 
     init(gateway: GoogleCalendarGateway?, calendar: Calendar = .current) {
         self.gateway = gateway
@@ -152,27 +169,56 @@ final class ClockViewModel: ObservableObject {
         TimeOfDay.from(date: now, calendar: calendar).clockAngle
     }
 
-    /// Domain Event を UI 描画用 `RenderableEvent` に変換する。
+    /// Domain Event → RenderableEvent 変換ヘルパー（spec 013 で抽出）。
+    /// canvasEvents / canvasGroups / canvasBackgroundEvent の共通ロジックを集約。
     /// 角度は `TimeOfDay.clockAngle`、status は `Event.status(at:)` に委譲する。
-    var canvasEvents: [RenderableEvent] {
+    private func makeRenderable(_ ev: Event) -> RenderableEvent {
+        RenderableEvent(
+            id: ev.id,
+            title: ev.title,
+            startAngle: TimeOfDay.from(date: ev.start, calendar: calendar).clockAngle,
+            endAngle: TimeOfDay.from(date: ev.end, calendar: calendar).clockAngle,
+            color: ev.calendarColor,
+            status: ev.status(at: now),
+            start: ev.start,
+            end: ev.end,
+            webURL: ev.webURL,
+            location: ev.location,
+            note: ev.note,
+            attendees: ev.attendees,
+            meetURL: ev.meetURL
+        )
+    }
+
+    /// 重なりグループごとの描画用データ。spec 013 で追加。
+    /// 各グループから「現 index の event」「次 index の event（peek 用）」「extraCount」を組み立てる。
+    var canvasGroups: [RenderableOverlapGroup] {
         guard let tl = timeline else { return [] }
-        return tl.events.map { ev in
-            RenderableEvent(
-                id: ev.id,
-                title: ev.title,
-                startAngle: TimeOfDay.from(date: ev.start, calendar: calendar).clockAngle,
-                endAngle: TimeOfDay.from(date: ev.end, calendar: calendar).clockAngle,
-                color: ev.calendarColor,
-                status: ev.status(at: now),
-                start: ev.start,
-                end: ev.end,
-                webURL: ev.webURL,
-                location: ev.location,
-                note: ev.note,
-                attendees: ev.attendees,
-                meetURL: ev.meetURL
+        return tl.groups.map { group in
+            let idx = overlapIndices[group.id] ?? 0
+            let current = makeRenderable(group.event(at: idx))
+            let next: RenderableEvent? = group.isOverlapping
+                ? makeRenderable(group.event(at: idx + 1))
+                : nil
+            return RenderableOverlapGroup(
+                id: group.id,
+                current: current,
+                next: next,
+                extraCount: max(0, group.count - 1)
             )
         }
+    }
+
+    /// 背景帯描画用。複数 24h event のうち最初の 1 件のみ採用（spec 013 §Open Questions §15）。
+    var canvasBackgroundEvent: RenderableEvent? {
+        guard let tl = timeline, let ev = tl.backgroundEvents.first else { return nil }
+        return makeRenderable(ev)
+    }
+
+    /// 後方互換：既存 ClockView / hitTest 経路が canvasEvents を読めるようにする。
+    /// canvasGroups の current だけを flatten した配列で、popover や hit-test で使う。
+    var canvasEvents: [RenderableEvent] {
+        canvasGroups.map(\.current)
     }
 
     /// 中央 3 行テキストの表示状態を組み立てる。
@@ -303,6 +349,9 @@ final class ClockViewModel: ObservableObject {
     func handleHover(phase: HoverPhase, geometry: ClockGeometry) {
         switch phase {
         case .active(let location):
+            // spec 013: scroll handler が hover 中グループ特定に使う
+            lastHoverPoint = location
+            lastHoverGeometry = geometry
             if let event = hitTest(point: location, events: canvasEvents, geometry: geometry) {
                 let tooltip = TooltipState(
                     startEndLabel: Self.formatTimeRange(event.start, event.end, calendar: calendar),
@@ -316,6 +365,9 @@ final class ClockViewModel: ObservableObject {
                 hoveredTooltip = nil
             }
         case .ended:
+            // spec 013: hover 終了で scroll 操作対象を解除
+            lastHoverPoint = nil
+            lastHoverGeometry = nil
             if hoveredTooltip != nil {
                 hoveredTooltip = nil
             }
@@ -381,5 +433,55 @@ final class ClockViewModel: ObservableObject {
         let m = c.month ?? 1
         let d = c.day ?? 1
         return String(format: "https://calendar.google.com/calendar/u/0/r/day/%04d/%02d/%02d", y, m, d)
+    }
+
+    // MARK: - スクロールハンドラ（spec 013）
+
+    /// ScrollCatcher からの raw scroll を受け取り、200ms debounce 後に index を更新する（spec 013）。
+    /// hover 外 / 重なりなしグループでは no-op（debounce 適用時にも判定）。
+    /// 上スクロール = 次 event（index++）、下スクロール = 前 event（index--）。
+    /// macOS の natural scroll でも deltaY 符号は同じ（trackpad 上向き = +）。
+    func handleScrollRaw(deltaY: CGFloat) {
+        let step = deltaY > 0 ? 1 : -1
+        pendingScrollSteps += step
+
+        scrollDebounceTask?.cancel()
+        scrollDebounceTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 200_000_000)  // 200ms
+            guard let self, !Task.isCancelled else { return }
+            let pending = self.pendingScrollSteps
+            self.pendingScrollSteps = 0
+            self.applyScroll(steps: pending)
+        }
+    }
+
+    /// debounce 後に呼ばれる本体。hover 中グループに対して index を循環更新する（spec 013）。
+    /// hover 外 / 重なりなしグループは no-op。
+    private func applyScroll(steps: Int) {
+        guard steps != 0,
+              let point = lastHoverPoint,
+              let geo = lastHoverGeometry,
+              let group = hitTestGroup(at: point, geometry: geo),
+              group.isOverlapping else {
+            return
+        }
+        let current = overlapIndices[group.id] ?? 0
+        let c = group.count
+        overlapIndices[group.id] = ((current + steps) % c + c) % c
+    }
+
+    /// hover 位置から OverlapGroup を特定する（spec 013）。
+    /// canvasGroups の current event の弧範囲を hitTest して、対応する Domain OverlapGroup を返す。
+    /// canvasGroups と timeline.groups は同じ順序なので、index で紐付ける。
+    /// 角度判定は既存 `hitTest` の `Path.contains(point:)` を流用（annulusPath と完全整合）。
+    private func hitTestGroup(at point: CGPoint, geometry: ClockGeometry) -> OverlapGroup? {
+        guard let tl = timeline else { return nil }
+        let groups = canvasGroups
+        for (idx, rgroup) in groups.enumerated() {
+            if hitTest(point: point, events: [rgroup.current], geometry: geometry) != nil {
+                return tl.groups[idx]
+            }
+        }
+        return nil
     }
 }
