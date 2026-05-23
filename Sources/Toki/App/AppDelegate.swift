@@ -34,10 +34,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 初回 handleBottomHover で frame.height を記録。
     private var hoverBaselineHeight: CGFloat?
     /// hover による setFrame で設定した最新 frame。didResize / didMove 通知が
-    /// このフレームと完全一致するなら「hover 起動」と判定し、baseline / windowFrame
-    /// 保存をスキップする。`isHoverResizing` フラグ方式では animation 完了後の
-    /// 遅延通知で baseline がずれる timing race が発生したため frame 値判定に変更。
+    /// このフレームと完全一致するなら「hover 起動」と判定し、保存をスキップする。
+    /// animation 完了後の保険として使用。アニメ中の中間値判定には別の
+    /// `isHoverResizing` フラグを併用する（中間値は target と一致しないため）。
     private var lastHoverDrivenFrame: NSRect?
+    /// hover による animation 進行中フラグ。animation 中の didResize 通知は
+    /// 中間値（target と一致しない）で発火するため、frame 値判定では skip できない。
+    /// このフラグで完全 skip し、completion + 0.5s buffer で遅延通知にも対応。
+    private var isHoverResizing: Bool = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
@@ -141,8 +145,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             guard let self else { return }
             guard let w = self.window else { return }
-            // spec 013 改修：hover で設定した frame と完全一致なら save しない
-            // （animation 完了後の遅延通知でも frame 値で確実に判定できる）
+            // spec 013 改修：以下のいずれかなら hover-driven として save スキップ
+            // 1. isHoverResizing=true（animation 中 + 完了後 0.5s buffer）→ 中間値も skip
+            // 2. lastHoverDrivenFrame と完全一致 → buffer 後の保険
+            if self.isHoverResizing { return }
             if let lastHover = self.lastHoverDrivenFrame,
                NSEqualRects(w.frame, lastHover) {
                 return
@@ -156,7 +162,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             guard let self else { return }
             guard let w = self.window else { return }
-            // spec 013 改修：hover で設定した frame と完全一致なら save しない
+            // spec 013 改修：以下のいずれかなら hover-driven として save スキップ
+            if self.isHoverResizing { return }
             if let lastHover = self.lastHoverDrivenFrame,
                NSEqualRects(w.frame, lastHover) {
                 return
@@ -208,9 +215,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         hoverLog.info("isHovered=\(isHovered, privacy: .public) baseline=\(baseline, privacy: .public) target=\(targetHeight, privacy: .public) before=\(NSStringFromRect(frame), privacy: .public) after=\(NSStringFromRect(newFrame), privacy: .public)")
 
-        // hover 起動 frame として記録：didResize / didMove がこの frame と完全一致する間は
-        // user 操作ではなく hover-driven とみなして baseline 保存をスキップ。
+        // hover 起動 frame として記録：完了後の保険、didResize / didMove で frame が
+        // この target と完全一致なら baseline 保存をスキップ。
         lastHoverDrivenFrame = newFrame
+        // animation 中フラグ：中間値の didResize 通知を全 skip するため。
+        isHoverResizing = true
 
         // SwiftUI の .animation(.easeInOut(0.2)) と同じ duration / curve で同期。
         // 既に animation 中なら自動的にキャンセルして新しい animation に切り替わる。
@@ -218,7 +227,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             w.animator().setFrame(newFrame, display: true)
-        }, completionHandler: {
+        }, completionHandler: { [weak self] in
+            // completion 後 0.5s buffer を取って isHoverResizing を維持。
+            // NSWindow.didResize 通知が animation 完了より遅れて来ることがあるため
+            // buffer 期間内の通知も hover-driven として扱う。
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self?.isHoverResizing = false
+            }
             hoverLog.info("resize completed")
         })
     }
