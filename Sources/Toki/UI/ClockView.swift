@@ -46,10 +46,11 @@ struct ClockView: View {
 
                 Divider().frame(height: 0.5)
 
-                NextEventLine(state: viewModel.nextLineState,
-                              lastUpdatedText: viewModel.lastUpdatedFormatted,
-                              textScale: appearance.textScale.factor)
-                    .frame(height: 40)
+                // spec 013 改修：BottomInfoArea で priority 表示 + hover で展開。
+                // 通常は 1 行のみ（24h event / 次の予定 / 最終更新 のいずれか優先）、
+                // hover で「下に伸びて」全行表示する collapsible UI。
+                BottomInfoArea(viewModel: viewModel,
+                               textScale: appearance.textScale.factor)
             }
 
             // popover 表示中：透明 backdrop（外側クリックで close）+ popover 本体

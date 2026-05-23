@@ -259,6 +259,16 @@ final class ClockViewModel: ObservableObject {
         return "\(hours) 時間 \(mins) 分"
     }
 
+    /// 下部「終日」ラインの状態。spec 013 改修で追加。
+    /// 24h timed event（DayTimeline.backgroundEvents）の最初の 1 件のタイトルを返す。
+    /// BottomInfoArea が priority 表示で使用、nil なら非表示。
+    var allDayLineState: AllDayLineState? {
+        guard accessGranted, let tl = timeline, let ev = tl.backgroundEvents.first else {
+            return nil
+        }
+        return AllDayLineState(title: ev.title)
+    }
+
     /// 下部「次の予定」ラインの状態。
     /// 今日の予定残あり → 今日の next event（既存挙動、日付ラベルなし）
     /// 今日の予定残ゼロ → 明日以降の最初の未来 event（spec 012、日付ラベル付き）
