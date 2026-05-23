@@ -79,7 +79,7 @@ final class GoogleCalendarGateway: ObservableObject {
             return DayTimeline(date: dayStart, events: [])
         }
         do {
-            let apiEvents = try await api.fetchTodayEvents(timeMin: dayStart, timeMax: dayEnd)
+            let apiEvents = try await api.fetchEventsAhead(timeMin: dayStart, timeMax: dayEnd)
             var rawEvents: [Event] = []
             var allDayFlags: [Bool] = []
             for ge in apiEvents {

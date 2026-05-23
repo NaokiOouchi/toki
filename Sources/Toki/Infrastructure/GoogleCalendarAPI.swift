@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 
 /// Google Calendar API クライアント。
-/// 今日の event を全 calendar 横断で取得することに特化する。
+/// 指定期間の event を全 calendar 横断で取得する（spec 012 で 7 日先までに拡張）。
 /// 認証は GoogleOAuthClient に委譲、本クラスはトークンを使った REST 呼び出しのみ。
 final class GoogleCalendarAPI {
     enum APIError: Error {
@@ -41,11 +41,11 @@ final class GoogleCalendarAPI {
         }
     }
 
-    /// 今日の event を全 calendar 横断で並列取得する。
+    /// 指定期間（timeMin..<timeMax）の event を全 calendar 横断で並列取得する。
     /// 各 calendar の `events.list?timeMin=...&timeMax=...&singleEvents=true&orderBy=startTime` を並列実行し、
     /// 親 calendar の summary / color を詰めて GoogleAPIEvent 配列で返す。
-    /// 個別 calendar 失敗は空配列で扱う（silent fail）。
-    func fetchTodayEvents(timeMin: Date, timeMax: Date) async throws -> [GoogleAPIEvent] {
+    /// 個別 calendar 失敗は空配列で扱う（silent fail）。spec 012 で 7 日先まで対応するため rename。
+    func fetchEventsAhead(timeMin: Date, timeMax: Date) async throws -> [GoogleAPIEvent] {
         let token = try await oauth.getValidAccessToken()
         let calendars = try await fetchCalendars(token: token)
         guard !calendars.isEmpty else { return [] }
