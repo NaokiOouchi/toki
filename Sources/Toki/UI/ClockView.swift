@@ -21,41 +21,53 @@ struct ClockView: View {
             glassBackgroundLayer
 
             // 前景コンテンツ（時計 / テキスト）：常時 100% 表示
-            VStack(spacing: 0) {
-                ZStack {
-                    ClockFaceCanvas(
-                        nowAngle: viewModel.nowAngle,
-                        groups: viewModel.canvasGroups,
-                        backgroundEvent: viewModel.canvasBackgroundEvent,
-                        themeColor: appearance.resolvedThemeColor,
-                        ringThickness: appearance.ringThickness.factor,
-                        handLineWidth: appearance.handThickness.lineWidth,
-                        textScale: appearance.textScale.factor,
-                        circleOutlineLineWidth: appearance.circleOutlineThickness.lineWidth,
-                        circleOutlineColor: appearance.resolvedCircleOutlineColor,
-                        onTap: { point, geometry in
-                            viewModel.handleArcTap(at: point, geometry: geometry)
-                        },
-                        onHover: { phase, geometry in
-                            viewModel.handleHover(phase: phase, geometry: geometry)
-                        }
-                    )
-                    // spec 013：scroll wheel は AppDelegate の NSEvent.addLocalMonitorForEvents
-                    // で捕捉し ViewModel.handleScrollRaw に転送する（SwiftUI overlay 経由では
-                    // scrollWheel が responder chain で届かないため、global monitor で対応）。
-                    CurrentEventLabel(state: viewModel.centerState,
-                                      textScale: appearance.textScale.factor)
-                        .allowsHitTesting(false)  // 中央テキストが円弧クリックを奪わないようにする
+            // spec 013 改修：GeometryReader で width を取得し、ZStack(clock) を
+            // 正方形（height = width）に固定する。Window 拡縮で ZStack のサイズが
+            // 変動しないため、hover アニメーション中も clock が完全固定になる。
+            // 余白は Spacer(minLength: 0) が動的に吸収する。
+            GeometryReader { proxy in
+                VStack(spacing: 0) {
+                    ZStack {
+                        ClockFaceCanvas(
+                            nowAngle: viewModel.nowAngle,
+                            groups: viewModel.canvasGroups,
+                            backgroundEvent: viewModel.canvasBackgroundEvent,
+                            themeColor: appearance.resolvedThemeColor,
+                            ringThickness: appearance.ringThickness.factor,
+                            handLineWidth: appearance.handThickness.lineWidth,
+                            textScale: appearance.textScale.factor,
+                            circleOutlineLineWidth: appearance.circleOutlineThickness.lineWidth,
+                            circleOutlineColor: appearance.resolvedCircleOutlineColor,
+                            onTap: { point, geometry in
+                                viewModel.handleArcTap(at: point, geometry: geometry)
+                            },
+                            onHover: { phase, geometry in
+                                viewModel.handleHover(phase: phase, geometry: geometry)
+                            }
+                        )
+                        // spec 013：scroll wheel は AppDelegate の NSEvent.addLocalMonitorForEvents
+                        // で捕捉し ViewModel.handleScrollRaw に転送する（SwiftUI overlay 経由では
+                        // scrollWheel が responder chain で届かないため、global monitor で対応）。
+                        CurrentEventLabel(state: viewModel.centerState,
+                                          textScale: appearance.textScale.factor)
+                            .allowsHitTesting(false)  // 中央テキストが円弧クリックを奪わないようにする
+                    }
+                    // ZStack(clock) を width = height の正方形に固定
+                    .frame(height: proxy.size.width)
+
+                    // hover による window 拡張 ↔ BottomInfoArea 拡張の差分を吸収。
+                    // ZStack(clock) サイズは変動しないため Spacer が動的に縮む / 伸びる。
+                    Spacer(minLength: 0)
+
+                    Divider().frame(height: 0.5)
+
+                    // spec 013 改修：BottomInfoArea で priority 表示 + hover で展開。
+                    // 通常は 1 行のみ（24h event / 次の予定 / 最終更新 のいずれか優先）、
+                    // hover で「下に伸びて」全行表示する collapsible UI。
+                    BottomInfoArea(viewModel: viewModel,
+                                   textScale: appearance.textScale.factor,
+                                   onHoverChanged: onBottomHoverChanged)
                 }
-
-                Divider().frame(height: 0.5)
-
-                // spec 013 改修：BottomInfoArea で priority 表示 + hover で展開。
-                // 通常は 1 行のみ（24h event / 次の予定 / 最終更新 のいずれか優先）、
-                // hover で「下に伸びて」全行表示する collapsible UI。
-                BottomInfoArea(viewModel: viewModel,
-                               textScale: appearance.textScale.factor,
-                               onHoverChanged: onBottomHoverChanged)
             }
 
             // popover 表示中：透明 backdrop（外側クリックで close）+ popover 本体
