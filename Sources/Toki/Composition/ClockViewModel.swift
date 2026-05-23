@@ -535,14 +535,34 @@ final class ClockViewModel: ObservableObject {
     }
 
     /// hover 位置から OverlapGroup を特定する（spec 013）。
-    /// canvasGroups の current event の弧範囲を hitTest して、対応する Domain OverlapGroup を返す。
-    /// canvasGroups と timeline.groups は同じ順序なので、index で紐付ける。
-    /// 角度判定は既存 `hitTest` の `Path.contains(point:)` を流用（annulusPath と完全整合）。
+    /// group の **合成弧範囲（最長 event の範囲）** で hitTest して、対応する Domain OverlapGroup を返す。
+    /// current event の弧範囲だけだと、短い event 表示中に長い event の範囲で scroll が効かなくなる
+    /// （例：A=09:00-10:00 と B=09:00-09:15 重なり、current=B 表示中に 09:15-10:00 で scroll 不発）。
+    /// 薄色で描画される合成弧の範囲全体で scroll を受けるため、group 内最長 event の範囲のどこに
+    /// hover しても cycle 可能になる。
+    /// tooltip / popover 用の hitTest は引き続き current event の弧範囲を使う（表示中 event のみ反応）。
     private func hitTestGroup(at point: CGPoint, geometry: ClockGeometry) -> OverlapGroup? {
         guard let tl = timeline else { return nil }
         let groups = canvasGroups
         for (idx, rgroup) in groups.enumerated() {
-            if hitTest(point: point, events: [rgroup.current], geometry: geometry) != nil {
+            // 仮想 RenderableEvent を作って、合成弧範囲（groupStartAngle〜groupEndAngle）で hitTest。
+            // 既存 hitTest と annulusPath ロジックを流用するための wrap。
+            let groupArc = RenderableEvent(
+                id: rgroup.id,
+                title: rgroup.current.title,
+                startAngle: rgroup.groupStartAngle,
+                endAngle: rgroup.groupEndAngle,
+                color: rgroup.current.color,
+                status: rgroup.current.status,
+                start: rgroup.current.start,
+                end: rgroup.current.end,
+                webURL: rgroup.current.webURL,
+                location: nil,
+                note: nil,
+                attendees: [],
+                meetURL: nil
+            )
+            if hitTest(point: point, events: [groupArc], geometry: geometry) != nil {
                 return tl.groups[idx]
             }
         }
