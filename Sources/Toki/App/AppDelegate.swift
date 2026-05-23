@@ -33,9 +33,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// didResize（ユーザー操作）で更新、hover による setFrame では更新しない。
     /// 初回 handleBottomHover で frame.height を記録。
     private var hoverBaselineHeight: CGFloat?
-    /// hover による window resize 中の didMove / didResize 通知を skip するフラグ。
-    /// hover 起動 setFrame の前後で立てて、ユーザー設定の windowFrame を上書きしないよう保護。
-    private var isHoverResizing: Bool = false
+    /// hover による setFrame で設定した最新 frame。didResize / didMove 通知が
+    /// このフレームと完全一致するなら「hover 起動」と判定し、baseline / windowFrame
+    /// 保存をスキップする。`isHoverResizing` フラグ方式では animation 完了後の
+    /// 遅延通知で baseline がずれる timing race が発生したため frame 値判定に変更。
+    private var lastHoverDrivenFrame: NSRect?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
@@ -138,9 +140,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            // spec 013 改修：hover 起動 setFrame による didMove は保存対象外
-            guard !self.isHoverResizing else { return }
             guard let w = self.window else { return }
+            // spec 013 改修：hover で設定した frame と完全一致なら save しない
+            // （animation 完了後の遅延通知でも frame 値で確実に判定できる）
+            if let lastHover = self.lastHoverDrivenFrame,
+               NSEqualRects(w.frame, lastHover) {
+                return
+            }
             SettingsStore.shared.setWindowFrame(w.frame)
         }
         NotificationCenter.default.addObserver(
@@ -149,9 +155,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            // spec 013 改修：hover 起動 setFrame による didResize は保存対象外
-            guard !self.isHoverResizing else { return }
             guard let w = self.window else { return }
+            // spec 013 改修：hover で設定した frame と完全一致なら save しない
+            if let lastHover = self.lastHoverDrivenFrame,
+               NSEqualRects(w.frame, lastHover) {
+                return
+            }
             SettingsStore.shared.setWindowFrame(w.frame)
             // ユーザー手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
             self.hoverBaselineHeight = w.frame.height
@@ -199,7 +208,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         hoverLog.info("isHovered=\(isHovered, privacy: .public) baseline=\(baseline, privacy: .public) target=\(targetHeight, privacy: .public) before=\(NSStringFromRect(frame), privacy: .public) after=\(NSStringFromRect(newFrame), privacy: .public)")
 
-        isHoverResizing = true
+        // hover 起動 frame として記録：didResize / didMove がこの frame と完全一致する間は
+        // user 操作ではなく hover-driven とみなして baseline 保存をスキップ。
+        lastHoverDrivenFrame = newFrame
 
         // SwiftUI の .animation(.easeInOut(0.2)) と同じ duration / curve で同期。
         // 既に animation 中なら自動的にキャンセルして新しい animation に切り替わる。
@@ -207,8 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             w.animator().setFrame(newFrame, display: true)
-        }, completionHandler: { [weak self] in
-            self?.isHoverResizing = false
+        }, completionHandler: {
             hoverLog.info("resize completed")
         })
     }
