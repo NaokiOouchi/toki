@@ -1,5 +1,8 @@
 import AppKit
+import OSLog
 import SwiftUI
+
+private let hoverLog = Logger(subsystem: "com.toki", category: "BottomHover")
 
 /// メニューバー常駐と FloatingClockWindow の表示/非表示を司る AppDelegate。
 /// Gateway → ViewModel → Window(ClockView) の順で構成し、`vm.start()` で
@@ -161,7 +164,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let targetDelta: CGFloat = isHovered ? 28 : 0
         let diff = targetDelta - hoverExpandedDelta
         guard diff != 0 else {
-            print("[BottomHover] skip: isHovered=\(isHovered) delta=\(hoverExpandedDelta)")
+            hoverLog.info("skip: isHovered=\(isHovered, privacy: .public) delta=\(self.hoverExpandedDelta, privacy: .public)")
             return
         }
 
@@ -172,7 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let newFrame = NSRect(x: frame.minX, y: newOriginY,
                               width: frame.width, height: newHeight)
 
-        print("[BottomHover] isHovered=\(isHovered) diff=\(diff) before=\(frame) after=\(newFrame)")
+        hoverLog.info("isHovered=\(isHovered, privacy: .public) diff=\(diff, privacy: .public) before=\(NSStringFromRect(frame), privacy: .public) after=\(NSStringFromRect(newFrame), privacy: .public)")
 
         hoverExpandedDelta = targetDelta
         isHoverResizing = true
@@ -184,7 +187,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.animator().setFrame(newFrame, display: true)
         }, completionHandler: { [weak self] in
             self?.isHoverResizing = false
-            print("[BottomHover] resize completed")
+            hoverLog.info("resize completed")
         })
     }
 
