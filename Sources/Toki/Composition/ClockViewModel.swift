@@ -497,18 +497,29 @@ final class ClockViewModel: ObservableObject {
         }
     }
 
-    /// debounce 後に呼ばれる本体。hover 中グループに対して index を循環更新する（spec 013）。
-    /// hover 外 / 重なりなしグループは no-op。
-    /// index 更新後、tooltip と popover も新 current event に同期する
-    /// （scroll しても hover / popover が前 event のままになる問題を回避）。
+    /// debounce 後に呼ばれる本体。対象 group の index を循環更新する（spec 013）。
+    /// scroll の対象 group の決定優先度：
+    ///   1. popover 表示中：previewedEvent が属する group（backdrop が hover を遮断するため）
+    ///   2. hover 中：hover 位置から hitTestGroup で特定
+    /// どちらでもない / 重なりなしグループは no-op。
+    /// index 更新後、tooltip と popover も新 current event に同期する。
     private func applyScroll(steps: Int) {
-        guard steps != 0,
-              let point = lastHoverPoint,
-              let geo = lastHoverGeometry,
-              let group = hitTestGroup(at: point, geometry: geo),
-              group.isOverlapping else {
-            return
+        guard steps != 0 else { return }
+
+        // scroll 対象 group を popover 優先 → hover の順で決定
+        let targetGroup: OverlapGroup?
+        if let preview = previewedEvent, let tl = timeline {
+            targetGroup = tl.groups.first { g in
+                g.events.contains(where: { $0.id == preview.id })
+            }
+        } else if let point = lastHoverPoint, let geo = lastHoverGeometry {
+            targetGroup = hitTestGroup(at: point, geometry: geo)
+        } else {
+            targetGroup = nil
         }
+
+        guard let group = targetGroup, group.isOverlapping else { return }
+
         let current = overlapIndices[group.id] ?? 0
         let c = group.count
         let newIndex = ((current + steps) % c + c) % c
@@ -517,18 +528,18 @@ final class ClockViewModel: ObservableObject {
         // 新 current event に tooltip / popover を同期する。
         let newCurrent = group.event(at: newIndex)
 
-        // hover tooltip 再構築（hover 中なので current event の TooltipState を作る）
-        // spec 013：cycleIndicator も新 index で更新
-        let newTooltip = TooltipState(
-            startEndLabel: Self.formatTimeRange(newCurrent.start, newCurrent.end, calendar: calendar),
-            title: newCurrent.title,
-            position: point,
-            cycleIndicator: "\(newIndex + 1)/\(group.count)"
-        )
-        if hoveredTooltip != newTooltip { hoveredTooltip = newTooltip }
+        // hover tooltip 再構築（hover 中の時のみ）
+        if let point = lastHoverPoint {
+            let newTooltip = TooltipState(
+                startEndLabel: Self.formatTimeRange(newCurrent.start, newCurrent.end, calendar: calendar),
+                title: newCurrent.title,
+                position: point,
+                cycleIndicator: "\(newIndex + 1)/\(group.count)"
+            )
+            if hoveredTooltip != newTooltip { hoveredTooltip = newTooltip }
+        }
 
         // popover 表示中で、対象 group 内の event を表示しているなら新 current に置換。
-        // 別 group の popover 表示中は影響させない。
         if let prev = previewedEvent, group.events.contains(where: { $0.id == prev.id }) {
             previewedEvent = makeRenderable(newCurrent)
         }
