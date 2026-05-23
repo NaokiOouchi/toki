@@ -24,6 +24,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 経由で届かないため、NSEvent monitor で直接捕捉する fallback 実装。
     private var scrollMonitor: Any?
 
+    /// spec 013 改修：BottomInfoArea hover で window を伸ばした分の delta。
+    /// 0 = 通常、>0 = hover 拡張中。`handleBottomHover` で更新。
+    private var hoverExpandedDelta: CGFloat = 0
+    /// hover による window resize 中の didMove / didResize 通知を skip するフラグ。
+    /// hover 起動 setFrame の前後で立てて、ユーザー設定の windowFrame を上書きしないよう保護。
+    private var isHoverResizing: Bool = false
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
         let oauth = OAuthConfig.load().map { config in
@@ -48,7 +55,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appearance = AppearanceModel()
         self.appearance = appearance
 
-        let w = FloatingClockWindow.make(contentView: ClockView(viewModel: vm, appearance: appearance))
+        // spec 013 改修：BottomInfoArea の hover 状態を受け取り、window を下方向に伸ばす。
+        // 時計領域を hover で圧迫しないようにするための callback。
+        let clockView = ClockView(
+            viewModel: vm,
+            appearance: appearance,
+            onBottomHoverChanged: { [weak self] hovered in
+                self?.handleBottomHover(hovered)
+            }
+        )
+        let w = FloatingClockWindow.make(contentView: clockView)
         window = w
 
         // spec 008: 保存フレームの復元（あれば、かつ画面内に表示可能なら）
@@ -115,7 +131,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             object: w,
             queue: .main
         ) { [weak self] _ in
-            guard let w = self?.window else { return }
+            guard let self else { return }
+            // spec 013 改修：hover 起動 setFrame による didMove は保存対象外
+            guard !self.isHoverResizing else { return }
+            guard let w = self.window else { return }
             SettingsStore.shared.setWindowFrame(w.frame)
         }
         NotificationCenter.default.addObserver(
@@ -123,8 +142,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             object: w,
             queue: .main
         ) { [weak self] _ in
-            guard let w = self?.window else { return }
+            guard let self else { return }
+            // spec 013 改修：hover 起動 setFrame による didResize は保存対象外
+            guard !self.isHoverResizing else { return }
+            guard let w = self.window else { return }
             SettingsStore.shared.setWindowFrame(w.frame)
+        }
+    }
+
+    /// BottomInfoArea の hover 状態に応じて window を下方向に伸縮する（spec 013 改修）。
+    /// 通常時を 0、hover 時を +28pt（1 行 + padding ぶん）として、上端固定で下に拡張。
+    /// 拡張中の didMove / didResize 通知は isHoverResizing で skip し、
+    /// ユーザー設定の windowFrame を上書きしないよう保護する。
+    private func handleBottomHover(_ isHovered: Bool) {
+        guard let w = window else { return }
+        let targetDelta: CGFloat = isHovered ? 28 : 0
+        let diff = targetDelta - hoverExpandedDelta
+        guard diff != 0 else { return }
+
+        let frame = w.frame
+        let topY = frame.maxY  // NSWindow は bottom-left 原点、maxY = top
+        let newHeight = frame.height + diff
+        let newOriginY = topY - newHeight  // 上端固定
+        let newFrame = NSRect(x: frame.minX, y: newOriginY,
+                              width: frame.width, height: newHeight)
+
+        hoverExpandedDelta = targetDelta
+        isHoverResizing = true
+        w.setFrame(newFrame, display: true, animate: true)
+        // animate の完了を待ってフラグ解除（macOS 標準アニメーション ~0.25s）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.isHoverResizing = false
         }
     }
 

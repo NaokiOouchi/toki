@@ -15,6 +15,9 @@ import SwiftUI
 struct BottomInfoArea: View {
     @ObservedObject var viewModel: ClockViewModel
     var textScale: CGFloat = 1.0
+    /// hover 状態の変化通知（spec 013 改修）。
+    /// AppDelegate がこれを受けて NSWindow を下方向に伸ばす（時計領域を保つため）。
+    var onHoverChanged: (Bool) -> Void = { _ in }
 
     @State private var isHovered = false
 
@@ -31,8 +34,9 @@ struct BottomInfoArea: View {
         .contentShape(Rectangle())
         .onHover { hovering in
             isHovered = hovering
+            onHoverChanged(hovering)
         }
-        // 「下に伸びる」感じの展開アニメーション
+        // 「下に伸びる」感じの展開アニメーション（NSWindow.setFrame の animate と並走）
         .animation(.easeInOut(duration: 0.2), value: isHovered)
     }
 

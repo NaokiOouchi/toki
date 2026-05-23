@@ -8,6 +8,10 @@ import SwiftUI
 struct ClockView: View {
     @ObservedObject var viewModel: ClockViewModel
     @ObservedObject var appearance: AppearanceModel
+    /// BottomInfoArea の hover 状態通知（spec 013 改修）。
+    /// AppDelegate が NSWindow を下方向に伸ばすために使用、時計領域を hover で
+    /// 圧迫しないようにする。
+    var onBottomHoverChanged: (Bool) -> Void = { _ in }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -50,7 +54,8 @@ struct ClockView: View {
                 // 通常は 1 行のみ（24h event / 次の予定 / 最終更新 のいずれか優先）、
                 // hover で「下に伸びて」全行表示する collapsible UI。
                 BottomInfoArea(viewModel: viewModel,
-                               textScale: appearance.textScale.factor)
+                               textScale: appearance.textScale.factor,
+                               onHoverChanged: onBottomHoverChanged)
             }
 
             // popover 表示中：透明 backdrop（外側クリックで close）+ popover 本体
