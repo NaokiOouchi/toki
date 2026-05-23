@@ -34,3 +34,14 @@ extension RenderableEvent: Equatable {
         lhs.id == rhs.id
     }
 }
+
+/// 重なりグループ表示単位（spec 013 で導入）。
+/// ClockFaceCanvas が描画、ClockViewModel.canvasGroups が Domain OverlapGroup から生成。
+/// `current` は今表示中の event、`next` は peek 表示用の次 event、
+/// `extraCount` は badge `+N` 表示用の追加件数。
+struct RenderableOverlapGroup: Identifiable, Equatable {
+    let id: String                // = OverlapGroup.id
+    let current: RenderableEvent  // 現在表示中
+    let next: RenderableEvent?    // peek 用、重なりなし（count == 1）は nil
+    let extraCount: Int           // 重なり追加件数 = max(0, count - 1)
+}
