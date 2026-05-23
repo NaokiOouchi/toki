@@ -21,7 +21,8 @@ struct ClockView: View {
                 ZStack {
                     ClockFaceCanvas(
                         nowAngle: viewModel.nowAngle,
-                        events: viewModel.canvasEvents,
+                        groups: viewModel.canvasGroups,
+                        backgroundEvent: viewModel.canvasBackgroundEvent,
                         themeColor: appearance.resolvedThemeColor,
                         ringThickness: appearance.ringThickness.factor,
                         handLineWidth: appearance.handThickness.lineWidth,
@@ -33,6 +34,12 @@ struct ClockView: View {
                         },
                         onHover: { phase, geometry in
                             viewModel.handleHover(phase: phase, geometry: geometry)
+                        }
+                    )
+                    .overlay(
+                        // spec 013: scroll wheel を受けて重なり event を cycle
+                        ScrollCatcher { deltaY in
+                            viewModel.handleScrollRaw(deltaY: deltaY)
                         }
                     )
                     CurrentEventLabel(state: viewModel.centerState,

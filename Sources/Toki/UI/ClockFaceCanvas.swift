@@ -1,13 +1,24 @@
 import SwiftUI
 
 /// 時計盤の Canvas 描画。0:00 真上、時計回り、24 時間表示。
-/// 描画順：リング輪郭 → 時刻マーク → イベント円弧（past→future→current）→ 中心ドット → 針。
+/// 描画順（spec 013 で背景帯 / peek / badge を追加）：
+/// 1. 背景帯（24h timed event、最背面）
+/// 2. リング輪郭
+/// 3. 時刻マーク
+/// 4. イベント円弧（past→future→current、各 group の current のみ）
+/// 5. peek（重なり時の next event を current 弧終端に少しだけ重ね）
+/// 6. badge `+N`（重なり追加件数）
+/// 7. 中心ドット / 針（最前面）
 struct ClockFaceCanvas: View {
     /// 現在時刻に対応する針の角度（ラジアン）。
     /// 角度変換は ViewModel 側で `calendar` を考慮して行うため、
     /// View は計算済みの値を受け取るだけにする。
     let nowAngle: Double
-    let events: [RenderableEvent]
+    /// 重なりグループ群（spec 013 で events から差し替え）。
+    /// 各 group の current event を従来 events と同様に円弧描画する。
+    let groups: [RenderableOverlapGroup]
+    /// 24h timed event の背景帯（spec 013 で新規）。あれば全周に薄色塗り。
+    let backgroundEvent: RenderableEvent?
     /// 針 / 中心ドット / 現在 event アウトラインのテーマカラー。
     /// 旧来の `.primary` から差し替え、ユーザー設定で変更可能（spec 008 拡張）。
     var themeColor: Color = .accentColor
@@ -33,9 +44,19 @@ struct ClockFaceCanvas: View {
         GeometryReader { proxy in
             Canvas { ctx, size in
                 let geometry = ClockGeometry.standard(in: size, ringThickness: ringThickness)
+                // 1. 背景帯（最背面）
+                drawBackgroundBand(in: &ctx, geometry: geometry, event: backgroundEvent)
+                // 2. リング輪郭
                 drawRingOutlines(in: &ctx, geometry: geometry)
+                // 3. 時刻マーク
                 drawHourMarks(in: &ctx, geometry: geometry)
+                // 4. event 円弧（各 group の current だけを従来通り描画）
                 drawEventArcs(in: &ctx, geometry: geometry)
+                // 5. peek（current 弧終端に next を少し重ね塗り）
+                drawPeeks(in: &ctx, geometry: geometry)
+                // 6. badge `+N`
+                drawBadges(in: &ctx, geometry: geometry)
+                // 7. 中心ドット / 針（最前面）
                 drawHand(in: &ctx, geometry: geometry, angle: nowAngle)
                 drawCenterDot(in: &ctx, geometry: geometry)
             }
@@ -100,8 +121,10 @@ struct ClockFaceCanvas: View {
     }
 
     /// イベント円弧を描画する。current のアウトラインが最上位に来るよう描画順を制御する。
+    /// spec 013 で events から groups に切替、各 group の current だけを描画する。
     private func drawEventArcs(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
-        let sorted = events.sorted { Self.drawOrder($0.status) < Self.drawOrder($1.status) }
+        let currents = groups.map(\.current)
+        let sorted = currents.sorted { Self.drawOrder($0.status) < Self.drawOrder($1.status) }
         for event in sorted {
             drawEventArc(in: &ctx, event: event, geometry: geometry)
         }
@@ -136,5 +159,77 @@ struct ClockFaceCanvas: View {
         path.move(to: startPoint)
         path.addLine(to: endPoint)
         ctx.stroke(path, with: .color(themeColor), lineWidth: handLineWidth)
+    }
+
+    // MARK: - 新規描画 helper（spec 013）
+
+    /// 背景帯を環状全周に薄色塗りで描画する（spec 013、24h timed event 用）。
+    /// 色 = event.color × opacity 0.15（spec 013 §Open Questions §13）。
+    /// `annulusPath` は内縁を半径 innerR の逆方向円弧で閉じるため、
+    /// startAngle == endAngle だと閉じた図形にならない。
+    /// 全周塗りは内外の同心円差分（Even-Odd 塗り）で実現する。
+    private func drawBackgroundBand(in ctx: inout GraphicsContext,
+                                    geometry: ClockGeometry,
+                                    event: RenderableEvent?) {
+        guard let ev = event else { return }
+        var path = Path()
+        path.addEllipse(in: CGRect(
+            x: geometry.center.x - geometry.outerRadius,
+            y: geometry.center.y - geometry.outerRadius,
+            width: geometry.outerRadius * 2,
+            height: geometry.outerRadius * 2
+        ))
+        path.addEllipse(in: CGRect(
+            x: geometry.center.x - geometry.innerRadius,
+            y: geometry.center.y - geometry.innerRadius,
+            width: geometry.innerRadius * 2,
+            height: geometry.innerRadius * 2
+        ))
+        ctx.fill(path, with: .color(Color(cgColor: ev.color).opacity(0.15)), style: FillStyle(eoFill: true))
+    }
+
+    /// peek 描画。各グループに next がある場合、current 弧の終端付近を next.color で重ね塗り。
+    /// 角度幅 = min(弧角度 × 0.05, 8pt 相当角度)。
+    /// 弧の 30% を超える peek は skip（視認性確保、spec 013 §Open Questions §10）。
+    private func drawPeeks(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
+        // 8pt を円弧の中央半径での角度に換算（arc length ≒ r × θ）
+        let radius = (geometry.innerRadius + geometry.outerRadius) / 2
+        let minPeekFromPt: Double = radius > 0 ? 8.0 / Double(radius) : 0
+        for g in groups {
+            guard let next = g.next else { continue }
+            let arcAngle = g.current.endAngle - g.current.startAngle
+            guard arcAngle > 0 else { continue }
+            let peekAngle = min(arcAngle * 0.05, minPeekFromPt)
+            // 弧の 30% 超は skip
+            guard peekAngle < arcAngle * 0.30 else { continue }
+            let peekStart = g.current.endAngle - peekAngle
+            let path = annulusPath(
+                center: geometry.center,
+                innerR: geometry.innerRadius,
+                outerR: geometry.outerRadius,
+                startAngle: peekStart,
+                endAngle: g.current.endAngle
+            )
+            ctx.fill(path, with: .color(Color(cgColor: next.color)))
+        }
+    }
+
+    /// badge `+N` 描画（spec 013）。extraCount > 0 のグループの弧の外側に Text 9pt。
+    /// 外側オフセット 6pt、角度位置は current 弧の中央角度。
+    /// 角度規約は `drawHourMarks` と同じ：clockAngle はすでに描画座標系
+    /// （0:00 が真上 = -π/2）なので、そのまま cos / sin で位置を取れる。
+    private func drawBadges(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
+        let badgeRadius = geometry.outerRadius + 6
+        for g in groups where g.extraCount > 0 {
+            let midAngle = (g.current.startAngle + g.current.endAngle) / 2
+            let pos = CGPoint(
+                x: geometry.center.x + CGFloat(cos(midAngle)) * badgeRadius,
+                y: geometry.center.y + CGFloat(sin(midAngle)) * badgeRadius
+            )
+            let text = Text("+\(g.extraCount)")
+                .font(.system(size: 9 * textScale))
+                .foregroundStyle(.secondary)
+            ctx.draw(text, at: pos, anchor: .center)
+        }
     }
 }
