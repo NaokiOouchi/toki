@@ -256,9 +256,10 @@ struct DayTimeline {
 
 ### Phase 3 — 仕上げ・拡張
 
-#### 直近の有力候補（spec 012 / 013 想定）
+#### 直近の有力候補（spec 013 以降想定）
 
-- **表示するカレンダーを選択**（spec 012 候補）：calendars.list 結果を SettingsView で listing し Toggle で表示 / 非表示。UserDefaults に hidden ID set を保存、Gateway.convert で filter。ユーザーがタスクを Google Calendar の event として管理しているため、「仕事 / 個人 / 共有 calendar」を分離して見たい pain がある（spec 007 §Out of scope → spec 012 候補）
+- ✅ **今日の予定がない時に次未来 event を表示**（spec 012 完了）：Google Calendar API の fetch 範囲を 7 日先まで拡張、明日以降の最初の時刻付き event を `次 明日 09:00 朝会` のような日付ラベル付きで NextEventLine に表示。Domain 無変更、Composition / Infrastructure / UI のみで完結
+- **表示するカレンダーを選択**（spec 013 候補）：calendars.list 結果を SettingsView で listing し Toggle で表示 / 非表示。UserDefaults に hidden ID set を保存、Gateway.convert で filter。ユーザーがタスクを Google Calendar の event として管理しているため、「仕事 / 個人 / 共有 calendar」を分離して見たい pain がある（spec 007 §Out of scope → 元 spec 012 候補から繰り下げ）
 
 #### 機能拡張（pain 待ち）
 
