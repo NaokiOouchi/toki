@@ -22,6 +22,12 @@ final class GoogleCalendarGateway: ObservableObject {
     /// nil は一度も reload してない状態（初回起動直後）を示す。
     @Published private(set) var lastReloadAt: Date? = nil
 
+    /// 明日以降の最初の未来 event（spec 012）。
+    /// 今日の予定が全て終了 / ゼロのとき NextEventLine に表示する。
+    /// 7 日先まで何もない場合は nil。Event の Equatable は id ベースで重複変更時の再描画を抑制する。
+    /// 終日（all-day）event は時刻ラベルが付けられないため除外する。
+    @Published private(set) var nextFutureEvent: Event? = nil
+
     init(oauthClient: GoogleOAuthClient,
          api: GoogleCalendarAPI,
          calendar: Calendar = .current) {
@@ -60,40 +66,55 @@ final class GoogleCalendarGateway: ObservableObject {
     /// event を再取得して subject に流す。
     /// 接続/切断時に AppDelegate から呼び出す。
     func reload() async {
-        let timeline = await fetchTodayTimeline()
+        let (timeline, nextFuture) = await fetchTimelineAndNextFuture()
         // refresh 失敗で Keychain がクリアされていれば isAuthorized=false に転落
         isAuthorized = oauthClient.isAuthorized
         // spec 008: reload 完了時刻を発火、ViewModel が「最終更新 X 分前」表示に使う
         lastReloadAt = Date()
+        nextFutureEvent = nextFuture
         subject.send(timeline)
     }
 
-    /// 今日の DayTimeline を Google Calendar API 経由で取得する。
-    /// OAuth 未接続時は空 DayTimeline、API 失敗時は last-known timeline を維持する。
-    private func fetchTodayTimeline() async -> DayTimeline {
+    /// 7 日先までの event を fetch し、今日分は DayTimeline、明日以降分の
+    /// 先頭 1 件（時刻付き）は nextFutureEvent として返す（spec 012）。
+    /// 既存の DayTimeline は今日 1 日分の責務を維持する（Domain 不変条件）。
+    /// 明日以降の all-day event は時刻ラベルが付けられないため除外する。
+    private func fetchTimelineAndNextFuture() async -> (DayTimeline, Event?) {
         let dayStart = calendar.startOfDay(for: Date())
-        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
-            return DayTimeline(date: dayStart, events: [])
+        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart),
+              let weekEnd = calendar.date(byAdding: .day, value: 7, to: dayStart) else {
+            return (DayTimeline(date: dayStart, events: []), nil)
         }
         guard oauthClient.isAuthorized else {
-            return DayTimeline(date: dayStart, events: [])
+            return (DayTimeline(date: dayStart, events: []), nil)
         }
         do {
-            let apiEvents = try await api.fetchEventsAhead(timeMin: dayStart, timeMax: dayEnd)
-            var rawEvents: [Event] = []
-            var allDayFlags: [Bool] = []
+            let apiEvents = try await api.fetchEventsAhead(timeMin: dayStart, timeMax: weekEnd)
+
+            // 7 日分を「今日」「明日以降の時刻付き」に分離。明日以降の all-day は除外。
+            var todayRaw: [Event] = []
+            var todayAllDay: [Bool] = []
+            var futureEvents: [Event] = []
             for ge in apiEvents {
                 guard let (event, isAllDay) = Self.convert(ge) else { continue }
-                rawEvents.append(event)
-                allDayFlags.append(isAllDay)
+                if event.start < dayEnd {
+                    todayRaw.append(event)
+                    todayAllDay.append(isAllDay)
+                } else if !isAllDay {
+                    futureEvents.append(event)
+                }
             }
-            return DayTimeline.make(date: dayStart,
-                                    rawEvents: rawEvents,
-                                    allDayFlags: allDayFlags,
-                                    calendar: calendar)
+            let timeline = DayTimeline.make(date: dayStart,
+                                            rawEvents: todayRaw,
+                                            allDayFlags: todayAllDay,
+                                            calendar: calendar)
+            // 未来 event は start 昇順で並び替え、先頭 1 件を採用
+            let nextFuture = futureEvents.sorted { $0.start < $1.start }.first
+            return (timeline, nextFuture)
         } catch {
             print("Google Calendar API fetch failed: \(error)")
-            return subject.value
+            // 失敗時は last-known 維持（spec 008 と整合）
+            return (subject.value, self.nextFutureEvent)
         }
     }
 
