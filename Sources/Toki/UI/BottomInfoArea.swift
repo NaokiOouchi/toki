@@ -1,7 +1,4 @@
-import OSLog
 import SwiftUI
-
-private let hoverLog = Logger(subsystem: "com.toki", category: "BottomInfoArea")
 
 /// 時計の下に表示する情報エリア。spec 013 改修で導入。
 /// 通常は priority に応じて 1 行だけ表示し、hover で全行を「下に伸ばして」展開する。
@@ -43,15 +40,10 @@ struct BottomInfoArea: View {
         .onHover { hovering in
             // 非対称 debounce：入りは即時応答、出は 350ms 待つことで
             // 境界線上の cursor 揺れによる window 振動を吸収する
-            hoverLog.info("onHover raw=\(hovering, privacy: .public)")
             hoverWorkItem?.cancel()
             let delay: Double = hovering ? 0.05 : 0.35
             let work = DispatchWorkItem {
-                guard isHovered != hovering else {
-                    hoverLog.info("applied skip same state=\(hovering, privacy: .public)")
-                    return
-                }
-                hoverLog.info("applied state=\(hovering, privacy: .public)")
+                guard isHovered != hovering else { return }
                 isHovered = hovering
                 onHoverChanged(hovering)
             }

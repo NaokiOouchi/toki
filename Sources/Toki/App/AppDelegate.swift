@@ -1,8 +1,5 @@
 import AppKit
-import OSLog
 import SwiftUI
-
-private let hoverLog = Logger(subsystem: "com.toki", category: "BottomHover")
 
 /// メニューバー常駐と FloatingClockWindow の表示/非表示を司る AppDelegate。
 /// Gateway → ViewModel → Window(ClockView) の順で構成し、`vm.start()` で
@@ -170,16 +167,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             guard let self else { return }
             guard let w = self.window else { return }
-            if self.isHoverResizing {
-                hoverLog.info("didEndLiveResize ignored: isHoverResizing=true frame=\(NSStringFromRect(w.frame), privacy: .public)")
-                return
-            }
+            if self.isHoverResizing { return }
             if let lastHover = self.lastHoverDrivenFrame,
                NSEqualRects(w.frame, lastHover) {
-                hoverLog.info("didEndLiveResize ignored: matches lastHoverDrivenFrame")
                 return
             }
-            hoverLog.info("didEndLiveResize saved: height=\(w.frame.height, privacy: .public)")
             SettingsStore.shared.setWindowFrame(w.frame)
             // user 手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
             self.hoverBaselineHeight = w.frame.height
@@ -225,12 +217,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                               width: frame.width, height: targetHeight)
 
         // すでに target と一致しているなら skip（重複 setFrame を避ける）
-        guard abs(frame.height - targetHeight) > 0.5 else {
-            hoverLog.info("skip already at target=\(targetHeight, privacy: .public) frame=\(NSStringFromRect(frame), privacy: .public)")
-            return
-        }
-
-        hoverLog.info("isHovered=\(isHovered, privacy: .public) baseline=\(baseline, privacy: .public) target=\(targetHeight, privacy: .public) before=\(NSStringFromRect(frame), privacy: .public) after=\(NSStringFromRect(newFrame), privacy: .public)")
+        guard abs(frame.height - targetHeight) > 0.5 else { return }
 
         // hover 起動 frame として記録：完了後の保険、didResize / didMove で frame が
         // この target と完全一致なら baseline 保存をスキップ。
@@ -246,12 +233,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.animator().setFrame(newFrame, display: true)
         }, completionHandler: { [weak self] in
             // completion 後 0.5s buffer を取って isHoverResizing を維持。
-            // NSWindow.didResize 通知が animation 完了より遅れて来ることがあるため
+            // NSWindow.didEndLiveResize 通知が animation 完了より遅れて来ることがあるため
             // buffer 期間内の通知も hover-driven として扱う。
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self?.isHoverResizing = false
             }
-            hoverLog.info("resize completed")
         })
     }
 
