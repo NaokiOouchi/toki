@@ -69,24 +69,63 @@ struct DayTimeline {
                      meetURL: event.meetURL)
     }
 
-    /// 生イベント列に all-day 除外 → clip → sort を適用するファクトリ。
+    /// 生イベント列に all-day 除外 → 24h timed 検出 → clip → sort → groupOverlaps を適用するファクトリ。
     /// Infrastructure 層から呼ばれる Domain の入口。
-    /// 本 task（Task 4）では placeholder として「各 event を単独 group」として保持する。
-    /// Task 5 で groupOverlaps（重なり grouping）+ 24h timed 検出（backgroundEvents 振り分け）を実装する。
+    /// spec 013：24h timed event（start == dayStart && end == nextDayStart）は
+    /// backgroundEvents に分離し、残りを groupOverlaps で重なりグループに集約する。
     static func make(date: Date,
                      rawEvents: [Event],
                      allDayFlags: [Bool],
                      calendar: Calendar) -> DayTimeline {
+        let dayStart = calendar.startOfDay(for: date)
+        guard let nextDayStart = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
+            return DayTimeline(date: date, groups: [], backgroundEvents: [])
+        }
+
+        // 1. all-day 除外（既存）
         let timedOnly = zip(rawEvents, allDayFlags).compactMap { (event, isAllDay) -> Event? in
             isAllDay ? nil : event
         }
-        let clipped = timedOnly.compactMap { clip($0, toDayOf: date, calendar: calendar) }
+
+        // 2. 24h timed event 検出（clip 前に exact match で判定、spec 013 §Open Questions §4）
+        var backgrounds: [Event] = []
+        var foreground: [Event] = []
+        for ev in timedOnly {
+            if ev.start == dayStart && ev.end == nextDayStart {
+                backgrounds.append(ev)
+            } else {
+                foreground.append(ev)
+            }
+        }
+
+        // 3. clip + sort（既存ロジック）
+        let clipped = foreground.compactMap { clip($0, toDayOf: date, calendar: calendar) }
         let sorted = clipped.sorted { lhs, rhs in
             if lhs.start != rhs.start { return lhs.start < rhs.start }
             return lhs.end < rhs.end
         }
-        // placeholder：各 event を単独 group として保持（Task 5 で grouping + 24h 検出に差し替え）
-        let groups = sorted.compactMap { OverlapGroup(events: [$0]) }
-        return DayTimeline(date: date, groups: groups, backgroundEvents: [])
+
+        // 4. groupOverlaps（filterOverlaps 撤廃、spec 013）
+        return DayTimeline(date: date, groups: groupOverlaps(sorted), backgroundEvents: backgrounds)
+    }
+
+    /// start 昇順 events を相互重複でグループ化する。
+    /// 端接触（prev.end == next.start）は別グループ扱い（spec 013 §Open Questions §3、`<` strict）。
+    /// `filterOverlaps`（earliest start wins, 捨てる）の代替。
+    /// 入力は事前に start 昇順 sort 済みである前提（make から呼ばれる経路）。
+    static func groupOverlaps(_ events: [Event]) -> [OverlapGroup] {
+        guard !events.isEmpty else { return [] }
+        var groups: [[Event]] = []
+        var currentEnd: Date? = nil
+        for ev in events {
+            if let lastEnd = currentEnd, ev.start < lastEnd, !groups.isEmpty {
+                groups[groups.count - 1].append(ev)
+                currentEnd = max(lastEnd, ev.end)
+            } else {
+                groups.append([ev])
+                currentEnd = ev.end
+            }
+        }
+        return groups.compactMap { OverlapGroup(events: $0) }
     }
 }

@@ -133,25 +133,120 @@ final class DayTimelineTests: XCTestCase {
         XCTAssertEqual(tl.events.map(\.id), ["a"])
     }
 
-    // 14 make 全ルール統合
-    // spec 013 Task 4 では make が placeholder 実装（各 event を単独 group）のため、
-    // 「b が a と重なるので除外」期待が満たせない。Task 5（groupOverlaps + 24h 検出）実装後に再有効化する。
-    func disabled_testMake_combined() {
-        let allDay = makeEvent(id: "ad",
-                               start: date(2026, 5, 20, 0, 0),
-                               end: date(2026, 5, 21, 0, 0))
-        let crossing = makeEvent(id: "cross",
-                                 start: date(2026, 5, 20, 23, 30),
-                                 end: date(2026, 5, 21, 0, 30))
-        let a = makeEvent(id: "a", start: date(2026, 5, 20, 9, 0), end: date(2026, 5, 20, 10, 0))
-        let b = makeEvent(id: "b", start: date(2026, 5, 20, 9, 30), end: date(2026, 5, 20, 9, 45))
-        let tl = DayTimeline.make(date: today(),
-                                  rawEvents: [allDay, crossing, a, b],
-                                  allDayFlags: [true, false, false, false],
-                                  calendar: calendar)
-        // ad 除外、b は a と重なるので除外、a と cross（23:30-24:00 にクリップ）が残る
-        XCTAssertEqual(tl.events.map(\.id), ["a", "cross"])
-        let crossClipped = tl.events.last!
-        XCTAssertEqual(crossClipped.end, date(2026, 5, 21, 0, 0))
+    // MARK: - spec 013: 新仕様テスト（T15-T22）
+
+    /// 当日（2026-05-20）の指定時刻に hour:minute から duration 分の event を作る helper。
+    private func eventAtHour(id: String, hour: Int, minute: Int = 0,
+                             durationMinutes: Int = 60) -> Event {
+        let start = date(2026, 5, 20, hour, minute)
+        let end = start.addingTimeInterval(TimeInterval(durationMinutes * 60))
+        return Event(
+            id: id, title: id, start: start, end: end,
+            calendarColor: CGColor(red: 1, green: 0, blue: 0, alpha: 1)
+        )!
+    }
+
+    private var dayStart: Date { date(2026, 5, 20, 0, 0) }
+    private var nextDayStart: Date { date(2026, 5, 21, 0, 0) }
+
+    // T15: groupOverlaps 単独 → 1 グループ
+    func testGroupOverlaps_single() {
+        let a = eventAtHour(id: "a", hour: 10)
+        let groups = DayTimeline.groupOverlaps([a])
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups[0].events.map(\.id), ["a"])
+    }
+
+    // T16: 2 件重なり → 1 グループ 2 件
+    func testGroupOverlaps_overlapping() {
+        let a = eventAtHour(id: "a", hour: 10)
+        let b = eventAtHour(id: "b", hour: 10, minute: 30, durationMinutes: 30)
+        let groups = DayTimeline.groupOverlaps([a, b])
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups[0].events.map(\.id), ["a", "b"])
+    }
+
+    // T17: チェーン 3 件（a:10-11, b:10-11:30, c:11-12 → a∩b, b∩c で全部同じグループ）
+    func testGroupOverlaps_chain() {
+        let a = eventAtHour(id: "a", hour: 10)
+        let b = eventAtHour(id: "b", hour: 10, durationMinutes: 90)
+        let c = eventAtHour(id: "c", hour: 11)
+        let groups = DayTimeline.groupOverlaps([a, b, c])
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups[0].events.map(\.id), ["a", "b", "c"])
+    }
+
+    // T18: 端接触 → 別グループ（a:10-11, b:11-12）
+    func testGroupOverlaps_endToStart() {
+        let a = eventAtHour(id: "a", hour: 10)
+        let b = eventAtHour(id: "b", hour: 11)
+        let groups = DayTimeline.groupOverlaps([a, b])
+        XCTAssertEqual(groups.count, 2)
+        XCTAssertEqual(groups[0].events.map(\.id), ["a"])
+        XCTAssertEqual(groups[1].events.map(\.id), ["b"])
+    }
+
+    // T19: 24h timed event → backgroundEvents
+    func test24h_detectedAsBackground() {
+        let busy24h = Event(id: "busy", title: "出張", start: dayStart, end: nextDayStart,
+                            calendarColor: CGColor(red: 0, green: 1, blue: 0, alpha: 1))!
+        let tl = DayTimeline.make(date: today(), rawEvents: [busy24h],
+                                  allDayFlags: [false], calendar: calendar)
+        XCTAssertEqual(tl.backgroundEvents.count, 1)
+        XCTAssertEqual(tl.backgroundEvents[0].id, "busy")
+        XCTAssertEqual(tl.groups.count, 0)
+    }
+
+    // T20: all-day と 24h timed 並存 → all-day 除外、24h は背景
+    func testAllDayAnd24h_combined() {
+        let allDay = Event(id: "ad", title: "ad", start: dayStart, end: nextDayStart,
+                           calendarColor: CGColor(red: 1, green: 0, blue: 0, alpha: 1))!
+        let busy24h = Event(id: "24h", title: "24h", start: dayStart, end: nextDayStart,
+                            calendarColor: CGColor(red: 0, green: 1, blue: 0, alpha: 1))!
+        let tl = DayTimeline.make(date: today(), rawEvents: [allDay, busy24h],
+                                  allDayFlags: [true, false], calendar: calendar)
+        XCTAssertEqual(tl.groups.count, 0)
+        XCTAssertEqual(tl.backgroundEvents.count, 1)
+        XCTAssertEqual(tl.backgroundEvents[0].id, "24h")
+    }
+
+    // T21: 24h + 通常 event 並存 → 通常は groups、24h は背景
+    func test24hAndNormal_separated() {
+        let busy24h = Event(id: "24h", title: "24h", start: dayStart, end: nextDayStart,
+                            calendarColor: CGColor(red: 0, green: 1, blue: 0, alpha: 1))!
+        let normal = eventAtHour(id: "normal", hour: 10)
+        let tl = DayTimeline.make(date: today(), rawEvents: [busy24h, normal],
+                                  allDayFlags: [false, false], calendar: calendar)
+        XCTAssertEqual(tl.groups.count, 1)
+        XCTAssertEqual(tl.groups[0].events.map(\.id), ["normal"])
+        XCTAssertEqual(tl.backgroundEvents.count, 1)
+        XCTAssertEqual(tl.backgroundEvents[0].id, "24h")
+    }
+
+    // T22（旧 T14 を新仕様で書き直し）: a と b が重なる + cross が日跨ぎ + all-day 除外
+    func testMake_combined() {
+        let a = eventAtHour(id: "a", hour: 10)            // 10:00-11:00
+        let b = eventAtHour(id: "b", hour: 10, minute: 30, durationMinutes: 30)  // 10:30-11:00 (a と重なる)
+        // 日跨ぎ event：前日 23:00 から 当日 01:00（clip で 00:00-01:00 に切り詰められる）
+        let crossStart = date(2026, 5, 19, 23, 0)
+        let crossEnd = crossStart.addingTimeInterval(2 * 60 * 60)  // 当日 01:00
+        let cross = Event(id: "cross", title: "cross", start: crossStart, end: crossEnd,
+                          calendarColor: CGColor(red: 0, green: 0, blue: 1, alpha: 1))!
+        let allDay = eventAtHour(id: "allDay", hour: 0, durationMinutes: 60)
+
+        let tl = DayTimeline.make(
+            date: today(),
+            rawEvents: [a, b, cross, allDay],
+            allDayFlags: [false, false, false, true],
+            calendar: calendar
+        )
+
+        // 期待：cross は 0:00-1:00 に clip、a/b は同 group、allDay 除外
+        // groups[0] = [cross] (00:00-01:00)
+        // groups[1] = [a, b] (10:00-11:00)
+        XCTAssertEqual(tl.groups.count, 2)
+        XCTAssertEqual(tl.groups[0].events.map(\.id), ["cross"])
+        XCTAssertEqual(tl.groups[1].events.map(\.id), ["a", "b"])
+        XCTAssertTrue(tl.backgroundEvents.isEmpty)
     }
 }
