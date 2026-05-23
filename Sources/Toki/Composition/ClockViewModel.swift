@@ -33,6 +33,11 @@ final class ClockViewModel: ObservableObject {
     /// 中央 / 下部表示の「最終更新 X 分前」算出に使う。
     @Published private(set) var lastUpdatedAt: Date? = nil
 
+    /// 明日以降の最初の未来 event（spec 012）。
+    /// Gateway の $nextFutureEvent を sink して同期する。
+    /// 今日の予定が全終了 / ゼロのとき NextEventLine で日付ラベル付き表示する。
+    @Published private(set) var nextFutureEvent: Event? = nil
+
     /// OAuth 接続フロー中か。AppDelegate が beginAuthorization 開始 / 完了で叩く。
     /// 中央テキストに「接続中…」を表示するための flag。
     @Published private(set) var isConnecting: Bool = false
@@ -65,6 +70,12 @@ final class ClockViewModel: ObservableObject {
         gateway?.$lastReloadAt
             .receive(on: DispatchQueue.main)
             .sink { [weak self] date in self?.lastUpdatedAt = date }
+            .store(in: &cancellables)
+
+        // spec 012: 明日以降の最初の未来 event を sink
+        gateway?.$nextFutureEvent
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] ev in self?.nextFutureEvent = ev }
             .store(in: &cancellables)
 
         gateway?.timelineUpdates
@@ -202,15 +213,31 @@ final class ClockViewModel: ObservableObject {
         return "\(hours) 時間 \(mins) 分"
     }
 
-    /// 下部「次の予定」ラインの状態。次イベントが無い／権限なし／未取得は nil。
+    /// 下部「次の予定」ラインの状態。
+    /// 今日の予定残あり → 今日の next event（既存挙動、日付ラベルなし）
+    /// 今日の予定残ゼロ → 明日以降の最初の未来 event（spec 012、日付ラベル付き）
+    /// 7 日先までゼロ → nil（NextEventLine 非表示）
     var nextLineState: NextLineState? {
-        guard accessGranted,
-              let tl = timeline,
-              let nxt = tl.nextEvent(after: now) else { return nil }
-        return NextLineState(
-            timeHHMM: Self.formatHHMM(nxt.start, calendar: calendar),
-            title: nxt.title
-        )
+        guard accessGranted else { return nil }
+
+        // 今日の予定残あり → 既存ロジック
+        if let tl = timeline, let nxt = tl.nextEvent(after: now) {
+            return NextLineState(
+                timeHHMM: Self.formatHHMM(nxt.start, calendar: calendar),
+                title: nxt.title,
+                dateLabel: nil
+            )
+        }
+
+        // spec 012: 今日の予定残ゼロ → 明日以降の最初の未来 event
+        if let future = nextFutureEvent {
+            return NextLineState(
+                timeHHMM: Self.formatHHMM(future.start, calendar: calendar),
+                title: future.title,
+                dateLabel: Self.formatDateLabel(future.start, relativeTo: now, calendar: calendar)
+            )
+        }
+        return nil
     }
 
     /// HH:MM 形式の時刻文字列を返す。
@@ -222,6 +249,49 @@ final class ClockViewModel: ObservableObject {
     /// "HH:MM - HH:MM" 形式の時刻範囲文字列。既存 `formatHHMM` を再利用する。
     private static func formatTimeRange(_ start: Date, _ end: Date, calendar: Calendar) -> String {
         "\(formatHHMM(start, calendar: calendar)) - \(formatHHMM(end, calendar: calendar))"
+    }
+
+    /// 日付ラベル整形 helper（spec 012）。
+    /// now を起点に target までの日数差で表示形式を切り替える。
+    /// - 今日：nil
+    /// - 翌日："明日"
+    /// - 翌々日："明後日"
+    /// - 3〜6 日後：曜日名（"金曜" / "土曜" 等）
+    /// - 7 日後以降："M/d (曜)" フォーマット
+    /// 日数差は startOfDay 同士の Calendar.dateComponents で算出（DST 跨ぎ安全）。
+    private static func formatDateLabel(_ target: Date,
+                                        relativeTo now: Date,
+                                        calendar: Calendar) -> String? {
+        let nowDay = calendar.startOfDay(for: now)
+        let targetDay = calendar.startOfDay(for: target)
+        let comps = calendar.dateComponents([.day], from: nowDay, to: targetDay)
+        guard let dayDiff = comps.day else { return nil }
+        switch dayDiff {
+        case ..<1: return nil
+        case 1: return "明日"
+        case 2: return "明後日"
+        case 3...6: return weekdayName(of: target, calendar: calendar)
+        default: return shortDateLabel(of: target, calendar: calendar)
+        }
+    }
+
+    /// 曜日名（"日曜" / "月曜" / ...）。
+    /// DateFormatter のロケール依存を避けるため日本語ハードコード。
+    /// CLAUDE.md「個人利用、Mac専用」前提で日本語固定 OK。
+    private static func weekdayName(of date: Date, calendar: Calendar) -> String {
+        let weekday = calendar.component(.weekday, from: date)  // 1=日, 2=月, ..., 7=土
+        let names = ["日曜", "月曜", "火曜", "水曜", "木曜", "金曜", "土曜"]
+        return names[max(1, min(7, weekday)) - 1]
+    }
+
+    /// "M/d (曜)" 形式（例：5/26 (月)）。7 日後の境界用。
+    private static func shortDateLabel(of date: Date, calendar: Calendar) -> String {
+        let c = calendar.dateComponents([.month, .day], from: date)
+        let m = c.month ?? 1
+        let d = c.day ?? 1
+        let weekday = calendar.component(.weekday, from: date)
+        let shortNames = ["日", "月", "火", "水", "木", "金", "土"]
+        return "\(m)/\(d) (\(shortNames[max(1, min(7, weekday)) - 1]))"
     }
 
     // MARK: - ホバーハンドラ
