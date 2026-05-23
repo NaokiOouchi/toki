@@ -190,21 +190,21 @@ final class ClockViewModel: ObservableObject {
         )
     }
 
-    /// 重なりグループごとの描画用データ。spec 013 で追加。
-    /// 各グループから「現 index の event」「次 index の event（peek 用）」「extraCount」を組み立てる。
+    /// 重なりグループごとの描画用データ。spec 013 で追加（後に peek 廃止・合成弧 + i/N badge に改修）。
+    /// 各グループから「現 index の event」「1-based currentIndex / totalCount」
+    /// 「重なり全体の合成弧角度（groupStart/EndAngle）」を組み立てる。
     var canvasGroups: [RenderableOverlapGroup] {
         guard let tl = timeline else { return [] }
         return tl.groups.map { group in
             let idx = overlapIndices[group.id] ?? 0
             let current = makeRenderable(group.event(at: idx))
-            let next: RenderableEvent? = group.isOverlapping
-                ? makeRenderable(group.event(at: idx + 1))
-                : nil
             return RenderableOverlapGroup(
                 id: group.id,
                 current: current,
-                next: next,
-                extraCount: max(0, group.count - 1)
+                currentIndex: idx + 1,
+                totalCount: group.count,
+                groupStartAngle: TimeOfDay.from(date: group.start, calendar: calendar).clockAngle,
+                groupEndAngle: TimeOfDay.from(date: group.end, calendar: calendar).clockAngle
             )
         }
     }

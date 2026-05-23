@@ -35,13 +35,19 @@ extension RenderableEvent: Equatable {
     }
 }
 
-/// 重なりグループ表示単位（spec 013 で導入）。
+/// 重なりグループ表示単位（spec 013 で導入、改修で peek を廃止し合成弧 + i/N badge に変更）。
 /// ClockFaceCanvas が描画、ClockViewModel.canvasGroups が Domain OverlapGroup から生成。
-/// `current` は今表示中の event、`next` は peek 表示用の次 event、
-/// `extraCount` は badge `+N` 表示用の追加件数。
+/// `current` は今表示中の event、`currentIndex`/`totalCount` は badge "i/N" 表示用、
+/// `groupStartAngle`/`groupEndAngle` は重なり範囲を背景に薄色描画する合成弧用。
 struct RenderableOverlapGroup: Identifiable, Equatable {
-    let id: String                // = OverlapGroup.id
-    let current: RenderableEvent  // 現在表示中
-    let next: RenderableEvent?    // peek 用、重なりなし（count == 1）は nil
-    let extraCount: Int           // 重なり追加件数 = max(0, count - 1)
+    let id: String                  // = OverlapGroup.id
+    let current: RenderableEvent    // 現在表示中
+    /// 1-based の現 index（表示用、scroll で 1→2→3→1→...）。
+    let currentIndex: Int
+    /// グループの総件数。badge は totalCount > 1 のときだけ "i/N" を表示。
+    let totalCount: Int
+    /// グループ内全 event の最早 start を時計角度に変換した値（合成弧の開始）。
+    let groupStartAngle: Double
+    /// グループ内全 event の最遅 end を時計角度に変換した値（合成弧の終了）。
+    let groupEndAngle: Double
 }

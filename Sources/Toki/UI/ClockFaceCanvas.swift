@@ -1,13 +1,13 @@
 import SwiftUI
 
 /// 時計盤の Canvas 描画。0:00 真上、時計回り、24 時間表示。
-/// 描画順（spec 013 で背景帯 / peek / badge を追加）：
+/// 描画順（spec 013 で背景帯 / 合成弧 / badge を追加、peek は改修で廃止）：
 /// 1. 背景帯（24h timed event、最背面）
 /// 2. リング輪郭
 /// 3. 時刻マーク
-/// 4. イベント円弧（past→future→current、各 group の current のみ）
-/// 5. peek（重なり時の next event を current 弧終端に少しだけ重ね）
-/// 6. badge `+N`（重なり追加件数）
+/// 4. 合成弧（重なりグループの最大時間範囲、薄色背景、current 弧より長い event の存在を可視化）
+/// 5. イベント円弧（past→future→current、各 group の current のみ、normal 色）
+/// 6. badge `i/N`（重なり時の現 index / 総件数を表示、scroll 進行状況も伝わる）
 /// 7. 中心ドット / 針（最前面）
 struct ClockFaceCanvas: View {
     /// 現在時刻に対応する針の角度（ラジアン）。
@@ -50,11 +50,11 @@ struct ClockFaceCanvas: View {
                 drawRingOutlines(in: &ctx, geometry: geometry)
                 // 3. 時刻マーク
                 drawHourMarks(in: &ctx, geometry: geometry)
-                // 4. event 円弧（各 group の current だけを従来通り描画）
+                // 4. 合成弧（重なりグループの最大範囲、薄色背景）
+                drawCompositeArcs(in: &ctx, geometry: geometry)
+                // 5. event 円弧（各 group の current だけを従来通り描画、合成弧の上）
                 drawEventArcs(in: &ctx, geometry: geometry)
-                // 5. peek（current 弧終端に next を少し重ね塗り）
-                drawPeeks(in: &ctx, geometry: geometry)
-                // 6. badge `+N`
+                // 6. badge `i/N`
                 drawBadges(in: &ctx, geometry: geometry)
                 // 7. 中心ドット / 針（最前面）
                 drawHand(in: &ctx, geometry: geometry, angle: nowAngle)
@@ -188,45 +188,40 @@ struct ClockFaceCanvas: View {
         ctx.fill(path, with: .color(Color(cgColor: ev.color).opacity(0.15)), style: FillStyle(eoFill: true))
     }
 
-    /// peek 描画。各グループに next がある場合、current 弧の終端付近を next.color で重ね塗り。
-    /// 角度幅 = min(弧角度 × 0.05, 8pt 相当角度)。
-    /// 弧の 30% を超える peek は skip（視認性確保、spec 013 §Open Questions §10）。
-    private func drawPeeks(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
-        // 8pt を円弧の中央半径での角度に換算（arc length ≒ r × θ）
-        let radius = (geometry.innerRadius + geometry.outerRadius) / 2
-        let minPeekFromPt: Double = radius > 0 ? 8.0 / Double(radius) : 0
+    /// 重なりグループの「合成弧」描画（spec 013 改修、peek 廃止後の代替）。
+    /// 各グループの最早 start 〜 最遅 end の範囲を current 色 × opacity 0.25 で背景描画する。
+    /// 「current 弧より裏に長い event がある」が一目で分かる。
+    /// 単独 event（current 弧 == 合成弧）の場合も同じ範囲で薄色描画するため、
+    /// 後段の drawEventArcs で描く normal 色弧が上に乗って実質見えない（描画コスト微増のみ）。
+    private func drawCompositeArcs(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
         for g in groups {
-            guard let next = g.next else { continue }
-            let arcAngle = g.current.endAngle - g.current.startAngle
-            guard arcAngle > 0 else { continue }
-            let peekAngle = min(arcAngle * 0.05, minPeekFromPt)
-            // 弧の 30% 超は skip
-            guard peekAngle < arcAngle * 0.30 else { continue }
-            let peekStart = g.current.endAngle - peekAngle
+            // 単独 event は合成弧と current 弧が同じ範囲、描画する意味なし
+            guard g.totalCount > 1 else { continue }
             let path = annulusPath(
                 center: geometry.center,
                 innerR: geometry.innerRadius,
                 outerR: geometry.outerRadius,
-                startAngle: peekStart,
-                endAngle: g.current.endAngle
+                startAngle: g.groupStartAngle,
+                endAngle: g.groupEndAngle
             )
-            ctx.fill(path, with: .color(Color(cgColor: next.color)))
+            ctx.fill(path, with: .color(Color(cgColor: g.current.color).opacity(0.25)))
         }
     }
 
-    /// badge `+N` 描画（spec 013）。extraCount > 0 のグループの弧の外側に Text 9pt。
+    /// badge `i/N` 描画（spec 013 改修）。totalCount > 1 のグループの弧の外側に Text 9pt。
     /// 外側オフセット 6pt、角度位置は current 弧の中央角度。
+    /// 「3 件中の 2 件目」を直感的に伝える（scroll 進行状況も伝わる）。
     /// 角度規約は `drawHourMarks` と同じ：clockAngle はすでに描画座標系
     /// （0:00 が真上 = -π/2）なので、そのまま cos / sin で位置を取れる。
     private func drawBadges(in ctx: inout GraphicsContext, geometry: ClockGeometry) {
         let badgeRadius = geometry.outerRadius + 6
-        for g in groups where g.extraCount > 0 {
+        for g in groups where g.totalCount > 1 {
             let midAngle = (g.current.startAngle + g.current.endAngle) / 2
             let pos = CGPoint(
                 x: geometry.center.x + CGFloat(cos(midAngle)) * badgeRadius,
                 y: geometry.center.y + CGFloat(sin(midAngle)) * badgeRadius
             )
-            let text = Text("+\(g.extraCount)")
+            let text = Text("\(g.currentIndex)/\(g.totalCount)")
                 .font(.system(size: 9 * textScale))
                 .foregroundStyle(.secondary)
             ctx.draw(text, at: pos, anchor: .center)
