@@ -152,13 +152,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// BottomInfoArea の hover 状態に応じて window を下方向に伸縮する（spec 013 改修）。
     /// 通常時を 0、hover 時を +28pt（1 行 + padding ぶん）として、上端固定で下に拡張。
+    /// NSAnimationContext で SwiftUI .animation(.easeInOut(0.2)) と同じ duration / curve に揃え、
+    /// BottomInfoArea の SwiftUI アニメと NSWindow リサイズを同期させて Divider 位置を固定する。
     /// 拡張中の didMove / didResize 通知は isHoverResizing で skip し、
     /// ユーザー設定の windowFrame を上書きしないよう保護する。
     private func handleBottomHover(_ isHovered: Bool) {
         guard let w = window else { return }
         let targetDelta: CGFloat = isHovered ? 28 : 0
         let diff = targetDelta - hoverExpandedDelta
-        guard diff != 0 else { return }
+        guard diff != 0 else {
+            print("[BottomHover] skip: isHovered=\(isHovered) delta=\(hoverExpandedDelta)")
+            return
+        }
 
         let frame = w.frame
         let topY = frame.maxY  // NSWindow は bottom-left 原点、maxY = top
@@ -167,13 +172,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let newFrame = NSRect(x: frame.minX, y: newOriginY,
                               width: frame.width, height: newHeight)
 
+        print("[BottomHover] isHovered=\(isHovered) diff=\(diff) before=\(frame) after=\(newFrame)")
+
         hoverExpandedDelta = targetDelta
         isHoverResizing = true
-        w.setFrame(newFrame, display: true, animate: true)
-        // animate の完了を待ってフラグ解除（macOS 標準アニメーション ~0.25s）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+
+        // SwiftUI の .animation(.easeInOut(0.2)) と同じ duration / curve で同期。
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            w.animator().setFrame(newFrame, display: true)
+        }, completionHandler: { [weak self] in
             self?.isHoverResizing = false
-        }
+            print("[BottomHover] resize completed")
+        })
     }
 
     /// 終了直前にもウィンドウフレームを保険として保存する。

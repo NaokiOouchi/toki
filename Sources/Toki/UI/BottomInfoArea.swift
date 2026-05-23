@@ -40,10 +40,15 @@ struct BottomInfoArea: View {
         .onHover { hovering in
             // 非対称 debounce：入りは即時応答、出は 350ms 待つことで
             // 境界線上の cursor 揺れによる window 振動を吸収する
+            print("[BottomInfoArea] .onHover raw=\(hovering)")
             hoverWorkItem?.cancel()
             let delay: Double = hovering ? 0.05 : 0.35
             let work = DispatchWorkItem {
-                guard isHovered != hovering else { return }
+                guard isHovered != hovering else {
+                    print("[BottomInfoArea] applied skip same state=\(hovering)")
+                    return
+                }
+                print("[BottomInfoArea] applied state=\(hovering)")
                 isHovered = hovering
                 onHoverChanged(hovering)
             }
