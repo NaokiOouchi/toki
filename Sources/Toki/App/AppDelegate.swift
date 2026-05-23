@@ -155,21 +155,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             SettingsStore.shared.setWindowFrame(w.frame)
         }
+        // spec 013 改修：didResize の代わりに didEndLiveResize を使う。
+        // didResize は programmatic な setFrame でも発火するため、hover animation の
+        // 中間値で baseline が drift する race が避けられなかった。
+        // didEndLiveResize は user が resize handle を掴んで離した時のみ発火し、
+        // hover-driven setFrame では発火しないため確実に「user 操作」を判定できる。
         NotificationCenter.default.addObserver(
-            forName: NSWindow.didResizeNotification,
+            forName: NSWindow.didEndLiveResizeNotification,
             object: w,
             queue: .main
         ) { [weak self] _ in
             guard let self else { return }
             guard let w = self.window else { return }
-            // spec 013 改修：以下のいずれかなら hover-driven として save スキップ
-            if self.isHoverResizing { return }
-            if let lastHover = self.lastHoverDrivenFrame,
-               NSEqualRects(w.frame, lastHover) {
-                return
-            }
             SettingsStore.shared.setWindowFrame(w.frame)
-            // ユーザー手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
+            // user 手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
             self.hoverBaselineHeight = w.frame.height
         }
     }
