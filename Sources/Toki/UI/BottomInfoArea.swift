@@ -32,9 +32,17 @@ struct BottomInfoArea: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             primaryRow
-            if isHovered {
-                extraRows
-            }
+            // extras を常に layout 上に保持し、frame の maxHeight と opacity の
+            // 両方を isHovered で animate する。
+            // `if isHovered { ... }` だと SwiftUI default transition (.opacity) で
+            // size が即時変化し、SwiftUI animation と NSWindow.setFrame animate の
+            // timing 不一致で clock 位置が一瞬ずれる事象が発生していた。
+            // .frame(maxHeight:) + .clipped() で height も animation 対象にし、
+            // window resize と同期させて clock 領域を完全固定する。
+            extraRows
+                .opacity(isHovered ? 1 : 0)
+                .frame(maxHeight: isHovered ? .infinity : 0, alignment: .top)
+                .clipped()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 4)
