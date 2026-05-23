@@ -50,3 +50,12 @@ extension Event: Equatable {
         lhs.id == rhs.id
     }
 }
+
+extension Event: Hashable {
+    /// Equatable と整合させるため id ベースで実装。
+    /// CGColor は自動合成 Hashable 不可だが、id だけで一意性が担保される。
+    /// spec 013 で OverlapGroup の Hashable 自動合成を可能にするため追加。
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
