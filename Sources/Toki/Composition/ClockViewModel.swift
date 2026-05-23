@@ -465,6 +465,21 @@ final class ClockViewModel: ObservableObject {
         return Self.formatTimeRange(ev.start, ev.end, calendar: calendar)
     }
 
+    /// popover ヘッダーに表示する cycle indicator "i/N"（spec 013 改修）。
+    /// previewedEvent が属する OverlapGroup が重なり（count > 1）の時のみ返す。
+    /// 単独 event や popover 非表示時は nil。
+    /// tooltip の cycleIndicator と同じ pattern で、popover 表示中に scroll で
+    /// event を cycle した時の進行状況を伝える。
+    var previewCycleIndicator: String? {
+        guard let preview = previewedEvent, let tl = timeline else { return nil }
+        guard let group = tl.groups.first(where: { g in
+            g.events.contains(where: { $0.id == preview.id })
+        }) else { return nil }
+        guard group.isOverlapping else { return nil }
+        let idx = overlapIndices[group.id] ?? 0
+        return "\(idx + 1)/\(group.count)"
+    }
+
     /// イベント開始日から Google Calendar の day view URL を組み立てる。
     /// 形式：https://calendar.google.com/calendar/u/0/r/day/YYYY/MM/DD
     /// `u/0` は固定（複数アカウント対応は MVP 範囲外、設定 UI 必須なので Phase 3 行き）。

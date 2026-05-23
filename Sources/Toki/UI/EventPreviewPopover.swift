@@ -11,6 +11,10 @@ struct EventPreviewPopover: View {
     let note: String?
     let hasMeetURL: Bool
     let hasCalendarURL: Bool
+    /// 重なりグループ内の現 index / 総件数（spec 013 改修）。
+    /// 例：3 件中の 2 件目 → "2/3"。重なりなしや単独 event は nil で非表示。
+    /// popover 表示中に scroll で event を cycle した時の進行状況を伝える。
+    var cycleIndicator: String? = nil
     var textScale: CGFloat = 1.0
 
     let onOpenMeet: () -> Void
@@ -53,12 +57,17 @@ struct EventPreviewPopover: View {
         .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
     }
 
-    /// ヘッダー：時刻範囲 + × ボタン（ESC でも close）。
+    /// ヘッダー：時刻範囲 + cycle indicator + × ボタン（ESC でも close）。
     private var header: some View {
-        HStack {
+        HStack(spacing: 6) {
             Text(timeLabel)
                 .font(.system(size: 11 * textScale))
                 .foregroundStyle(.secondary)
+            if let cycle = cycleIndicator {
+                Text(cycle)
+                    .font(.system(size: 10 * textScale))
+                    .foregroundStyle(.tertiary)
+            }
             Spacer()
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
