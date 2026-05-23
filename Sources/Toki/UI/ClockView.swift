@@ -21,10 +21,14 @@ struct ClockView: View {
             glassBackgroundLayer
 
             // 前景コンテンツ（時計 / テキスト）：常時 100% 表示
-            // spec 013 改修：GeometryReader で width を取得し、ZStack(clock) を
-            // 正方形（height = width）に固定する。Window 拡縮で ZStack のサイズが
-            // 変動しないため、hover アニメーション中も clock が完全固定になる。
-            // 余白は Spacer(minLength: 0) が動的に吸収する。
+            // spec 013 改修：
+            // - GeometryReader で width を取得し、ZStack(clock) を正方形（height = width）に固定
+            // - Spacer の代わりに Color.clear.frame(height: 4) の固定 gap を使用
+            //   （Spacer は collapsible で hover 時に縮んで Divider 位置がシフトしていた）
+            // - VStack を上端 anchor で固定、hover 時に BottomInfoArea が成長すると
+            //   window より下にはみ出して clipShape で clipped、window animation の
+            //   進行と共に下から徐々に visible になる
+            // → Divider / primaryRow 位置が完全固定、「下に伸びる」feel も維持
             GeometryReader { proxy in
                 VStack(spacing: 0) {
                     ZStack {
@@ -55,9 +59,9 @@ struct ClockView: View {
                     // ZStack(clock) を width = height の正方形に固定
                     .frame(height: proxy.size.width)
 
-                    // hover による window 拡張 ↔ BottomInfoArea 拡張の差分を吸収。
-                    // ZStack(clock) サイズは変動しないため Spacer が動的に縮む / 伸びる。
-                    Spacer(minLength: 0)
+                    // 固定 4pt gap：Spacer ではなく Color.clear で「縮まない」gap を
+                    // 作ることで、hover 時に Divider 位置が上にシフトする事象を防ぐ。
+                    Color.clear.frame(height: 4)
 
                     Divider().frame(height: 0.5)
 
@@ -68,6 +72,10 @@ struct ClockView: View {
                                    textScale: appearance.textScale.factor,
                                    onHoverChanged: onBottomHoverChanged)
                 }
+                // 上端 anchor：window が manual resize で大きくなった場合、
+                // 余白は VStack の下に出る（content は常に上端固定）。
+                // hover 時 content が window より大きくなれば下にはみ出して clip される。
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
 
             // popover 表示中：透明 backdrop（外側クリックで close）+ popover 本体
