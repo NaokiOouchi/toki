@@ -34,7 +34,9 @@ struct BottomInfoArea: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 4)
+        // top は primaryRow と Divider の間に余裕を持たせる、bottom は控えめ
+        .padding(.top, 8)
+        .padding(.bottom, 4)
         // hover を取りやすくするため透明な hit-test 領域を確保
         .contentShape(Rectangle())
         .onHover { hovering in
