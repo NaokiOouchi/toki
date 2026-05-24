@@ -1,0 +1,590 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		D26107F52FC3BCD000CB4D03 /* Attendee.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C72FC3BCD000CB4D03 /* Attendee.swift */; };
+		D26107F62FC3BCD000CB4D03 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D12FC3BCD000CB4D03 /* KeychainStore.swift */; };
+		D26107F72FC3BCD000CB4D03 /* ClockViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C42FC3BCD000CB4D03 /* ClockViewModel.swift */; };
+		D26107F82FC3BCD000CB4D03 /* ClockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E62FC3BCD000CB4D03 /* ClockView.swift */; };
+		D26107F92FC3BCD000CB4D03 /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107EB2FC3BCD000CB4D03 /* GlassBackground.swift */; };
+		D26107FA2FC3BCD000CB4D03 /* RenderableEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107ED2FC3BCD000CB4D03 /* RenderableEvent.swift */; };
+		D26107FB2FC3BCD000CB4D03 /* EventPreviewPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E92FC3BCD000CB4D03 /* EventPreviewPopover.swift */; };
+		D26107FC2FC3BCD000CB4D03 /* NextEventLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107EC2FC3BCD000CB4D03 /* NextEventLine.swift */; };
+		D26107FD2FC3BCD000CB4D03 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107EE2FC3BCD000CB4D03 /* SettingsView.swift */; };
+		D26107FE2FC3BCD000CB4D03 /* ThemeColorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107DF2FC3BCD000CB4D03 /* ThemeColorSection.swift */; };
+		D26107FF2FC3BCD000CB4D03 /* AllDayEventLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E12FC3BCD000CB4D03 /* AllDayEventLine.swift */; };
+		D26108002FC3BCD000CB4D03 /* CustomCircleColorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D82FC3BCD000CB4D03 /* CustomCircleColorSection.swift */; };
+		D26108012FC3BCD000CB4D03 /* GoogleCalendarAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107CE2FC3BCD000CB4D03 /* GoogleCalendarAPI.swift */; };
+		D26108022FC3BCD000CB4D03 /* OverlapGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107CB2FC3BCD000CB4D03 /* OverlapGroup.swift */; };
+		D26108032FC3BCD000CB4D03 /* DayTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C82FC3BCD000CB4D03 /* DayTimeline.swift */; };
+		D26108042FC3BCD000CB4D03 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C52FC3BCD000CB4D03 /* SettingsStore.swift */; };
+		D26108052FC3BCD000CB4D03 /* EventStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107CA2FC3BCD000CB4D03 /* EventStatus.swift */; };
+		D26108062FC3BCD000CB4D03 /* GoogleOAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D02FC3BCD000CB4D03 /* GoogleOAuthClient.swift */; };
+		D26108072FC3BCD000CB4D03 /* MaterialStrengthSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107DB2FC3BCD000CB4D03 /* MaterialStrengthSection.swift */; };
+		D26108082FC3BCD000CB4D03 /* HandThicknessSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107DA2FC3BCD000CB4D03 /* HandThicknessSection.swift */; };
+		D26108092FC3BCD000CB4D03 /* OAuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D32FC3BCD000CB4D03 /* OAuthConfig.swift */; };
+		D261080A2FC3BCD000CB4D03 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C02FC3BCD000CB4D03 /* AppDelegate.swift */; };
+		D261080B2FC3BCD000CB4D03 /* TimeOfDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107CC2FC3BCD000CB4D03 /* TimeOfDay.swift */; };
+		D261080C2FC3BCD000CB4D03 /* BottomInfoArea.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E32FC3BCD000CB4D03 /* BottomInfoArea.swift */; };
+		D261080D2FC3BCD000CB4D03 /* ClockFaceCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E42FC3BCD000CB4D03 /* ClockFaceCanvas.swift */; };
+		D261080E2FC3BCD000CB4D03 /* CircleOutlineThicknessSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D52FC3BCD000CB4D03 /* CircleOutlineThicknessSection.swift */; };
+		D261080F2FC3BCD000CB4D03 /* ClockGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E52FC3BCD000CB4D03 /* ClockGeometry.swift */; };
+		D26108102FC3BCD000CB4D03 /* CurrentEventLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E72FC3BCD000CB4D03 /* CurrentEventLabel.swift */; };
+		D26108112FC3BCD000CB4D03 /* OpacitySection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107DC2FC3BCD000CB4D03 /* OpacitySection.swift */; };
+		D26108122FC3BCD000CB4D03 /* GoogleCalendarGateway.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107CF2FC3BCD000CB4D03 /* GoogleCalendarGateway.swift */; };
+		D26108132FC3BCD000CB4D03 /* AppearanceTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E22FC3BCD000CB4D03 /* AppearanceTokens.swift */; };
+		D26108142FC3BCD000CB4D03 /* EventTooltip.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107EA2FC3BCD000CB4D03 /* EventTooltip.swift */; };
+		D26108152FC3BCD000CB4D03 /* TokiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C12FC3BCD000CB4D03 /* TokiApp.swift */; };
+		D26108162FC3BCD000CB4D03 /* RingThicknessSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107DD2FC3BCD000CB4D03 /* RingThicknessSection.swift */; };
+		D26108172FC3BCD000CB4D03 /* ColorSchemeSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D62FC3BCD000CB4D03 /* ColorSchemeSection.swift */; };
+		D26108182FC3BCD000CB4D03 /* TextScaleSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107DE2FC3BCD000CB4D03 /* TextScaleSection.swift */; };
+		D26108192FC3BCD000CB4D03 /* FloatingClockWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107F12FC3BCD000CB4D03 /* FloatingClockWindow.swift */; };
+		D261081A2FC3BCD000CB4D03 /* TooltipState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107EF2FC3BCD000CB4D03 /* TooltipState.swift */; };
+		D261081B2FC3BCD000CB4D03 /* CustomBackgroundSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D72FC3BCD000CB4D03 /* CustomBackgroundSection.swift */; };
+		D261081C2FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D22FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift */; };
+		D261081D2FC3BCD000CB4D03 /* EventArcRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E82FC3BCD000CB4D03 /* EventArcRenderer.swift */; };
+		D261081E2FC3BCD000CB4D03 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C92FC3BCD000CB4D03 /* Event.swift */; };
+		D261081F2FC3BCD000CB4D03 /* CustomTextColorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D92FC3BCD000CB4D03 /* CustomTextColorSection.swift */; };
+		D26108202FC3BCD000CB4D03 /* AppearanceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C32FC3BCD000CB4D03 /* AppearanceModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		D26107402FC35B9E00CB4D03 /* Toki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Toki.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D26107C02FC3BCD000CB4D03 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		D26107C12FC3BCD000CB4D03 /* TokiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokiApp.swift; sourceTree = "<group>"; };
+		D26107C32FC3BCD000CB4D03 /* AppearanceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceModel.swift; sourceTree = "<group>"; };
+		D26107C42FC3BCD000CB4D03 /* ClockViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockViewModel.swift; sourceTree = "<group>"; };
+		D26107C52FC3BCD000CB4D03 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		D26107C72FC3BCD000CB4D03 /* Attendee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attendee.swift; sourceTree = "<group>"; };
+		D26107C82FC3BCD000CB4D03 /* DayTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayTimeline.swift; sourceTree = "<group>"; };
+		D26107C92FC3BCD000CB4D03 /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
+		D26107CA2FC3BCD000CB4D03 /* EventStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStatus.swift; sourceTree = "<group>"; };
+		D26107CB2FC3BCD000CB4D03 /* OverlapGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlapGroup.swift; sourceTree = "<group>"; };
+		D26107CC2FC3BCD000CB4D03 /* TimeOfDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeOfDay.swift; sourceTree = "<group>"; };
+		D26107CE2FC3BCD000CB4D03 /* GoogleCalendarAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleCalendarAPI.swift; sourceTree = "<group>"; };
+		D26107CF2FC3BCD000CB4D03 /* GoogleCalendarGateway.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleCalendarGateway.swift; sourceTree = "<group>"; };
+		D26107D02FC3BCD000CB4D03 /* GoogleOAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthClient.swift; sourceTree = "<group>"; };
+		D26107D12FC3BCD000CB4D03 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		D26107D22FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopbackOAuthReceiver.swift; sourceTree = "<group>"; };
+		D26107D32FC3BCD000CB4D03 /* OAuthConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthConfig.swift; sourceTree = "<group>"; };
+		D26107D52FC3BCD000CB4D03 /* CircleOutlineThicknessSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleOutlineThicknessSection.swift; sourceTree = "<group>"; };
+		D26107D62FC3BCD000CB4D03 /* ColorSchemeSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorSchemeSection.swift; sourceTree = "<group>"; };
+		D26107D72FC3BCD000CB4D03 /* CustomBackgroundSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackgroundSection.swift; sourceTree = "<group>"; };
+		D26107D82FC3BCD000CB4D03 /* CustomCircleColorSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCircleColorSection.swift; sourceTree = "<group>"; };
+		D26107D92FC3BCD000CB4D03 /* CustomTextColorSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTextColorSection.swift; sourceTree = "<group>"; };
+		D26107DA2FC3BCD000CB4D03 /* HandThicknessSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandThicknessSection.swift; sourceTree = "<group>"; };
+		D26107DB2FC3BCD000CB4D03 /* MaterialStrengthSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialStrengthSection.swift; sourceTree = "<group>"; };
+		D26107DC2FC3BCD000CB4D03 /* OpacitySection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpacitySection.swift; sourceTree = "<group>"; };
+		D26107DD2FC3BCD000CB4D03 /* RingThicknessSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingThicknessSection.swift; sourceTree = "<group>"; };
+		D26107DE2FC3BCD000CB4D03 /* TextScaleSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextScaleSection.swift; sourceTree = "<group>"; };
+		D26107DF2FC3BCD000CB4D03 /* ThemeColorSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeColorSection.swift; sourceTree = "<group>"; };
+		D26107E12FC3BCD000CB4D03 /* AllDayEventLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllDayEventLine.swift; sourceTree = "<group>"; };
+		D26107E22FC3BCD000CB4D03 /* AppearanceTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceTokens.swift; sourceTree = "<group>"; };
+		D26107E32FC3BCD000CB4D03 /* BottomInfoArea.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomInfoArea.swift; sourceTree = "<group>"; };
+		D26107E42FC3BCD000CB4D03 /* ClockFaceCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockFaceCanvas.swift; sourceTree = "<group>"; };
+		D26107E52FC3BCD000CB4D03 /* ClockGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockGeometry.swift; sourceTree = "<group>"; };
+		D26107E62FC3BCD000CB4D03 /* ClockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockView.swift; sourceTree = "<group>"; };
+		D26107E72FC3BCD000CB4D03 /* CurrentEventLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentEventLabel.swift; sourceTree = "<group>"; };
+		D26107E82FC3BCD000CB4D03 /* EventArcRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventArcRenderer.swift; sourceTree = "<group>"; };
+		D26107E92FC3BCD000CB4D03 /* EventPreviewPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPreviewPopover.swift; sourceTree = "<group>"; };
+		D26107EA2FC3BCD000CB4D03 /* EventTooltip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTooltip.swift; sourceTree = "<group>"; };
+		D26107EB2FC3BCD000CB4D03 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
+		D26107EC2FC3BCD000CB4D03 /* NextEventLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextEventLine.swift; sourceTree = "<group>"; };
+		D26107ED2FC3BCD000CB4D03 /* RenderableEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderableEvent.swift; sourceTree = "<group>"; };
+		D26107EE2FC3BCD000CB4D03 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		D26107EF2FC3BCD000CB4D03 /* TooltipState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TooltipState.swift; sourceTree = "<group>"; };
+		D26107F12FC3BCD000CB4D03 /* FloatingClockWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingClockWindow.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		D26107422FC35B9E00CB4D03 /* Toki */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Toki;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D261073D2FC35B9E00CB4D03 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D26107372FC35B9E00CB4D03 = {
+			isa = PBXGroup;
+			children = (
+				D26107F42FC3BCD000CB4D03 /* Sources */,
+				D26107422FC35B9E00CB4D03 /* Toki */,
+				D26107412FC35B9E00CB4D03 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D26107412FC35B9E00CB4D03 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D26107402FC35B9E00CB4D03 /* Toki.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D26107C22FC3BCD000CB4D03 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				D26107C02FC3BCD000CB4D03 /* AppDelegate.swift */,
+				D26107C12FC3BCD000CB4D03 /* TokiApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D26107C62FC3BCD000CB4D03 /* Composition */ = {
+			isa = PBXGroup;
+			children = (
+				D26107C32FC3BCD000CB4D03 /* AppearanceModel.swift */,
+				D26107C42FC3BCD000CB4D03 /* ClockViewModel.swift */,
+				D26107C52FC3BCD000CB4D03 /* SettingsStore.swift */,
+			);
+			path = Composition;
+			sourceTree = "<group>";
+		};
+		D26107CD2FC3BCD000CB4D03 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				D26107C72FC3BCD000CB4D03 /* Attendee.swift */,
+				D26107C82FC3BCD000CB4D03 /* DayTimeline.swift */,
+				D26107C92FC3BCD000CB4D03 /* Event.swift */,
+				D26107CA2FC3BCD000CB4D03 /* EventStatus.swift */,
+				D26107CB2FC3BCD000CB4D03 /* OverlapGroup.swift */,
+				D26107CC2FC3BCD000CB4D03 /* TimeOfDay.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		D26107D42FC3BCD000CB4D03 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				D26107CE2FC3BCD000CB4D03 /* GoogleCalendarAPI.swift */,
+				D26107CF2FC3BCD000CB4D03 /* GoogleCalendarGateway.swift */,
+				D26107D02FC3BCD000CB4D03 /* GoogleOAuthClient.swift */,
+				D26107D12FC3BCD000CB4D03 /* KeychainStore.swift */,
+				D26107D22FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift */,
+				D26107D32FC3BCD000CB4D03 /* OAuthConfig.swift */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		D26107E02FC3BCD000CB4D03 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				D26107D52FC3BCD000CB4D03 /* CircleOutlineThicknessSection.swift */,
+				D26107D62FC3BCD000CB4D03 /* ColorSchemeSection.swift */,
+				D26107D72FC3BCD000CB4D03 /* CustomBackgroundSection.swift */,
+				D26107D82FC3BCD000CB4D03 /* CustomCircleColorSection.swift */,
+				D26107D92FC3BCD000CB4D03 /* CustomTextColorSection.swift */,
+				D26107DA2FC3BCD000CB4D03 /* HandThicknessSection.swift */,
+				D26107DB2FC3BCD000CB4D03 /* MaterialStrengthSection.swift */,
+				D26107DC2FC3BCD000CB4D03 /* OpacitySection.swift */,
+				D26107DD2FC3BCD000CB4D03 /* RingThicknessSection.swift */,
+				D26107DE2FC3BCD000CB4D03 /* TextScaleSection.swift */,
+				D26107DF2FC3BCD000CB4D03 /* ThemeColorSection.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		D26107F02FC3BCD000CB4D03 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				D26107E02FC3BCD000CB4D03 /* Settings */,
+				D26107E12FC3BCD000CB4D03 /* AllDayEventLine.swift */,
+				D26107E22FC3BCD000CB4D03 /* AppearanceTokens.swift */,
+				D26107E32FC3BCD000CB4D03 /* BottomInfoArea.swift */,
+				D26107E42FC3BCD000CB4D03 /* ClockFaceCanvas.swift */,
+				D26107E52FC3BCD000CB4D03 /* ClockGeometry.swift */,
+				D26107E62FC3BCD000CB4D03 /* ClockView.swift */,
+				D26107E72FC3BCD000CB4D03 /* CurrentEventLabel.swift */,
+				D26107E82FC3BCD000CB4D03 /* EventArcRenderer.swift */,
+				D26107E92FC3BCD000CB4D03 /* EventPreviewPopover.swift */,
+				D26107EA2FC3BCD000CB4D03 /* EventTooltip.swift */,
+				D26107EB2FC3BCD000CB4D03 /* GlassBackground.swift */,
+				D26107EC2FC3BCD000CB4D03 /* NextEventLine.swift */,
+				D26107ED2FC3BCD000CB4D03 /* RenderableEvent.swift */,
+				D26107EE2FC3BCD000CB4D03 /* SettingsView.swift */,
+				D26107EF2FC3BCD000CB4D03 /* TooltipState.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		D26107F22FC3BCD000CB4D03 /* Window */ = {
+			isa = PBXGroup;
+			children = (
+				D26107F12FC3BCD000CB4D03 /* FloatingClockWindow.swift */,
+			);
+			path = Window;
+			sourceTree = "<group>";
+		};
+		D26107F32FC3BCD000CB4D03 /* Toki */ = {
+			isa = PBXGroup;
+			children = (
+				D26107C22FC3BCD000CB4D03 /* App */,
+				D26107C62FC3BCD000CB4D03 /* Composition */,
+				D26107CD2FC3BCD000CB4D03 /* Domain */,
+				D26107D42FC3BCD000CB4D03 /* Infrastructure */,
+				D26107F02FC3BCD000CB4D03 /* UI */,
+				D26107F22FC3BCD000CB4D03 /* Window */,
+			);
+			path = Toki;
+			sourceTree = "<group>";
+		};
+		D26107F42FC3BCD000CB4D03 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				D26107F32FC3BCD000CB4D03 /* Toki */,
+			);
+			name = Sources;
+			path = ../Sources;
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D261073F2FC35B9E00CB4D03 /* Toki */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D261074B2FC35B9F00CB4D03 /* Build configuration list for PBXNativeTarget "Toki" */;
+			buildPhases = (
+				D261073C2FC35B9E00CB4D03 /* Sources */,
+				D261073D2FC35B9E00CB4D03 /* Frameworks */,
+				D261073E2FC35B9E00CB4D03 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D26107422FC35B9E00CB4D03 /* Toki */,
+			);
+			name = Toki;
+			packageProductDependencies = (
+			);
+			productName = Toki;
+			productReference = D26107402FC35B9E00CB4D03 /* Toki.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D26107382FC35B9E00CB4D03 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					D261073F2FC35B9E00CB4D03 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = D261073B2FC35B9E00CB4D03 /* Build configuration list for PBXProject "Toki" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D26107372FC35B9E00CB4D03;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D26107412FC35B9E00CB4D03 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D261073F2FC35B9E00CB4D03 /* Toki */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D261073E2FC35B9E00CB4D03 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D261073C2FC35B9E00CB4D03 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D26107F52FC3BCD000CB4D03 /* Attendee.swift in Sources */,
+				D26107F62FC3BCD000CB4D03 /* KeychainStore.swift in Sources */,
+				D26107F72FC3BCD000CB4D03 /* ClockViewModel.swift in Sources */,
+				D26107F82FC3BCD000CB4D03 /* ClockView.swift in Sources */,
+				D26107F92FC3BCD000CB4D03 /* GlassBackground.swift in Sources */,
+				D26107FA2FC3BCD000CB4D03 /* RenderableEvent.swift in Sources */,
+				D26107FB2FC3BCD000CB4D03 /* EventPreviewPopover.swift in Sources */,
+				D26107FC2FC3BCD000CB4D03 /* NextEventLine.swift in Sources */,
+				D26107FD2FC3BCD000CB4D03 /* SettingsView.swift in Sources */,
+				D26107FE2FC3BCD000CB4D03 /* ThemeColorSection.swift in Sources */,
+				D26107FF2FC3BCD000CB4D03 /* AllDayEventLine.swift in Sources */,
+				D26108002FC3BCD000CB4D03 /* CustomCircleColorSection.swift in Sources */,
+				D26108012FC3BCD000CB4D03 /* GoogleCalendarAPI.swift in Sources */,
+				D26108022FC3BCD000CB4D03 /* OverlapGroup.swift in Sources */,
+				D26108032FC3BCD000CB4D03 /* DayTimeline.swift in Sources */,
+				D26108042FC3BCD000CB4D03 /* SettingsStore.swift in Sources */,
+				D26108052FC3BCD000CB4D03 /* EventStatus.swift in Sources */,
+				D26108062FC3BCD000CB4D03 /* GoogleOAuthClient.swift in Sources */,
+				D26108072FC3BCD000CB4D03 /* MaterialStrengthSection.swift in Sources */,
+				D26108082FC3BCD000CB4D03 /* HandThicknessSection.swift in Sources */,
+				D26108092FC3BCD000CB4D03 /* OAuthConfig.swift in Sources */,
+				D261080A2FC3BCD000CB4D03 /* AppDelegate.swift in Sources */,
+				D261080B2FC3BCD000CB4D03 /* TimeOfDay.swift in Sources */,
+				D261080C2FC3BCD000CB4D03 /* BottomInfoArea.swift in Sources */,
+				D261080D2FC3BCD000CB4D03 /* ClockFaceCanvas.swift in Sources */,
+				D261080E2FC3BCD000CB4D03 /* CircleOutlineThicknessSection.swift in Sources */,
+				D261080F2FC3BCD000CB4D03 /* ClockGeometry.swift in Sources */,
+				D26108102FC3BCD000CB4D03 /* CurrentEventLabel.swift in Sources */,
+				D26108112FC3BCD000CB4D03 /* OpacitySection.swift in Sources */,
+				D26108122FC3BCD000CB4D03 /* GoogleCalendarGateway.swift in Sources */,
+				D26108132FC3BCD000CB4D03 /* AppearanceTokens.swift in Sources */,
+				D26108142FC3BCD000CB4D03 /* EventTooltip.swift in Sources */,
+				D26108152FC3BCD000CB4D03 /* TokiApp.swift in Sources */,
+				D26108162FC3BCD000CB4D03 /* RingThicknessSection.swift in Sources */,
+				D26108172FC3BCD000CB4D03 /* ColorSchemeSection.swift in Sources */,
+				D26108182FC3BCD000CB4D03 /* TextScaleSection.swift in Sources */,
+				D26108192FC3BCD000CB4D03 /* FloatingClockWindow.swift in Sources */,
+				D261081A2FC3BCD000CB4D03 /* TooltipState.swift in Sources */,
+				D261081B2FC3BCD000CB4D03 /* CustomBackgroundSection.swift in Sources */,
+				D261081C2FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift in Sources */,
+				D261081D2FC3BCD000CB4D03 /* EventArcRenderer.swift in Sources */,
+				D261081E2FC3BCD000CB4D03 /* Event.swift in Sources */,
+				D261081F2FC3BCD000CB4D03 /* CustomTextColorSection.swift in Sources */,
+				D26108202FC3BCD000CB4D03 /* AppearanceModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		D26107492FC35B9F00CB4D03 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = Z3X3T827CS;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D261074A2FC35B9F00CB4D03 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = Z3X3T827CS;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		D261074C2FC35B9F00CB4D03 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z3X3T827CS;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ../Resources/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = jp.co.noouchi.toki;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D261074D2FC35B9F00CB4D03 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z3X3T827CS;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ../Resources/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = jp.co.noouchi.toki;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D261073B2FC35B9E00CB4D03 /* Build configuration list for PBXProject "Toki" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D26107492FC35B9F00CB4D03 /* Debug */,
+				D261074A2FC35B9F00CB4D03 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D261074B2FC35B9F00CB4D03 /* Build configuration list for PBXNativeTarget "Toki" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D261074C2FC35B9F00CB4D03 /* Debug */,
+				D261074D2FC35B9F00CB4D03 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D26107382FC35B9E00CB4D03 /* Project object */;
+}
