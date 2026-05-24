@@ -8,10 +8,15 @@ Package.resolved
 .swiftpm/
 
 # Xcode
-*.xcodeproj/
-*.xcworkspace/
+# プロジェクト設定（project.pbxproj 等）はコミットする。
+# 個人ごとの user state / scheme のみ除外する。
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
 xcuserdata/
 *.xcuserstate
+# Archive 成果物
+*.xcarchive
 
 # macOS
 .DS_Store
