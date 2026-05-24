@@ -69,7 +69,7 @@ for future releases.
 
 GitHub Issues でお願いします：
 
-Please open a [GitHub Issue](https://github.com/<github-username>/toki/issues/new/choose).
+Please open a [GitHub Issue](https://github.com/NaokiOouchi/toki/issues/new/choose).
 
 ### 一般的な感想 / General Feedback
 
@@ -83,7 +83,7 @@ We welcome reviews on the [App Store](https://apps.apple.com/jp/app/toki-circle-
 
 - [Privacy Policy (日本語)](./privacy/)
 - [Privacy Policy (English)](./privacy-en/)
-- [GitHub Repository](https://github.com/<github-username>/toki)
+- [GitHub Repository](https://github.com/NaokiOouchi/toki)
 
 ---
 

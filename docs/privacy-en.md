@@ -110,7 +110,7 @@ and Google (the API provider).
 
 ## 7. Contact
 
-For questions about data handling, please open a [GitHub Issue](https://github.com/<github-username>/toki/issues/new/choose).
+For questions about data handling, please open a [GitHub Issue](https://github.com/NaokiOouchi/toki/issues/new/choose).
 
 ---
 
