@@ -80,7 +80,8 @@
 | Phase | サブ | カテゴリ | 内容 | 依存 | Spec | 難 |
 |:---:|:---:|---|---|---|:---:|:---:|
 | 0 | – | 準備 | Apple Developer Program 登録（年 ¥14,800）/ Bundle ID 確定 / Privacy Policy 草案 | なし | spec 014 | 低 |
-| 1 | A | 技術 | App Sandbox 対応（entitlements / keychain / network 検証）| Phase 0 | spec 015 | 中 |
+| 1 | A0 | 技術 | **Xcode Project 移行**（ハイブリッド構成、SwiftPM 維持）| Phase 0 | spec 015a | 中 |
+| 1 | A | 技術 | App Sandbox 対応（entitlements / keychain / network 検証）| Phase 1A0 | spec 015 | 中 |
 | 1 | B | 技術 | **OAuth 公開対応**（client_secret 漏洩問題、PKCE / proxy 等）| Phase 0 | spec 016 | **高** |
 | 1 | C | 技術 | エラーハンドリング強化（UI で見える形に）| Phase 1A | spec 017 | 低 |
 | 1 | D | 技術 | アクセシビリティ最低限（VoiceOver / キーボード）| Phase 1A | spec 018 | 中 |
