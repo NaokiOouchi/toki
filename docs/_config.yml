@@ -1,0 +1,18 @@
+# GitHub Pages Jekyll 設定
+title: "Toki - Circle Calendar Clock"
+description: "macOS 常時前面表示の円形カレンダー時計 / Floating circle clock for Google Calendar on Mac"
+theme: jekyll-theme-minimal
+lang: ja
+
+# サイト URL（GitHub Pages 配信後の実 URL に応じて調整可能）
+url: ""
+baseurl: "/toki"
+
+# Markdown プロセッサ
+markdown: kramdown
+highlighter: rouge
+
+# 公開対象外
+exclude:
+  - README.md
+  - .gitignore
