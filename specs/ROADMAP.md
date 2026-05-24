@@ -48,54 +48,57 @@
 
 ## 2. 公開までの Phase 一覧
 
-各 Phase は順次 spec 化していく。spec 番号は予定（変動あり）。
+各サブカテゴリは独立した spec として落とし込む。spec 番号は予定（変動あり）。
+**依存** 列で「並行で進められる作業」と「待ちが必要な作業」を判別する。
+**難** 列：低 / 中 / 高（実装侵襲度 + 不確実性）。
 
-### Phase 0: 準備
-- Apple Developer Program 登録（年 ¥14,800）
-- Bundle ID 確定 / App ID 作成
-- 公開戦略の最終化（このドキュメント）
+| Phase | サブ | カテゴリ | 内容 | 依存 | Spec | 難 |
+|:---:|:---:|---|---|---|:---:|:---:|
+| 0 | – | 準備 | Apple Developer Program 登録（年 ¥14,800）/ Bundle ID 確定 / Privacy Policy 草案 | なし | spec 014 | 低 |
+| 1 | A | 技術 | App Sandbox 対応（entitlements / keychain / network 検証）| Phase 0 | spec 015 | 中 |
+| 1 | B | 技術 | **OAuth 公開対応**（client_secret 漏洩問題、PKCE / proxy 等）| Phase 0 | spec 016 | **高** |
+| 1 | C | 技術 | エラーハンドリング強化（UI で見える形に）| Phase 1A | spec 017 | 低 |
+| 1 | D | 技術 | アクセシビリティ最低限（VoiceOver / キーボード）| Phase 1A | spec 018 | 中 |
+| 1 | E | 技術 | ローカライズ（日本語 + 英語？）| Phase 1A | spec 019 | 中 |
+| 2 | A | ブランディング | App Icon（1024 までの複数サイズ）| なし（並行可）| spec 020 | 中 |
+| 2 | B | ブランディング | スクリーンショット（macOS App Store 規定サイズ）| Phase 1A 完了後 | spec 021 | 低 |
+| 2 | C | ブランディング | App 説明文 / キーワード / カテゴリ | なし | spec 022 | 低 |
+| 3 | A | 法務 | Privacy Policy（ウェブ掲載必須）| Phase 0 | spec 023 | 低 |
+| 3 | B | 法務 | Support サイト（最低限 GitHub Issues でも可）| なし | spec 023 | 低 |
+| 3 | C | 法務 | Data Use Disclosure（App Store Connect 質問）| Phase 1 完了後 | spec 024 | 低 |
+| 4 | A | ストア | App Store Connect レコード作成 / メタデータ入力 | Phase 0 | spec 025 | 低 |
+| 4 | B | テスト | TestFlight 配布 / β ユーザーテスト | Phase 1 + 4A | spec 027 | 中 |
+| 4 | C | インフラ | GitHub Issues / Templates 整備 | なし | spec 026 | 低 |
+| 5 | – | リリース | 審査提出 → リジェクト対応 → 公開 | Phase 1–4 全部 | spec 028 | 高 |
+| 6 | A | 後付け | StoreKit 2 統合 | 公開後 | spec 029 | 中 |
+| 6 | B | 後付け | 機能フラグ機構（Pro / 無料の出し分け）| 公開後 | spec 030 | 中 |
+| 6 | C | 後付け | Tip Jar UI | Phase 6A | spec 031 | 低 |
+| 6 | D | 後付け | Pro 機能（複数アカウント / カラーピック等）| Phase 6B | spec 032 | 中 |
 
-### Phase 1: 技術基盤
-| Spec 候補 | 内容 | 難易度 |
-|---|---|---|
-| spec 014 | App Sandbox 対応（entitlements / keychain / network 検証）| 中 |
-| spec 015 | **OAuth 公開対応**（client_secret 漏洩対策）| **高（最難）** |
-| spec 016 | エラーハンドリング強化（UI で見える形に）| 低 |
-| spec 017 | アクセシビリティ最低限（VoiceOver / キーボード）| 中 |
-| spec 018 | ローカライズ（未決定）| 中 |
+### 並行で進められる作業（依存「なし」のもの）
 
-### Phase 2: ブランディング / ストア素材
-| Spec 候補 | 内容 |
-|---|---|
-| spec 019 | App Icon（1024 までの複数サイズ）|
-| spec 020 | スクリーンショット（App Store 規定サイズ）|
-| spec 021 | App 説明文 / キーワード / カテゴリ |
+Phase 0 着手と同時にスタート可：
+- **2A** App Icon（デザイン作業、コードに侵襲しない）
+- **2C** App 説明文 / キーワード / カテゴリ（マーケコピー作成）
+- **3B** Support サイト準備（GitHub repo 整備）
+- **4C** GitHub Issues / Templates 整備
 
-### Phase 3: 法務 / コンプライアンス
-| Spec 候補 | 内容 |
-|---|---|
-| spec 022 | Privacy Policy / Support サイト |
-| spec 023 | Data Use Disclosure（App Store Connect 質問）|
+これらは Phase 1 の重い技術作業と完全に独立、隙間時間で進められる。
 
-### Phase 4: App Store Connect + テスト
-| Spec 候補 | 内容 |
-|---|---|
-| spec 024 | App Store Connect レコード作成 / メタデータ入力 |
-| spec 025 | GitHub Issues / Templates 整備 |
-| spec 026 | TestFlight 配布 / β テスト |
+### 待ちが発生する依存チェーン
 
-### Phase 5: 審査 → 公開
-| Spec 候補 | 内容 |
-|---|---|
-| spec 027 | 審査提出準備 / リジェクト対応プロトコル |
-
-### Phase 6: 後付け（v1.1+、Tip Jar / Pro 機能解放）
-| Spec 候補 | 内容 |
-|---|---|
-| spec 028 | StoreKit 2 統合 |
-| spec 029 | 機能フラグ機構（Pro / 無料の出し分け）|
-| spec 030 | Tip Jar UI |
-| spec 031 | Pro 機能（複数アカウント / カラーピック等）|
+```
+Phase 0
+ ├─ 1A (Sandbox) ──┬─ 1C (エラー) ─┐
+ │                 ├─ 1D (a11y)    │
+ │                 └─ 1E (l10n)    ├─ 2B (Screenshot)
+ ├─ 1B (OAuth)  ───────────────────┤
+ ├─ 3A (Privacy Policy)            │
+ └─ 4A (App Store Connect) ─┐      │
+                            ├─ 4B (TestFlight) ─┐
+                            │                   │
+                            └─ 3C (Data Use) ───┴─ 5 (審査 → 公開) → Phase 6
+```
 
 ---
 
