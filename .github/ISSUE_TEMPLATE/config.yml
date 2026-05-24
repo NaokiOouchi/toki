@@ -1,0 +1,10 @@
+# Issue Template 設定
+# blank issue を無効化することで、必ず 3 つのテンプレ（bug / feature / question）
+# のいずれかを経由させる。これにより報告品質が上がり、振り分け負担が減る。
+
+blank_issues_enabled: false
+
+contact_links:
+  - name: App Store でレビューを書く / Leave a review on App Store
+    url: https://apps.apple.com/jp/app/toki-circle-calendar-clock/
+    about: 一般的な感想や星評価は App Store レビューでお待ちしています / General feedback and star ratings are welcomed on App Store reviews
