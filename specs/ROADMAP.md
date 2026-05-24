@@ -157,12 +157,25 @@ spec 015 で技術選定する。
 | **v1.0 スコープ** | **完全無料リリースのみ**（Tip Jar / Pro は v1.1+ で後付け）|
 | **ローカライズ** | **日本語 + 英語**（i18n 機構は最初から導入、後付けは高コスト）|
 | **Bundle ID** | **`jp.co.noouchi.toki`**（過去ゲームの prefix 踏襲、将来別アプリも同系列に統一可能）|
+| **App 表示名** | 日本語：**`Toki - 円形カレンダー時計`** / 英語：**`Toki - Circle Calendar Clock`** |
+| **内部識別** | コードベース / Bundle ID / spec の `Toki` 表記は変えない（内部識別はずっと Toki） |
 
-### 4.2 未決定
+### 4.2 未決定（後で詰める）
 
 | 項目 | 候補 | 決定時期 |
 |---|---|---|
-| **App 表示名** | `Toki` でいくか別名か（App Store 検索 SEO 考慮）| Phase 2 |
+| **サブタイトル文言** | 30 文字制限内でキャッチー化、英語先行検討 | Phase 2（App Store Connect 入力時）|
+
+### 4.3 App 名差別化の経緯
+
+App Store 既存「Toki」アプリのリサーチ結果：
+- **Toki - Automatic Time Tracker**（Productivity, Free）
+- **Toki — Pro Post Scheduler**（Business, Free）
+- **Toki** (Timer, Productivity, $0.99)
+
+Productivity カテゴリに既に `Toki` 単独名が複数。検索埋没 + Apple 審査
+「similar / misleading」リスクのため、App 表示名にサフィックスを付けて差別化する判断。
+円形 × カレンダー × 常時前面 の組み合わせは競合なし。
 
 ---
 
