@@ -45,9 +45,19 @@ pick_codesign_identity() {
 }
 
 CODESIGN_IDENTITY_RESOLVED=$(pick_codesign_identity)
+# spec 015: App Sandbox 対応のため entitlements を適用する。
+# Xcode 側と同じ entitlements ファイルを共有することで、
+# SwiftPM build した .app も Sandbox 環境で動作確認できる。
+ENTITLEMENTS_FILE="Toki/Toki/Toki.entitlements"
 if [ -n "$CODESIGN_IDENTITY_RESOLVED" ]; then
-    codesign --sign "$CODESIGN_IDENTITY_RESOLVED" --force --deep --options runtime "$APP_DIR"
-    echo "Signed with: $CODESIGN_IDENTITY_RESOLVED"
+    if [ -f "$ENTITLEMENTS_FILE" ]; then
+        codesign --sign "$CODESIGN_IDENTITY_RESOLVED" --force --deep \
+            --options runtime --entitlements "$ENTITLEMENTS_FILE" "$APP_DIR"
+        echo "Signed with: $CODESIGN_IDENTITY_RESOLVED (with entitlements)"
+    else
+        codesign --sign "$CODESIGN_IDENTITY_RESOLVED" --force --deep --options runtime "$APP_DIR"
+        echo "Signed with: $CODESIGN_IDENTITY_RESOLVED (no entitlements file found)"
+    fi
 else
     echo "Warning: no codesigning identity found. Skipping signing."
     echo "  -> Keychain prompts will recur after each rebuild."
