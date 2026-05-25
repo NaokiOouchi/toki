@@ -1,22 +1,30 @@
 import Foundation
 import AppKit
 import CryptoKit
+import AuthenticationServices
 
-/// Google OAuth 2.0 (Loopback IP) フローを管理するクライアント。
-/// consent URL 生成（PKCE 付き）、code → token 交換、refresh、revoke を担当する。
-/// token は KeychainStore に保存。
-final class GoogleOAuthClient {
+/// Google OAuth 2.0 (iOS client + custom URL scheme + PKCE only) を管理するクライアント。
+/// spec 016 で全面改修：
+/// - LoopbackOAuthReceiver 廃止 → ASWebAuthenticationSession に移行
+/// - client_secret 完全廃止（iOS client は secret 不要、PKCE で守る）
+/// - redirect は custom scheme（`com.googleusercontent.apps.xxx:/oauthredirect`）
+/// - token は KeychainStore に保存（変更なし）
+///
+/// クラス自体は actor isolation なし（KeychainStore は thread-safe）。
+/// ASWebAuth 起動部分のみ @MainActor 局所適用。
+final class GoogleOAuthClient: NSObject {
     enum OAuthClientError: Error {
         case tokenExchangeFailed(String)
         case refreshFailed(String)
         case revokeFailed(String)
         case noRefreshToken
         case invalidResponse
+        case userCancelled
+        case authSessionFailed(String)
     }
 
     private let config: OAuthConfig
     private let keychain: KeychainStore
-    private let receiver: LoopbackOAuthReceiver
     private let session: URLSession
 
     private static let consentURL = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -30,12 +38,11 @@ final class GoogleOAuthClient {
 
     init(config: OAuthConfig,
          keychain: KeychainStore,
-         receiver: LoopbackOAuthReceiver,
          session: URLSession = .shared) {
         self.config = config
         self.keychain = keychain
-        self.receiver = receiver
         self.session = session
+        super.init()
     }
 
     /// refresh_token が Keychain にあれば認証済みとみなす。
@@ -43,10 +50,10 @@ final class GoogleOAuthClient {
         keychain.get(Self.keyRefreshToken) != nil
     }
 
-    /// OAuth consent を開始する。
+    /// OAuth consent を開始する（ASWebAuthenticationSession 経由）。
     /// 1. PKCE verifier / state nonce 生成
-    /// 2. consent URL をデフォルトブラウザで開く
-    /// 3. loopback で code を待つ
+    /// 2. ASWebAuthenticationSession で consent URL を開く
+    /// 3. custom scheme callback で code を受信、state 検証
     /// 4. code を token に交換して Keychain 保存
     func beginAuthorization() async throws {
         let verifier = Self.makeCodeVerifier()
@@ -54,10 +61,8 @@ final class GoogleOAuthClient {
         let state = Self.makeNonce()
 
         let consentURL = makeConsentURL(challenge: challenge, state: state)
-        NSWorkspace.shared.open(consentURL)
-
-        let port = Self.port(from: config.redirectURI) ?? 8081
-        let code = try await receiver.waitForCode(port: port, expectedState: state)
+        let callbackURL = try await startWebAuthSession(url: consentURL)
+        let code = try Self.extractCode(from: callbackURL, expectedState: state)
         try await exchange(code: code, verifier: verifier)
     }
 
@@ -99,6 +104,7 @@ final class GoogleOAuthClient {
     // MARK: - private
 
     /// consent URL を組み立てる（PKCE / state / offline access / consent prompt 込み）。
+    /// client_secret は **含めない**（PKCE が認証を担うため）。
     private func makeConsentURL(challenge: String, state: String) -> URL {
         var components = URLComponents(string: Self.consentURL)!
         components.queryItems = [
@@ -115,11 +121,62 @@ final class GoogleOAuthClient {
         return components.url!
     }
 
+    /// ASWebAuthenticationSession を起動して callback URL を待つ。
+    /// callback scheme は OAuthConfig.callbackURLScheme から取得。
+    /// session.start() と presentation anchor は MainActor 必須。
+    @MainActor
+    private func startWebAuthSession(url: URL) async throws -> URL {
+        try await withCheckedThrowingContinuation { continuation in
+            let session = ASWebAuthenticationSession(
+                url: url,
+                callbackURLScheme: config.callbackURLScheme
+            ) { callbackURL, error in
+                if let error {
+                    let nsError = error as NSError
+                    if nsError.domain == ASWebAuthenticationSessionErrorDomain,
+                       nsError.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                        continuation.resume(throwing: OAuthClientError.userCancelled)
+                    } else {
+                        continuation.resume(throwing: OAuthClientError.authSessionFailed(error.localizedDescription))
+                    }
+                    return
+                }
+                guard let callbackURL else {
+                    continuation.resume(throwing: OAuthClientError.invalidResponse)
+                    return
+                }
+                continuation.resume(returning: callbackURL)
+            }
+            session.presentationContextProvider = self
+            // ephemeral=false：Safari の cookies / iCloud Keychain 連携で
+            // 既ログインユーザーの 1 クリック認証を可能にする。
+            session.prefersEphemeralWebBrowserSession = false
+            session.start()
+        }
+    }
+
+    /// callback URL から `code` と `state` を抽出し、state を検証して `code` を返す。
+    private static func extractCode(from url: URL, expectedState: String) throws -> String {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let items = components.queryItems else {
+            throw OAuthClientError.invalidResponse
+        }
+        let code = items.first(where: { $0.name == "code" })?.value
+        let state = items.first(where: { $0.name == "state" })?.value
+        guard state == expectedState else {
+            throw OAuthClientError.authSessionFailed("state mismatch")
+        }
+        guard let code else {
+            throw OAuthClientError.invalidResponse
+        }
+        return code
+    }
+
     /// code → access_token / refresh_token 交換。
+    /// client_secret は **送信しない**（PKCE only）。
     private func exchange(code: String, verifier: String) async throws {
         let body = [
             "client_id": config.clientId,
-            "client_secret": config.clientSecret,
             "code": code,
             "redirect_uri": config.redirectURI,
             "grant_type": "authorization_code",
@@ -138,6 +195,7 @@ final class GoogleOAuthClient {
     }
 
     /// refresh_token から access_token を更新する。
+    /// client_secret は **送信しない**（PKCE only）。
     /// refresh も失敗（401 等）なら Keychain クリアして throw。
     private func refresh() async throws -> String {
         guard let refreshToken = keychain.get(Self.keyRefreshToken) else {
@@ -145,7 +203,6 @@ final class GoogleOAuthClient {
         }
         let body = [
             "client_id": config.clientId,
-            "client_secret": config.clientSecret,
             "refresh_token": refreshToken,
             "grant_type": "refresh_token"
         ]
@@ -190,14 +247,14 @@ final class GoogleOAuthClient {
     }
 
     /// PKCE verifier：32 byte ランダム → base64url（pad 除去）。
-    private static func makeCodeVerifier() -> String {
+    static func makeCodeVerifier() -> String {
         var bytes = [UInt8](repeating: 0, count: 32)
         _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         return Data(bytes).base64URLEncodedString()
     }
 
     /// PKCE challenge：SHA-256(verifier) を base64url。
-    private static func codeChallenge(from verifier: String) -> String {
+    static func codeChallenge(from verifier: String) -> String {
         let hash = SHA256.hash(data: Data(verifier.utf8))
         return Data(hash).base64URLEncodedString()
     }
@@ -208,16 +265,31 @@ final class GoogleOAuthClient {
         _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         return Data(bytes).base64URLEncodedString()
     }
+}
 
-    /// redirect_uri 文字列からポート番号を抽出する。
-    /// 例：`http://localhost:8081/callback` → 8081
-    private static func port(from redirectURI: String) -> UInt16? {
-        guard let url = URL(string: redirectURI), let port = url.port else { return nil }
-        return UInt16(port)
+// MARK: - ASWebAuthenticationPresentationContextProviding
+
+extension GoogleOAuthClient: ASWebAuthenticationPresentationContextProviding {
+    @MainActor
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        // メインウィンドウを presentation anchor として返す。
+        // メニューバー駐在型でメインウィンドウが取れないケースも考慮し、
+        // フォールバックで NSApp.keyWindow → NSApp.windows.first を順に試す。
+        if let main = NSApp.mainWindow {
+            return main
+        }
+        if let key = NSApp.keyWindow {
+            return key
+        }
+        if let first = NSApp.windows.first {
+            return first
+        }
+        // 最終 fallback：新規ウィンドウ（実際にはここに来る前にいずれかの window が取れるはず）
+        return NSWindow()
     }
 }
 
-private extension Data {
+extension Data {
     /// base64url（pad 除去、`+`→`-`、`/`→`_`）。
     func base64URLEncodedString() -> String {
         return base64EncodedString()

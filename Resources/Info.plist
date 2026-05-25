@@ -20,5 +20,16 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>jp.co.noouchi.toki.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.509549478487-up4ti0ct4rdc9fupqdslgk8egjvck75s</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

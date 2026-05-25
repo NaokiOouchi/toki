@@ -46,7 +46,6 @@
 		D26108192FC3BCD000CB4D03 /* FloatingClockWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107F12FC3BCD000CB4D03 /* FloatingClockWindow.swift */; };
 		D261081A2FC3BCD000CB4D03 /* TooltipState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107EF2FC3BCD000CB4D03 /* TooltipState.swift */; };
 		D261081B2FC3BCD000CB4D03 /* CustomBackgroundSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D72FC3BCD000CB4D03 /* CustomBackgroundSection.swift */; };
-		D261081C2FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D22FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift */; };
 		D261081D2FC3BCD000CB4D03 /* EventArcRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107E82FC3BCD000CB4D03 /* EventArcRenderer.swift */; };
 		D261081E2FC3BCD000CB4D03 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C92FC3BCD000CB4D03 /* Event.swift */; };
 		D261081F2FC3BCD000CB4D03 /* CustomTextColorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D92FC3BCD000CB4D03 /* CustomTextColorSection.swift */; };
@@ -70,7 +69,6 @@
 		D26107CF2FC3BCD000CB4D03 /* GoogleCalendarGateway.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleCalendarGateway.swift; sourceTree = "<group>"; };
 		D26107D02FC3BCD000CB4D03 /* GoogleOAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthClient.swift; sourceTree = "<group>"; };
 		D26107D12FC3BCD000CB4D03 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
-		D26107D22FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopbackOAuthReceiver.swift; sourceTree = "<group>"; };
 		D26107D32FC3BCD000CB4D03 /* OAuthConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthConfig.swift; sourceTree = "<group>"; };
 		D26107D52FC3BCD000CB4D03 /* CircleOutlineThicknessSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleOutlineThicknessSection.swift; sourceTree = "<group>"; };
 		D26107D62FC3BCD000CB4D03 /* ColorSchemeSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorSchemeSection.swift; sourceTree = "<group>"; };
@@ -176,7 +174,6 @@
 				D26107CF2FC3BCD000CB4D03 /* GoogleCalendarGateway.swift */,
 				D26107D02FC3BCD000CB4D03 /* GoogleOAuthClient.swift */,
 				D26107D12FC3BCD000CB4D03 /* KeychainStore.swift */,
-				D26107D22FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift */,
 				D26107D32FC3BCD000CB4D03 /* OAuthConfig.swift */,
 			);
 			path = Infrastructure;
@@ -366,7 +363,6 @@
 				D26108192FC3BCD000CB4D03 /* FloatingClockWindow.swift in Sources */,
 				D261081A2FC3BCD000CB4D03 /* TooltipState.swift in Sources */,
 				D261081B2FC3BCD000CB4D03 /* CustomBackgroundSection.swift in Sources */,
-				D261081C2FC3BCD000CB4D03 /* LoopbackOAuthReceiver.swift in Sources */,
 				D261081D2FC3BCD000CB4D03 /* EventArcRenderer.swift in Sources */,
 				D261081E2FC3BCD000CB4D03 /* Event.swift in Sources */,
 				D261081F2FC3BCD000CB4D03 /* CustomTextColorSection.swift in Sources */,

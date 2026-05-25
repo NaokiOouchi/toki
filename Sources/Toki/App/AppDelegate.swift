@@ -41,19 +41,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isHoverResizing: Bool = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // OAuth 依存組み立て：設定ファイルが無ければ nil → 未接続 UX で起動する。
-        let oauth = OAuthConfig.load().map { config in
-            GoogleOAuthClient(config: config,
-                              keychain: KeychainStore(),
-                              receiver: LoopbackOAuthReceiver())
-        }
+        // spec 016: OAuth 設定は Bundle 内に埋め込み済み（OAuthConfig.default）。
+        // 旧版の ~/.config/toki/oauth.json + LoopbackOAuthReceiver は廃止。
+        // ASWebAuthenticationSession + custom scheme + PKCE only でサインインする。
+        let oauth = GoogleOAuthClient(config: .default, keychain: KeychainStore())
         self.oauthClient = oauth
 
         // 依存の組み立て：OAuth → Gateway → ViewModel → ClockView。
-        let gw: GoogleCalendarGateway? = oauth.map { client in
-            GoogleCalendarGateway(oauthClient: client,
-                                  api: GoogleCalendarAPI(oauth: client))
-        }
+        // spec 016: OAuthConfig は常に存在するため Gateway も常に生成される。
+        let gw = GoogleCalendarGateway(oauthClient: oauth,
+                                       api: GoogleCalendarAPI(oauth: oauth))
         let vm = ClockViewModel(gateway: gw)
         gateway = gw
         viewModel = vm
