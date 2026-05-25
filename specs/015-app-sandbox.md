@@ -2,7 +2,7 @@
 
 参照: `specs/ROADMAP.md` §2 Phase 1A
 依存: `specs/015a-xcode-project-migration.md` 完了済み
-ステータス: **Sandbox 設定完了 / OAuth 動作検証は spec 016 完了後に持ち越し**
+ステータス: **完了**（spec 016 完了で OAuth 動作検証も達成、`network.server` entitlement も spec 016 で削除）
 
 Mac App Store 配布必須の App Sandbox に対応する。Entitlements ファイルを
 作成し、最小権限で Toki の全機能が動くことを確認する。

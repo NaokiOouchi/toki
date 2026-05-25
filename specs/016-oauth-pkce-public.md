@@ -2,7 +2,7 @@
 
 参照: `specs/ROADMAP.md` §2 Phase 1B
 依存: `specs/015-app-sandbox.md` 完了済み（一部後方互換更新あり）
-ステータス: **設計確定、実装未着手**
+ステータス: **完了**（2026-05-26、実装 + 実機動作確認済み）
 
 MAS 配布のため OAuth フローを公開対応にする。`client_secret` を完全廃止、
 `~/.config/toki/oauth.json` 廃止、`LoopbackOAuthReceiver` 廃止、`network.server`
