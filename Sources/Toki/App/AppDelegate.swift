@@ -78,9 +78,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // spec 008: 保存フレームの復元（あれば、かつ画面内に表示可能なら）
         // 外部モニタを抜いた等で画面外に行ったフレームは弾き、デフォルト位置にフォールバック。
+        // spec 016 後の補修：contentMinSize は drag resize にしか効かず setFrame には
+        // 適用されないため、復元時に明示的にクランプして BottomInfoArea が見切れないよう保護する。
         if let saved = SettingsStore.shared.windowFrame,
            Self.isFrameVisible(saved) {
-            w.setFrame(saved, display: true)
+            let minSize = w.contentMinSize
+            let clampedSize = NSSize(
+                width: max(saved.width, minSize.width),
+                height: max(saved.height, minSize.height)
+            )
+            let clampedFrame = NSRect(origin: saved.origin, size: clampedSize)
+            w.setFrame(clampedFrame, display: true)
         } else if let screen = NSScreen.main {
             // 初回位置：メインスクリーンの右上 16px インセット
             let visible = screen.visibleFrame
@@ -150,7 +158,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                NSEqualRects(w.frame, lastHover) {
                 return
             }
-            SettingsStore.shared.setWindowFrame(w.frame)
+            Self.saveClampedFrame(window: w)
         }
         // spec 013 改修：didResize の代わりに didEndLiveResize を使う + isHoverResizing 判定。
         // ログ解析で判明：animator().setFrame() でも didEndLiveResize が発火する
@@ -169,7 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                NSEqualRects(w.frame, lastHover) {
                 return
             }
-            SettingsStore.shared.setWindowFrame(w.frame)
+            Self.saveClampedFrame(window: w)
             // user 手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
             self.hoverBaselineHeight = w.frame.height
         }
@@ -242,7 +250,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 通知漏れがあっても最終位置 / サイズを次回起動に持ち越せるようにする。
     func applicationWillTerminate(_ notification: Notification) {
         if let w = window {
-            SettingsStore.shared.setWindowFrame(w.frame)
+            Self.saveClampedFrame(window: w)
         }
     }
 
@@ -256,6 +264,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         return false
+    }
+
+    /// window.frame を contentMinSize でクランプして保存する。
+    /// spec 016 後の補修：何らかの理由で window が contentMinSize より小さくなった場合でも
+    /// 永続化する値は minSize 以上に保ち、次回起動時に BottomInfoArea が見切れない状態を保証する。
+    private static func saveClampedFrame(window w: NSWindow) {
+        let minSize = w.contentMinSize
+        let clampedFrame = NSRect(
+            origin: w.frame.origin,
+            size: NSSize(
+                width: max(w.frame.width, minSize.width),
+                height: max(w.frame.height, minSize.height)
+            )
+        )
+        SettingsStore.shared.setWindowFrame(clampedFrame)
     }
 
     /// 左クリック → ウィンドウ toggle、右クリック → コンテキストメニュー（終了）。
