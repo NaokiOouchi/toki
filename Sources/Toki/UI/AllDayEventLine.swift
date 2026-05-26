@@ -19,7 +19,7 @@ struct AllDayEventLine: View {
         if state != nil || lastUpdatedText != nil {
             HStack {
                 if let s = state {
-                    Text("終日")
+                    Text("All-day")
                         .font(.system(size: 11 * textScale))
                         .foregroundStyle(.secondary)
                     Spacer()

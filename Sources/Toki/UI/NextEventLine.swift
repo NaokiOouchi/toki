@@ -29,7 +29,7 @@ struct NextEventLine: View {
         if state != nil || lastUpdatedText != nil {
             HStack {
                 if let s = state {
-                    Text("次")
+                    Text("Next")
                         .font(.system(size: 11 * textScale))
                         .foregroundStyle(.secondary)
                     Spacer()

@@ -104,7 +104,7 @@ struct EventPreviewPopover: View {
     /// 参加者リスト（5 名上限 + 「他 N 名」、status SF Symbol 付き）。
     private var attendeesSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("参加者")
+            Text("Attendees")
                 .font(.system(size: 10 * textScale))
                 .foregroundStyle(.tertiary)
             ForEach(Array(attendees.prefix(Self.attendeeDisplayLimit).enumerated()), id: \.offset) { _, attendee in
@@ -120,7 +120,7 @@ struct EventPreviewPopover: View {
                 }
             }
             if attendees.count > Self.attendeeDisplayLimit {
-                Text("他 \(attendees.count - Self.attendeeDisplayLimit) 名")
+                Text("\(attendees.count - Self.attendeeDisplayLimit) more attendees")
                     .font(.system(size: 10 * textScale))
                     .foregroundStyle(.tertiary)
             }
@@ -143,7 +143,7 @@ struct EventPreviewPopover: View {
         VStack(spacing: 6) {
             if hasMeetURL {
                 Button(action: onOpenMeet) {
-                    Label("Meet で開く", systemImage: "video.fill")
+                    Label("Open in Meet", systemImage: "video.fill")
                         .font(.system(size: 11 * textScale))
                         .frame(maxWidth: .infinity)
                 }
@@ -152,7 +152,7 @@ struct EventPreviewPopover: View {
             }
             if hasCalendarURL {
                 Button(action: onOpenCalendar) {
-                    Label("Calendar で開く", systemImage: "calendar")
+                    Label("Open in Calendar", systemImage: "calendar")
                         .font(.system(size: 11 * textScale))
                         .frame(maxWidth: .infinity)
                 }

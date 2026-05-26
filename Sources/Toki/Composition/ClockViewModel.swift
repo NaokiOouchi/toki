@@ -159,8 +159,8 @@ final class ClockViewModel: ObservableObject {
     var lastUpdatedFormatted: String? {
         guard let updated = lastUpdatedAt else { return nil }
         let elapsed = Int(now.timeIntervalSince(updated))
-        if elapsed < 60 { return "最終更新 たった今" }
-        return "最終更新 \(elapsed / 60) 分前"
+        if elapsed < 60 { return String(localized: "Updated just now") }
+        return String(localized: "Updated \(elapsed / 60) min ago")
     }
 
     /// 次の :00 までの差分を待ってから 60 秒ごとのタイマーを開始する。
@@ -266,24 +266,24 @@ final class ClockViewModel: ObservableObject {
             let remaining = Int(ceil(cur.end.timeIntervalSince(now) / 60))
             return .duringEvent(time: timeStr,
                                 title: cur.title,
-                                remaining: "残り \(Self.formatDurationMinutes(remaining))")
+                                remaining: String(localized: "\(Self.formatDurationMinutes(remaining)) left"))
         }
         if let nxt = tl.nextEvent(after: now) {
             let until = Int(ceil(nxt.start.timeIntervalSince(now) / 60))
-            return .freeTime(time: timeStr, subtitle: "次まで \(Self.formatDurationMinutes(until))")
+            return .freeTime(time: timeStr, subtitle: String(localized: "\(Self.formatDurationMinutes(until)) until next"))
         }
-        return .freeTime(time: timeStr, subtitle: "予定なし")
+        return .freeTime(time: timeStr, subtitle: String(localized: "No upcoming events"))
     }
 
     /// 分単位の数値を読みやすい形式に整形する。
     /// 60 分未満は「X 分」、60 分以上は「X 時間 Y 分」（Y=0 のときは「X 時間」）。
     /// 例：45 → "45 分"、60 → "1 時間"、90 → "1 時間 30 分"、600 → "10 時間"
     static func formatDurationMinutes(_ minutes: Int) -> String {
-        guard minutes >= 60 else { return "\(minutes) 分" }
+        guard minutes >= 60 else { return String(localized: "\(minutes) min") }
         let hours = minutes / 60
         let mins = minutes % 60
-        if mins == 0 { return "\(hours) 時間" }
-        return "\(hours) 時間 \(mins) 分"
+        if mins == 0 { return String(localized: "\(hours) hr") }
+        return String(localized: "\(hours) hr \(mins) min")
     }
 
     /// 下部「終日」ラインの状態。spec 013 改修で追加。
@@ -376,30 +376,36 @@ final class ClockViewModel: ObservableObject {
         guard let dayDiff = comps.day else { return nil }
         switch dayDiff {
         case ..<1: return nil
-        case 1: return "明日"
-        case 2: return "明後日"
+        case 1: return String(localized: "Tomorrow")
+        case 2: return String(localized: "Day after tomorrow")
         case 3...6: return weekdayName(of: target, calendar: calendar)
         default: return shortDateLabel(of: target, calendar: calendar)
         }
     }
 
     /// 曜日名（"日曜" / "月曜" / ...）。
-    /// DateFormatter のロケール依存を避けるため日本語ハードコード。
-    /// CLAUDE.md「個人利用、Mac専用」前提で日本語固定 OK。
+    /// 曜日名（例：日本語「月曜」、英語「Monday」）。spec 019 で DateFormatter ベースに変更し、
+    /// システム言語に応じて自動的に切り替わる。
     private static func weekdayName(of date: Date, calendar: Calendar) -> String {
-        let weekday = calendar.component(.weekday, from: date)  // 1=日, 2=月, ..., 7=土
-        let names = ["日曜", "月曜", "火曜", "水曜", "木曜", "金曜", "土曜"]
-        return names[max(1, min(7, weekday)) - 1]
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = .autoupdatingCurrent
+        formatter.setLocalizedDateFormatFromTemplate("EEEE")
+        return formatter.string(from: date)
     }
 
-    /// "M/d (曜)" 形式（例：5/26 (月)）。7 日後の境界用。
+    /// "M/d (曜)" 形式（例：5/26 (Mon) / 5/26 (月)）。7 日後の境界用。
+    /// spec 019 で曜日部分を DateFormatter（EEE）ベースに変更、ロケール自動対応。
     private static func shortDateLabel(of date: Date, calendar: Calendar) -> String {
         let c = calendar.dateComponents([.month, .day], from: date)
         let m = c.month ?? 1
         let d = c.day ?? 1
-        let weekday = calendar.component(.weekday, from: date)
-        let shortNames = ["日", "月", "火", "水", "木", "金", "土"]
-        return "\(m)/\(d) (\(shortNames[max(1, min(7, weekday)) - 1]))"
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = .autoupdatingCurrent
+        formatter.setLocalizedDateFormatFromTemplate("EEE")
+        let shortWeekday = formatter.string(from: date)
+        return "\(m)/\(d) (\(shortWeekday))"
     }
 
     // MARK: - ホバーハンドラ

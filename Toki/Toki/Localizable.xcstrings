@@ -1,208 +1,232 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ left" : {
+      "comment" : "Central remaining text during an event. e.g. '30 min left'.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%@ left" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "残り %@" }
+        }
+      }
+    },
+    "%@ until next" : {
+      "comment" : "Central subtitle when there's a next event soon. e.g. '15 min until next'.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%@ until next" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "次まで %@" }
+        }
+      }
+    },
+    "%1$lld hr %2$lld min" : {
+      "comment" : "Duration: hours + minutes. e.g. '1 hr 30 min'.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%1$lld hr %2$lld min" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "%1$lld 時間 %2$lld 分" }
+        }
+      }
+    },
+    "%lld hr" : {
+      "comment" : "Duration: hours only. e.g. '2 hr'.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%lld hr" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "%lld 時間" }
+        }
+      }
+    },
+    "%lld min" : {
+      "comment" : "Duration: minutes only. e.g. '30 min'.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%lld min" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "%lld 分" }
+        }
+      }
+    },
+    "%lld more attendees" : {
+      "comment" : "Popover: count of attendees beyond display limit.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%lld more attendees" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "他 %lld 名" }
+        }
+      }
+    },
+    "All-day" : {
+      "comment" : "BottomInfoArea: label for an all-day event.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "All-day" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "終日" }
+        }
+      }
+    },
+    "Attendees" : {
+      "comment" : "Popover: section header for attendees list.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Attendees" }
+        },
+        "ja" : {
+          "stringUnit" : { "state" : "translated", "value" : "参加者" }
+        }
+      }
+    },
     "Connect from menu bar" : {
       "comment" : "Central text shown when not authenticated. Tells user to use menu bar icon to sign in.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connect from menu bar"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メニューバーから接続"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect from menu bar" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "メニューバーから接続" } }
       }
     },
     "Connect to Google Calendar" : {
       "comment" : "Menu item to start OAuth sign-in.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connect to Google Calendar"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Google Calendar に接続"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect to Google Calendar" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Google Calendar に接続" } }
       }
     },
     "Connecting…" : {
       "comment" : "Central text shown during OAuth flow.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connecting…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "接続中…"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting…" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "接続中…" } }
       }
     },
     "Connection failed" : {
       "comment" : "Error: generic OAuth connection failure.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connection failed"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "接続に失敗しました"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection failed" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "接続に失敗しました" } }
+      }
+    },
+    "Day after tomorrow" : {
+      "comment" : "NextEventLine: label for an event 2 days from now.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Day after tomorrow" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "明後日" } }
       }
     },
     "Disconnect from Google Calendar" : {
       "comment" : "Menu item to sign out and revoke OAuth tokens.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Disconnect from Google Calendar"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Google Calendar から切断"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Disconnect from Google Calendar" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Google Calendar から切断" } }
       }
     },
     "Failed to retrieve credentials" : {
       "comment" : "Error: token exchange / invalid response.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Failed to retrieve credentials"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "認証情報の取得に失敗しました"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed to retrieve credentials" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "認証情報の取得に失敗しました" } }
       }
     },
     "Loading…" : {
       "comment" : "Central text shown while waiting for the first Calendar fetch.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "読み込み中…"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading…" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "読み込み中…" } }
+      }
+    },
+    "Next" : {
+      "comment" : "BottomInfoArea: label for the next upcoming event.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Next" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "次" } }
+      }
+    },
+    "No upcoming events" : {
+      "comment" : "Central subtitle when there are no events today.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No upcoming events" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "予定なし" } }
+      }
+    },
+    "Open in Calendar" : {
+      "comment" : "Popover button: open the event in Google Calendar in the browser.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open in Calendar" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Calendar で開く" } }
+      }
+    },
+    "Open in Meet" : {
+      "comment" : "Popover button: open the event's Google Meet link in the browser.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open in Meet" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Meet で開く" } }
       }
     },
     "Quit Toki" : {
       "comment" : "Menu item to terminate the app. 'Toki' is the brand name, do not translate.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quit Toki"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toki を終了"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit Toki" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Toki を終了" } }
       }
     },
     "Reload" : {
       "comment" : "Menu item to reload Calendar events manually.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reload"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再読込"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reload" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "再読込" } }
       }
     },
     "Settings…" : {
       "comment" : "Menu item to open the settings panel.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定…"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings…" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "設定…" } }
       }
     },
     "Sign-in cancelled" : {
       "comment" : "Error: user cancelled the OAuth sign-in dialog.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign-in cancelled"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "サインインをキャンセルしました"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign-in cancelled" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "サインインをキャンセルしました" } }
       }
     },
     "Sign-in failed" : {
       "comment" : "Error: ASWebAuthenticationSession failed.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign-in failed"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "サインインに失敗しました"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign-in failed" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "サインインに失敗しました" } }
+      }
+    },
+    "Tomorrow" : {
+      "comment" : "NextEventLine: label for an event tomorrow.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tomorrow" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "明日" } }
+      }
+    },
+    "Updated %lld min ago" : {
+      "comment" : "BottomInfoArea: last reload time.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated %lld min ago" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "最終更新 %lld 分前" } }
+      }
+    },
+    "Updated just now" : {
+      "comment" : "BottomInfoArea: just reloaded (less than 60s ago).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated just now" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "最終更新 たった今" } }
       }
     }
   },
