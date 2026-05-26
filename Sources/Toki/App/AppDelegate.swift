@@ -325,27 +325,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let oauth = oauthClient {
             if oauth.isAuthorized {
                 menu.addItem(NSMenuItem(
-                    title: "Google Calendar 切断",
+                    title: String(localized: "Disconnect from Google Calendar"),
                     action: #selector(handleDisconnect),
                     keyEquivalent: ""
                 ))
             } else {
                 menu.addItem(NSMenuItem(
-                    title: "Google Calendar 接続",
+                    title: String(localized: "Connect to Google Calendar"),
                     action: #selector(handleConnect),
                     keyEquivalent: ""
                 ))
             }
             if oauth.isAuthorized {
                 let reloadItem = NSMenuItem(
-                    title: "再読込",
+                    title: String(localized: "Reload"),
                     action: #selector(handleReload),
                     keyEquivalent: "r"
                 )
                 menu.addItem(reloadItem)
             }
             let settingsItem = NSMenuItem(
-                title: "設定…",
+                title: String(localized: "Settings…"),
                 action: #selector(handleOpenSettings),
                 keyEquivalent: ","
             )
@@ -354,7 +354,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         menu.addItem(NSMenuItem(
-            title: "Toki を終了",
+            title: String(localized: "Quit Toki"),
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         ))
@@ -377,17 +377,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let message: String
                 switch error {
                 case .userCancelled:
-                    message = "サインインをキャンセルしました"
+                    message = String(localized: "Sign-in cancelled")
                 case .tokenExchangeFailed, .invalidResponse:
-                    message = "認証情報の取得に失敗しました"
+                    message = String(localized: "Failed to retrieve credentials")
                 case .authSessionFailed:
-                    message = "サインインに失敗しました"
+                    message = String(localized: "Sign-in failed")
                 default:
-                    message = "接続に失敗しました"
+                    message = String(localized: "Connection failed")
                 }
                 await viewModel?.showError(message: message)
             } catch {
-                await viewModel?.showError(message: "接続に失敗しました")
+                await viewModel?.showError(message: String(localized: "Connection failed"))
             }
             await viewModel?.setConnecting(false)
         }

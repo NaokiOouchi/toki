@@ -251,15 +251,15 @@ final class ClockViewModel: ObservableObject {
             return .freeTime(time: timeStr, subtitle: err)
         }
         if isConnecting {
-            return .freeTime(time: timeStr, subtitle: "接続中…")
+            return .freeTime(time: timeStr, subtitle: String(localized: "Connecting…"))
         }
         if !accessGranted {
             // spec 017: 「右クリック」は時計を指してると誤解されるため
             // メニューバーから接続するよう明示する。
-            return .freeTime(time: timeStr, subtitle: "メニューバーから接続")
+            return .freeTime(time: timeStr, subtitle: String(localized: "Connect from menu bar"))
         }
         guard let tl = timeline else {
-            return .freeTime(time: timeStr, subtitle: "読み込み中")
+            return .freeTime(time: timeStr, subtitle: String(localized: "Loading…"))
         }
         if let cur = tl.currentEvent(at: now) {
             // 「あと 0 分」表示にならないよう ceil で次の整数分に丸める。
