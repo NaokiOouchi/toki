@@ -4,89 +4,78 @@
     "%@ left" : {
       "comment" : "Central remaining text during an event. e.g. '30 min left'.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "%@ left" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "残り %@" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ left" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "残り %@" } }
       }
     },
     "%@ until next" : {
       "comment" : "Central subtitle when there's a next event soon. e.g. '15 min until next'.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "%@ until next" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "次まで %@" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ until next" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "次まで %@" } }
       }
     },
     "%1$lld hr %2$lld min" : {
       "comment" : "Duration: hours + minutes. e.g. '1 hr 30 min'.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "%1$lld hr %2$lld min" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "%1$lld 時間 %2$lld 分" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld hr %2$lld min" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld 時間 %2$lld 分" } }
       }
     },
     "%lld hr" : {
       "comment" : "Duration: hours only. e.g. '2 hr'.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "%lld hr" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "%lld 時間" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld hr" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "%lld 時間" } }
       }
     },
     "%lld min" : {
       "comment" : "Duration: minutes only. e.g. '30 min'.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "%lld min" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "%lld 分" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld min" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "%lld 分" } }
       }
     },
     "%lld more attendees" : {
       "comment" : "Popover: count of attendees beyond display limit.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "%lld more attendees" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "他 %lld 名" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld more attendees" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "他 %lld 名" } }
       }
     },
     "All-day" : {
       "comment" : "BottomInfoArea: label for an all-day event.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "All-day" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "終日" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All-day" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "終日" } }
       }
     },
     "Attendees" : {
       "comment" : "Popover: section header for attendees list.",
       "localizations" : {
-        "en" : {
-          "stringUnit" : { "state" : "translated", "value" : "Attendees" }
-        },
-        "ja" : {
-          "stringUnit" : { "state" : "translated", "value" : "参加者" }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Attendees" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "参加者" } }
+      }
+    },
+    "Auto" : {
+      "comment" : "Settings: ColorSchemeMode = system follow.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Auto" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "自動" } }
+      }
+    },
+    "Blue" : {
+      "comment" : "Settings: ThemeColor = blue.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Blue" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ブルー" } }
+      }
+    },
+    "Brown" : {
+      "comment" : "Settings: ThemeColor = brown.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Brown" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ブラウン" } }
       }
     },
     "Connect from menu bar" : {
@@ -117,6 +106,27 @@
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "接続に失敗しました" } }
       }
     },
+    "Custom" : {
+      "comment" : "Settings: ThemeColor = custom (user picks via color picker).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Custom" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "カスタム" } }
+      }
+    },
+    "Cyan" : {
+      "comment" : "Settings: ThemeColor = cyan.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cyan" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "シアン" } }
+      }
+    },
+    "Dark" : {
+      "comment" : "Settings: ColorSchemeMode = dark.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dark" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ダーク" } }
+      }
+    },
     "Day after tomorrow" : {
       "comment" : "NextEventLine: label for an event 2 days from now.",
       "localizations" : {
@@ -131,6 +141,20 @@
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "Google Calendar から切断" } }
       }
     },
+    "Extra Large" : {
+      "comment" : "Settings: TextScale = extra large.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Extra Large" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "特大" } }
+      }
+    },
+    "Extra Thick" : {
+      "comment" : "Settings: Thickness = extra thick (ring/hand/outline).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Extra Thick" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "極太" } }
+      }
+    },
     "Failed to retrieve credentials" : {
       "comment" : "Error: token exchange / invalid response.",
       "localizations" : {
@@ -138,11 +162,81 @@
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "認証情報の取得に失敗しました" } }
       }
     },
+    "Gray" : {
+      "comment" : "Settings: ThemeColor = gray.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gray" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "グレー" } }
+      }
+    },
+    "Green" : {
+      "comment" : "Settings: ThemeColor = green.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Green" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "グリーン" } }
+      }
+    },
+    "Indigo" : {
+      "comment" : "Settings: ThemeColor = indigo.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Indigo" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "インディゴ" } }
+      }
+    },
+    "Large" : {
+      "comment" : "Settings: TextScale = large.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Large" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "大" } }
+      }
+    },
+    "Light" : {
+      "comment" : "Settings: ColorSchemeMode = light.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Light" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ライト" } }
+      }
+    },
     "Loading…" : {
       "comment" : "Central text shown while waiting for the first Calendar fetch.",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading…" } },
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "読み込み中…" } }
+      }
+    },
+    "Mint" : {
+      "comment" : "Settings: ThemeColor = mint.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mint" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ミント" } }
+      }
+    },
+    "More opaque" : {
+      "comment" : "Settings: MaterialStrength = thick (less transparent).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "More opaque" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "濃いめ" } }
+      }
+    },
+    "More translucent" : {
+      "comment" : "Settings: MaterialStrength = thin (more transparent).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "More translucent" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "薄め" } }
+      }
+    },
+    "Most opaque" : {
+      "comment" : "Settings: MaterialStrength = ultraThick (least transparent).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Most opaque" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "極濃" } }
+      }
+    },
+    "Most translucent" : {
+      "comment" : "Settings: MaterialStrength = ultraThin (most transparent).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Most translucent" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "極薄" } }
       }
     },
     "Next" : {
@@ -173,11 +267,46 @@
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "Meet で開く" } }
       }
     },
+    "Orange" : {
+      "comment" : "Settings: ThemeColor = orange.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Orange" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "オレンジ" } }
+      }
+    },
+    "Pink" : {
+      "comment" : "Settings: ThemeColor = pink.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pink" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ピンク" } }
+      }
+    },
+    "Purple" : {
+      "comment" : "Settings: ThemeColor = purple.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Purple" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "パープル" } }
+      }
+    },
     "Quit Toki" : {
       "comment" : "Menu item to terminate the app. 'Toki' is the brand name, do not translate.",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit Toki" } },
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "Toki を終了" } }
+      }
+    },
+    "Red" : {
+      "comment" : "Settings: ThemeColor = red.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Red" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "レッド" } }
+      }
+    },
+    "Regular" : {
+      "comment" : "Settings: medium/standard option for Thickness and TextScale.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Regular" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "標準" } }
       }
     },
     "Reload" : {
@@ -208,11 +337,53 @@
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "サインインに失敗しました" } }
       }
     },
+    "Small" : {
+      "comment" : "Settings: TextScale = small.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Small" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "小" } }
+      }
+    },
+    "System" : {
+      "comment" : "Settings: ThemeColor = system accent color.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "System" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "システム" } }
+      }
+    },
+    "Teal" : {
+      "comment" : "Settings: ThemeColor = teal.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Teal" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ティール" } }
+      }
+    },
+    "Thick" : {
+      "comment" : "Settings: Thickness = thick (ring/hand/outline).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Thick" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "太" } }
+      }
+    },
+    "Thin" : {
+      "comment" : "Settings: Thickness = thin (ring/hand/outline).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Thin" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "細" } }
+      }
+    },
     "Tomorrow" : {
       "comment" : "NextEventLine: label for an event tomorrow.",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Tomorrow" } },
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "明日" } }
+      }
+    },
+    "Translucent" : {
+      "comment" : "Settings: MaterialStrength = regular (balanced transparency).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Translucent" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "標準" } }
       }
     },
     "Updated %lld min ago" : {
@@ -227,6 +398,13 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated just now" } },
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "最終更新 たった今" } }
+      }
+    },
+    "Yellow" : {
+      "comment" : "Settings: ThemeColor = yellow.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Yellow" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "イエロー" } }
       }
     }
   },

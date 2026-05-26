@@ -14,21 +14,21 @@ enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .accent: return "システム"
-        case .indigo: return "インディゴ"
-        case .blue: return "ブルー"
-        case .cyan: return "シアン"
-        case .teal: return "ティール"
-        case .mint: return "ミント"
-        case .green: return "グリーン"
-        case .yellow: return "イエロー"
-        case .orange: return "オレンジ"
-        case .red: return "レッド"
-        case .pink: return "ピンク"
-        case .purple: return "パープル"
-        case .brown: return "ブラウン"
-        case .gray: return "グレー"
-        case .custom: return "カスタム"
+        case .accent: return String(localized: "System")
+        case .indigo: return String(localized: "Indigo")
+        case .blue: return String(localized: "Blue")
+        case .cyan: return String(localized: "Cyan")
+        case .teal: return String(localized: "Teal")
+        case .mint: return String(localized: "Mint")
+        case .green: return String(localized: "Green")
+        case .yellow: return String(localized: "Yellow")
+        case .orange: return String(localized: "Orange")
+        case .red: return String(localized: "Red")
+        case .pink: return String(localized: "Pink")
+        case .purple: return String(localized: "Purple")
+        case .brown: return String(localized: "Brown")
+        case .gray: return String(localized: "Gray")
+        case .custom: return String(localized: "Custom")
         }
     }
 
@@ -56,6 +56,7 @@ enum ThemeColor: String, CaseIterable, Identifiable, Hashable {
 // MARK: - MaterialStrength
 
 /// 背景 material の濃さプリセット。白背景での視認性調整用。
+/// 英訳は「透過度」概念で表現（Thin/Thick だと Thickness 系 enum と衝突するため）。
 enum MaterialStrength: String, CaseIterable, Identifiable, Hashable {
     case ultraThin, thin, regular, thick, ultraThick
 
@@ -63,11 +64,11 @@ enum MaterialStrength: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .ultraThin: return "極薄"
-        case .thin: return "薄め"
-        case .regular: return "標準"
-        case .thick: return "濃いめ"
-        case .ultraThick: return "極濃"
+        case .ultraThin: return String(localized: "Most translucent")
+        case .thin: return String(localized: "More translucent")
+        case .regular: return String(localized: "Translucent")
+        case .thick: return String(localized: "More opaque")
+        case .ultraThick: return String(localized: "Most opaque")
         }
     }
 
@@ -94,9 +95,9 @@ enum ColorSchemeMode: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .auto: return "自動"
-        case .light: return "ライト"
-        case .dark: return "ダーク"
+        case .auto: return String(localized: "Auto")
+        case .light: return String(localized: "Light")
+        case .dark: return String(localized: "Dark")
         }
     }
 
@@ -121,10 +122,10 @@ enum TextScale: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .small: return "小"
-        case .regular: return "標準"
-        case .large: return "大"
-        case .xLarge: return "特大"
+        case .small: return String(localized: "Small")
+        case .regular: return String(localized: "Regular")
+        case .large: return String(localized: "Large")
+        case .xLarge: return String(localized: "Extra Large")
         }
     }
 
@@ -148,10 +149,10 @@ enum RingThickness: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .thin: return "細"
-        case .regular: return "標準"
-        case .thick: return "太"
-        case .extraThick: return "極太"
+        case .thin: return String(localized: "Thin")
+        case .regular: return String(localized: "Regular")
+        case .thick: return String(localized: "Thick")
+        case .extraThick: return String(localized: "Extra Thick")
         }
     }
 
@@ -176,10 +177,10 @@ enum HandThickness: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .thin: return "細"
-        case .regular: return "標準"
-        case .thick: return "太"
-        case .extraThick: return "極太"
+        case .thin: return String(localized: "Thin")
+        case .regular: return String(localized: "Regular")
+        case .thick: return String(localized: "Thick")
+        case .extraThick: return String(localized: "Extra Thick")
         }
     }
 
@@ -203,10 +204,10 @@ enum CircleOutlineThickness: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .thin: return "細"
-        case .regular: return "標準"
-        case .thick: return "太"
-        case .extraThick: return "極太"
+        case .thin: return String(localized: "Thin")
+        case .regular: return String(localized: "Regular")
+        case .thick: return String(localized: "Thick")
+        case .extraThick: return String(localized: "Extra Thick")
         }
     }
 
