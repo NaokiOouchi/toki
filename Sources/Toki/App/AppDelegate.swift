@@ -177,6 +177,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                NSEqualRects(w.frame, lastHover) {
                 return
             }
+            // borderless window では contentMinSize が drag resize で効かない
+            // macOS のバグ／仕様のため、user drag 終了時に minSize より小さければ強制復元する。
+            let minSize = w.contentMinSize
+            if w.frame.height < minSize.height || w.frame.width < minSize.width {
+                let restoredFrame = NSRect(
+                    origin: w.frame.origin,
+                    size: NSSize(
+                        width: max(w.frame.width, minSize.width),
+                        height: max(w.frame.height, minSize.height)
+                    )
+                )
+                w.setFrame(restoredFrame, display: true)
+            }
             Self.saveClampedFrame(window: w)
             // user 手動 resize → baseline 更新（次の hover は新 baseline ± 28pt で動く）
             self.hoverBaselineHeight = w.frame.height
@@ -269,6 +282,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// window.frame を contentMinSize でクランプして保存する。
     /// spec 016 後の補修：何らかの理由で window が contentMinSize より小さくなった場合でも
     /// 永続化する値は minSize 以上に保ち、次回起動時に BottomInfoArea が見切れない状態を保証する。
+    @MainActor
     private static func saveClampedFrame(window w: NSWindow) {
         let minSize = w.contentMinSize
         let clampedFrame = NSRect(
