@@ -363,8 +363,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem?.menu = nil
     }
 
-    /// Google Calendar OAuth 認可フローを開始。ブラウザが立ち上がり同意画面が出る。
+    /// Google Calendar OAuth 認可フローを開始。Apple 認証ウィンドウが立ち上がり同意画面が出る。
     /// 成功後は ViewModel の接続状態を即時更新し、Gateway を reload して event を取り込む。
+    /// spec 017: エラー時はユーザーに見える形で中央テキストに表示する。
     @objc private func handleConnect() {
         Task {
             await viewModel?.setConnecting(true)
@@ -372,8 +373,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try await oauthClient?.beginAuthorization()
                 await viewModel?.refreshAuthorizationState()
                 await gateway?.reload()
+            } catch let error as GoogleOAuthClient.OAuthClientError {
+                let message: String
+                switch error {
+                case .userCancelled:
+                    message = "サインインをキャンセルしました"
+                case .tokenExchangeFailed, .invalidResponse:
+                    message = "認証情報の取得に失敗しました"
+                case .authSessionFailed:
+                    message = "サインインに失敗しました"
+                default:
+                    message = "接続に失敗しました"
+                }
+                await viewModel?.showError(message: message)
             } catch {
-                print("OAuth connect failed: \(error)")
+                await viewModel?.showError(message: "接続に失敗しました")
             }
             await viewModel?.setConnecting(false)
         }

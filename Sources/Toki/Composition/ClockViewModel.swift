@@ -42,6 +42,14 @@ final class ClockViewModel: ObservableObject {
     /// 中央テキストに「接続中…」を表示するための flag。
     @Published private(set) var isConnecting: Bool = false
 
+    /// エラー時に中央テキストに表示するメッセージ（spec 017）。
+    /// AppDelegate が showError で設定し、5 秒後に自動で nil に戻る。
+    /// centerState の subtitle 計算でこの値があれば優先表示する。
+    @Published private(set) var errorMessage: String? = nil
+
+    /// errorMessage の自動 clear タスク（多重起動防止）。
+    private var errorClearTask: Task<Void, Never>? = nil
+
     /// 各重なりグループの選択 index（key = OverlapGroup.id）。spec 013 で導入。
     /// scroll で hover 中グループの index を増減、modulo で循環。
     /// 未操作グループは存在しない or 0 扱い（取得時 default 0）。
@@ -130,6 +138,19 @@ final class ClockViewModel: ObservableObject {
     /// 接続フロー中フラグを更新する。AppDelegate.handleConnect から呼ばれる。
     func setConnecting(_ value: Bool) {
         isConnecting = value
+    }
+
+    /// エラーメッセージを中央テキスト subtitle に一時表示する（spec 017）。
+    /// 5 秒後に自動で nil に戻る。連続呼び出しは前のクリアタスクをキャンセルして上書き。
+    /// AppDelegate がエラー catch 時に呼ぶ。
+    func showError(message: String) {
+        errorMessage = message
+        errorClearTask?.cancel()
+        errorClearTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
+            self?.errorMessage = nil
+        }
     }
 
     /// 最後の reload からの経過時間を人間可読な形式に整形する。
@@ -225,11 +246,17 @@ final class ClockViewModel: ObservableObject {
     /// 権限なし / 未取得 / 進行中 / 次あり / 予定なし の 5 パターンを網羅する。
     var centerState: CenterState {
         let timeStr = Self.formatHHMM(now, calendar: calendar)
+        // spec 017: error が最優先（接続中フロー中のエラー等も上書き表示）
+        if let err = errorMessage {
+            return .freeTime(time: timeStr, subtitle: err)
+        }
         if isConnecting {
             return .freeTime(time: timeStr, subtitle: "接続中…")
         }
         if !accessGranted {
-            return .freeTime(time: timeStr, subtitle: "右クリックで接続")
+            // spec 017: 「右クリック」は時計を指してると誤解されるため
+            // メニューバーから接続するよう明示する。
+            return .freeTime(time: timeStr, subtitle: "メニューバーから接続")
         }
         guard let tl = timeline else {
             return .freeTime(time: timeStr, subtitle: "読み込み中")
