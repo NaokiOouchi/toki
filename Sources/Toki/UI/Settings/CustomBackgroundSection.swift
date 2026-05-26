@@ -9,7 +9,7 @@ struct CustomBackgroundSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Toggle("背景色を上書き", isOn: $appearance.useCustomBackground)
+                Toggle("Override background color", isOn: $appearance.useCustomBackground)
                     .font(.system(size: 12, weight: .medium))
                     .toggleStyle(.switch)
                     .controlSize(.small)

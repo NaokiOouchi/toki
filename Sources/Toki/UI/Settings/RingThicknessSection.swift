@@ -6,7 +6,7 @@ struct RingThicknessSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("リングの太さ")
+            Text("Ring thickness")
                 .font(.system(size: 12, weight: .medium))
             Picker("", selection: $appearance.ringThickness) {
                 ForEach(RingThickness.allCases) { thickness in

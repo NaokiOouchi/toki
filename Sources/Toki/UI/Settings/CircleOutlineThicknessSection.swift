@@ -6,7 +6,7 @@ struct CircleOutlineThicknessSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("円の太さ")
+            Text("Outline thickness")
                 .font(.system(size: 12, weight: .medium))
             Picker("", selection: $appearance.circleOutlineThickness) {
                 ForEach(CircleOutlineThickness.allCases) { thickness in

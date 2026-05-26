@@ -9,7 +9,7 @@ struct OpacitySection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("透過率")
+                Text("Opacity")
                     .font(.system(size: 12, weight: .medium))
                 Spacer()
                 Text("\(Int(appearance.opacity * 100))%")

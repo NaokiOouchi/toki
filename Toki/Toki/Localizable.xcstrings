@@ -406,6 +406,83 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Yellow" } },
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "イエロー" } }
       }
+    },
+    "Appearance" : {
+      "comment" : "Settings section header: ColorSchemeMode (light/dark/auto).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Appearance" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "配色" } }
+      }
+    },
+    "Hand thickness" : {
+      "comment" : "Settings section header: HandThickness (clock hands line width).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hand thickness" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "針の太さ" } }
+      }
+    },
+    "Material strength" : {
+      "comment" : "Settings section header: MaterialStrength (background opacity/translucency).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Material strength" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "背景の濃さ" } }
+      }
+    },
+    "Opacity" : {
+      "comment" : "Settings section header: window-wide opacity slider.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opacity" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "透過率" } }
+      }
+    },
+    "Outline thickness" : {
+      "comment" : "Settings section header: CircleOutlineThickness (clock face circle outline).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Outline thickness" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "円の太さ" } }
+      }
+    },
+    "Override background color" : {
+      "comment" : "Settings toggle: use a custom background color instead of system material.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Override background color" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "背景色を上書き" } }
+      }
+    },
+    "Override circle color" : {
+      "comment" : "Settings toggle: use a custom color for the clock face circle outline.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Override circle color" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "円の色を上書き" } }
+      }
+    },
+    "Override text color" : {
+      "comment" : "Settings toggle: use a custom color for primary text instead of system default.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Override text color" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "文字色を上書き" } }
+      }
+    },
+    "Ring thickness" : {
+      "comment" : "Settings section header: RingThickness (event arc width).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ring thickness" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "リングの太さ" } }
+      }
+    },
+    "Text size" : {
+      "comment" : "Settings section header: TextScale (font scaling factor).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Text size" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "文字サイズ" } }
+      }
+    },
+    "Theme color" : {
+      "comment" : "Settings section header: ThemeColor (accent color for hands/dots).",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Theme color" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "テーマカラー" } }
+      }
     }
   },
   "version" : "1.0"

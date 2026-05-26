@@ -6,7 +6,7 @@ struct HandThicknessSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("針の太さ")
+            Text("Hand thickness")
                 .font(.system(size: 12, weight: .medium))
             Picker("", selection: $appearance.handThickness) {
                 ForEach(HandThickness.allCases) { thickness in

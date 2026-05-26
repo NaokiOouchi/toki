@@ -9,7 +9,7 @@ struct CustomTextColorSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Toggle("文字色を上書き", isOn: $appearance.useCustomTextColor)
+                Toggle("Override text color", isOn: $appearance.useCustomTextColor)
                     .font(.system(size: 12, weight: .medium))
                     .toggleStyle(.switch)
                     .controlSize(.small)

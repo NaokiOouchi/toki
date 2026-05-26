@@ -8,7 +8,7 @@ struct ThemeColorSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("テーマカラー")
+                Text("Theme color")
                     .font(.system(size: 12, weight: .medium))
                 Spacer()
                 if appearance.themeColor == .custom {

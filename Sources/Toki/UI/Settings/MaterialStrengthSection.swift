@@ -6,7 +6,7 @@ struct MaterialStrengthSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("背景の濃さ")
+            Text("Material strength")
                 .font(.system(size: 12, weight: .medium))
             Picker("", selection: $appearance.materialStrength) {
                 ForEach(MaterialStrength.allCases) { strength in

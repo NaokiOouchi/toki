@@ -6,7 +6,7 @@ struct ColorSchemeSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("配色")
+            Text("Appearance")
                 .font(.system(size: 12, weight: .medium))
             Picker("", selection: $appearance.colorSchemeMode) {
                 ForEach(ColorSchemeMode.allCases) { mode in

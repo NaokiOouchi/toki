@@ -6,7 +6,7 @@ struct TextScaleSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("文字サイズ")
+            Text("Text size")
                 .font(.system(size: 12, weight: .medium))
             Picker("", selection: $appearance.textScale) {
                 ForEach(TextScale.allCases) { scale in
