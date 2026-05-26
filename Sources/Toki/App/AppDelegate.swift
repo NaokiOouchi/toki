@@ -420,6 +420,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
+        // NSWindow デフォルトの isReleasedWhenClosed = true だと閉じた瞬間に
+        // window が release され、strong-held な settingsWindow プロパティが
+        // 解放済み object を指して再オープン時にクラッシュする。
+        // settingsWindow で lifetime 管理するため false にする。
+        window.isReleasedWhenClosed = false
         window.title = String(localized: "Toki Settings")
         window.contentView = hosting
         window.center()
