@@ -420,7 +420,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Toki 設定"
+        window.title = String(localized: "Toki Settings")
         window.contentView = hosting
         window.center()
         window.makeKeyAndOrderFront(nil)

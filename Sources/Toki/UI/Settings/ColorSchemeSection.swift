@@ -13,7 +13,6 @@ struct ColorSchemeSection: View {
                     Text(mode.displayName).tag(mode)
                 }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
         }
     }

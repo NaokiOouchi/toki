@@ -483,6 +483,13 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Theme color" } },
         "ja" : { "stringUnit" : { "state" : "translated", "value" : "テーマカラー" } }
       }
+    },
+    "Toki Settings" : {
+      "comment" : "Settings window title bar. 'Toki' is the brand name, do not translate.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Toki Settings" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Toki 設定" } }
+      }
     }
   },
   "version" : "1.0"

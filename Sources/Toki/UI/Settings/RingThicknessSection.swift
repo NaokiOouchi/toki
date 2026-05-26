@@ -13,7 +13,6 @@ struct RingThicknessSection: View {
                     Text(thickness.displayName).tag(thickness)
                 }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
         }
     }

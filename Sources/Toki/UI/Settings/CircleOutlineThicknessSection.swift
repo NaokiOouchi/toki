@@ -13,7 +13,6 @@ struct CircleOutlineThicknessSection: View {
                     Text(thickness.displayName).tag(thickness)
                 }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
         }
     }

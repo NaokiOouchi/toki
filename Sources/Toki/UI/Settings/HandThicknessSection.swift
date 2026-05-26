@@ -13,7 +13,6 @@ struct HandThicknessSection: View {
                     Text(thickness.displayName).tag(thickness)
                 }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
         }
     }

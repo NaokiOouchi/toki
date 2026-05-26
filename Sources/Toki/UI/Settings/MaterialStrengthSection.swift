@@ -13,7 +13,6 @@ struct MaterialStrengthSection: View {
                     Text(strength.displayName).tag(strength)
                 }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
         }
     }

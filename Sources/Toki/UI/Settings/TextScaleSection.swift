@@ -13,7 +13,6 @@ struct TextScaleSection: View {
                     Text(scale.displayName).tag(scale)
                 }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
         }
     }
