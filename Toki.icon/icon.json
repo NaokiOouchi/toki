@@ -1,0 +1,72 @@
+{
+  "fill" : {
+    "automatic-gradient" : "display-p3:0.24680,0.24309,0.26465,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "display-p3:0.96783,0.64815,0.12707,1.00000"
+          },
+          "glass" : false,
+          "image-name" : "arc_past 2.svg",
+          "name" : "arc_past 2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -19.7578125,
+              35.000000000000114
+            ]
+          }
+        },
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "solid" : "display-p3:0.00890,0.96783,0.48630,1.00000"
+          },
+          "glass" : false,
+          "image-name" : "arc_current.svg",
+          "name" : "arc_current"
+        },
+        {
+          "fill" : {
+            "solid" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+          },
+          "glass" : false,
+          "image-name" : "arc_future.svg",
+          "name" : "arc_future",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -0.8768130319418788,
+              30
+            ]
+          }
+        },
+        {
+          "image-name" : "hand 2.svg",
+          "name" : "hand 2"
+        },
+        {
+          "image-name" : "ring.svg",
+          "name" : "ring"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
