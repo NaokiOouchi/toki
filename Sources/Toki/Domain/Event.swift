@@ -9,6 +9,9 @@ struct Event: Identifiable {
     let start: Date
     let end: Date
     let calendarColor: CGColor
+    /// Event 個別色（spec 029）。Google Calendar の colorId から解決した CGColor。
+    /// nil の場合は calendarColor を使う。表示時は `displayColor` で解決済み色を取得する。
+    let eventColor: CGColor?
     /// Google Calendar API で取得した event detail URL（`htmlLink`）。
     /// 取得失敗の場合は nil。
     let webURL: URL?
@@ -25,6 +28,7 @@ struct Event: Identifiable {
 
     init?(id: String, title: String, start: Date, end: Date,
           calendarColor: CGColor,
+          eventColor: CGColor? = nil,
           webURL: URL? = nil,
           location: String? = nil,
           note: String? = nil,
@@ -36,11 +40,18 @@ struct Event: Identifiable {
         self.start = start
         self.end = end
         self.calendarColor = calendarColor
+        self.eventColor = eventColor
         self.webURL = webURL
         self.location = location
         self.note = note
         self.attendees = attendees
         self.meetURL = meetURL
+    }
+
+    /// 描画用に解決された色（spec 029）。
+    /// Event 個別色（colorId 由来）があればそれを優先、なければ calendar 色。
+    var displayColor: CGColor {
+        eventColor ?? calendarColor
     }
 }
 

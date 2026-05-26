@@ -15,6 +15,7 @@ final class GoogleCalendarAPI {
 
     private static let baseURL = "https://www.googleapis.com/calendar/v3"
 
+
     init(oauth: GoogleOAuthClient, session: URLSession = .shared) {
         self.oauth = oauth
         self.session = session
@@ -121,6 +122,7 @@ final class GoogleCalendarAPI {
               let endDict = item["end"] as? [String: Any] else { return nil }
         let summary = (item["summary"] as? String) ?? "(無題)"
         let htmlLink = (item["htmlLink"] as? String).flatMap { URL(string: $0) }
+        let colorId = item["colorId"] as? String  // spec 029
         let visibility = item["visibility"] as? String
         let location = item["location"] as? String
         let description = item["description"] as? String
@@ -136,6 +138,7 @@ final class GoogleCalendarAPI {
             htmlLink: htmlLink,
             calendarSummary: cal.summary,
             calendarColor: cal.backgroundColor,
+            colorId: colorId,
             visibility: visibility,
             location: location,
             description: description,
@@ -206,6 +209,9 @@ struct GoogleAPIEvent {
     let htmlLink: URL?
     let calendarSummary: String
     let calendarColor: CGColor
+    /// Google Calendar event 個別色 ID（"1"〜"11"）。spec 029 で追加。
+    /// nil の場合は親カレンダー色（calendarColor）が使われる。
+    let colorId: String?
     /// event の可視性。"default" / "public" / "private" / "confidential" / nil。
     /// spec 008：他人のカレンダーから共有された "private" event の判定に使う。
     let visibility: String?

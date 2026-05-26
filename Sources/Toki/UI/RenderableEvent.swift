@@ -30,8 +30,10 @@ struct RenderableEvent: Identifiable {
 }
 
 extension RenderableEvent: Equatable {
+    /// spec 029: 色変更（colorId 反映）も再描画 trigger になるよう、id に加えて color も比較。
+    /// status / 時刻角度は時計進行で別経路 update されるので id + color のみで十分。
     static func == (lhs: RenderableEvent, rhs: RenderableEvent) -> Bool {
-        lhs.id == rhs.id
+        lhs.id == rhs.id && CFEqual(lhs.color, rhs.color)
     }
 }
 

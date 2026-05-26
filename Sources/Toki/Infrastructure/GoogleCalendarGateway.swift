@@ -150,11 +150,15 @@ final class GoogleCalendarGateway: ObservableObject {
                      responseStatus: ResponseStatus.from(apiString: a.responseStatus))
         }
         let meetURL: URL? = ge.hangoutLink ?? ge.conferenceVideoURL
+        // spec 029: Google Calendar event 個別色 (colorId) を CGColor に解決。
+        // nil なら親 calendar 色が使われる（Event.displayColor で fallback 実装）。
+        let eventColor = ge.colorId.flatMap { EventColorPalette.cgColor(forColorId: $0) }
 
         guard let event = Event(id: id,
                                 title: ge.summary,
                                 start: start, end: end,
                                 calendarColor: ge.calendarColor,
+                                eventColor: eventColor,
                                 webURL: effectiveWebURL,
                                 location: ge.location,
                                 note: ge.description,

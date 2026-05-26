@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
+    "—" : {
+
+    },
     "%@ left" : {
       "comment" : "Central remaining text during an event. e.g. '30 min left'.",
       "localizations" : {

@@ -199,7 +199,7 @@ final class ClockViewModel: ObservableObject {
             title: ev.title,
             startAngle: TimeOfDay.from(date: ev.start, calendar: calendar).clockAngle,
             endAngle: TimeOfDay.from(date: ev.end, calendar: calendar).clockAngle,
-            color: ev.calendarColor,
+            color: ev.displayColor,  // spec 029: event 個別色を優先、なければ calendar 色
             status: ev.status(at: now),
             start: ev.start,
             end: ev.end,

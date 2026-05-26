@@ -50,6 +50,7 @@
 		D261081E2FC3BCD000CB4D03 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C92FC3BCD000CB4D03 /* Event.swift */; };
 		D261081F2FC3BCD000CB4D03 /* CustomTextColorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107D92FC3BCD000CB4D03 /* CustomTextColorSection.swift */; };
 		D26108202FC3BCD000CB4D03 /* AppearanceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26107C32FC3BCD000CB4D03 /* AppearanceModel.swift */; };
+		D2610901EE029100CB4D03 /* EventColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2610900EE029100CB4D03 /* EventColorPalette.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -97,6 +98,7 @@
 		D26107EE2FC3BCD000CB4D03 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D26107EF2FC3BCD000CB4D03 /* TooltipState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TooltipState.swift; sourceTree = "<group>"; };
 		D26107F12FC3BCD000CB4D03 /* FloatingClockWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingClockWindow.swift; sourceTree = "<group>"; };
+		D2610900EE029100CB4D03 /* EventColorPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventColorPalette.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -160,6 +162,7 @@
 				D26107C72FC3BCD000CB4D03 /* Attendee.swift */,
 				D26107C82FC3BCD000CB4D03 /* DayTimeline.swift */,
 				D26107C92FC3BCD000CB4D03 /* Event.swift */,
+				D2610900EE029100CB4D03 /* EventColorPalette.swift */,
 				D26107CA2FC3BCD000CB4D03 /* EventStatus.swift */,
 				D26107CB2FC3BCD000CB4D03 /* OverlapGroup.swift */,
 				D26107CC2FC3BCD000CB4D03 /* TimeOfDay.swift */,
@@ -325,6 +328,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D26107F52FC3BCD000CB4D03 /* Attendee.swift in Sources */,
+				D2610901EE029100CB4D03 /* EventColorPalette.swift in Sources */,
 				D26107F62FC3BCD000CB4D03 /* KeychainStore.swift in Sources */,
 				D26107F72FC3BCD000CB4D03 /* ClockViewModel.swift in Sources */,
 				D26107F82FC3BCD000CB4D03 /* ClockView.swift in Sources */,

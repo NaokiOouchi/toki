@@ -62,6 +62,7 @@ struct DayTimeline {
                      start: newStart,
                      end: newEnd,
                      calendarColor: event.calendarColor,
+                     eventColor: event.eventColor,  // spec 029: 個別色を保持
                      webURL: event.webURL,
                      location: event.location,
                      note: event.note,
